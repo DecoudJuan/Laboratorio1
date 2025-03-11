@@ -1,0 +1,20 @@
+{
+  "name": "laboratorio1",
+  "version": "1.0.0",
+  "description": "Personal Project for Austral University",
+  "homepage": "https://github.com/DecoudJuan/Laboratorio1#readme",
+  "bugs": {
+    "url": "https://github.com/DecoudJuan/Laboratorio1/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DecoudJuan/Laboratorio1.git"
+  },
+  "license": "ISC",
+  "author": "Larisa Beni & Juan Decoud",
+  "type": "commonjs",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
