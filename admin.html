@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrador de Usuarios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .btn {
+            padding: 5px 10px;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-danger {
+            background-color: #DC3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>Administrador de Usuarios</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            <!-- Aquí se llenarán los usuarios registrados -->
+        </tbody>
+    </table>
+
+    <script>
+        // Ejemplo de datos de usuarios
+        const users = [
+            { id: 1, name: 'Juan Perez', email: 'juan@example.com' },
+            { id: 2, name: 'Maria Lopez', email: 'maria@example.com' },
+            { id: 3, name: 'Carlos Sanchez', email: 'carlos@example.com' }
+        ];
+
+        function loadUsers() {
+            const userTableBody = document.getElementById('userTableBody');
+            userTableBody.innerHTML = '';
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>
+                        <button class="btn" onclick="viewUser(${user.id})">Ver</button>
+                        <button class="btn btn-danger" onclick="deleteUser(${user.id})">Eliminar</button>
+                    </td>
+                `;
+                userTableBody.appendChild(row);
+            });
+        }
+
+        function viewUser(id) {
+            const user = users.find(u => u.id === id);
+            if (user) {
+                alert(`ID: ${user.id}\nNombre: ${user.name}\nEmail: ${user.email}`);
+            }
+        }
+
+        function deleteUser(id) {
+            const userIndex = users.findIndex(u => u.id === id);
+            if (userIndex !== -1) {
+                users.splice(userIndex, 1);
+                loadUsers();
+            }
+        }
+
+        // Cargar usuarios al iniciar la página
+        window.onload = loadUsers;
+    </script>
+</body>
+</html>

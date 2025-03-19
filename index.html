@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #F1DEDE;
             margin: 0;
             padding: 20px;
             display: flex;
@@ -18,7 +18,7 @@
         
         .container {
             max-width: 400px;
-            width: 100%;
+            width: auto;
         }
         
         .form-container {
@@ -75,6 +75,7 @@
         
         .register-button {
             background-color: #3498db;
+
         }
         
         .register-button:hover {
@@ -83,6 +84,7 @@
         
         .admin-button {
             background-color: #9b59b6;
+
         }
         
         .admin-button:hover {
@@ -112,9 +114,10 @@
     </style>
 </head>
 <body>
-    <div class="container center">
+    <div class="container">
         <!-- Formulario de Inicio de Sesión -->
         <div class="form-container" id="loginContainer">
+            <img src="./images/logo.png" alt="Logo" style="display: block; margin: 0 auto 20px; width: 50%;">
             <h2>Iniciar Sesión</h2>
             <form id="loginForm">
                 <div class="input-group">
@@ -128,13 +131,15 @@
                 <button type="submit" class="button">Iniciar Sesión</button>
                 <div id="loginMessage" class="message"></div>
             </form>
+
+             <!-- Botones de Registro -->
+        
+            <button id="showRegisterBtn" class="button register-button">Registrarse</button>
+            <button id="showAdminRegisterBtn" class="button admin-button">Registrarse como Administrador</button>
+        
+
         </div>
-        
-        <!-- Botones de Registro -->
-        
-        <button id="showRegisterBtn" class="button register-button">Registrarse</button>
-        <button id="showAdminRegisterBtn" class="button admin-button">Registrarse como Administrador</button>
-        
+    
 
         <!-- Formulario de Registro Normal (inicialmente oculto) -->
         <div class="form-container" id="registerForm">
@@ -261,23 +266,13 @@
             if (user) {
                 // Login exitoso - usuario normal
                 messageElement.textContent = 'Inicio de sesión exitoso como usuario!';
-                messageElement.className = 'message success';
-                messageElement.style.display = 'block';
-                
-                setTimeout(() => {
-                    alert('Redirigiendo a página de usuario...');
-                    window.location.href = 'principal.html'; // Comentado para demo
-                }, 1500);
+                window.location.href = 'principal.html'; // Comentado para demo
+
             } else if (admin) {
                 // Login exitoso - administrador
                 messageElement.textContent = 'Inicio de sesión exitoso como administrador!';
-                messageElement.className = 'message success';
-                messageElement.style.display = 'block';
-                
-                setTimeout(() => {
-                    alert('Redirigiendo a panel de administración...');
-                    // window.location.href = 'admin-dashboard.html'; // Comentado para demo
-                }, 1500);
+                window.location.href = 'admin.html'; // Comentado para demo
+
             } else {
                 // Login fallido
                 messageElement.textContent = 'Correo o contraseña incorrectos.';
