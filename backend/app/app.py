@@ -54,4 +54,4 @@ def test():
     return "Ruta de prueba funcionando correctamente"
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3000)
+    app.run(debug=True, port=3000)  # Cambia el puerto a 3000
