@@ -4,16 +4,20 @@ from flask_cors import CORS
 import random
 import string
 import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde el archivo .env
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../../.env'))
 
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para todas las rutas
 
-# Configuración de Flask-Mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'decoudjuanmanuel1@gmail.com'  # Reemplaza con tu correo
-app.config['MAIL_PASSWORD'] = 'ictv tcyc rvmx eqek'  # Reemplaza con tu contraseña
+# Configuración de Flask-Mail usando variables de entorno
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
 mail = Mail(app)
 
@@ -29,7 +33,7 @@ def send_recovery_email():
         recovery_code = generate_recovery_code()
 
         msg = Message('Recuperación de Contraseña',
-                      sender='decoudjuanmanuel1@gmail.com',
+                      sender=os.getenv('MAIL_USERNAME'),
                       recipients=[email])
         msg.body = f'Aquí tienes tu código de recuperación: {recovery_code}'
 
@@ -39,8 +43,7 @@ def send_recovery_email():
     except Exception as e:
         print(f'Error detallado: {str(e)}')  # Log de error detallado
         return jsonify({'success': False, 'message': str(e)}), 500
-    
-    
+
 # Ruta para servir archivos estáticos
 @app.route('/static/<path:path>')
 def send_static(path):
