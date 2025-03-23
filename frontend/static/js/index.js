@@ -6,16 +6,8 @@ const ADMIN_CODE = "admin123"; // Código de ejemplo para registrarse como admin
 // Elementos DOM
 const loginContainer = document.getElementById('loginContainer');
 
-// Inicializar el modal de Bootstrap correctamente
-var registerModal = new bootstrap.Modal(document.getElementById('registerModal'), {
-    keyboard: true
-});
 
-// Controlador para el enlace "Regístrate aquí"
-document.getElementById('showRegisterLink').addEventListener('click', function(e) {
-    e.preventDefault();
-    registerModal.show();
-});
+
 
 // Formulario de inicio de sesión
 document.getElementById('loginForm').addEventListener('submit', function(event) {
