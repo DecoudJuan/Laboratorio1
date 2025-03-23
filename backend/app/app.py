@@ -13,7 +13,7 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'decoudjuanmanuel1@gmail.com'  # Reemplaza con tu correo
-app.config['MAIL_PASSWORD'] = 'decoudjuan0124!'  # Reemplaza con tu contraseña
+app.config['MAIL_PASSWORD'] = 'ictv tcyc rvmx eqek'  # Reemplaza con tu contraseña
 
 mail = Mail(app)
 
@@ -34,11 +34,13 @@ def send_recovery_email():
         msg.body = f'Aquí tienes tu código de recuperación: {recovery_code}'
 
         mail.send(msg)
+        print(f"Correo enviado a {email} con código {recovery_code}")  # Log para depuración
         return jsonify({'success': True, 'message': 'Correo enviado.'}), 200
     except Exception as e:
-        print(f'Error: {e}')  # Agrega esta línea para imprimir el error en la consola
+        print(f'Error detallado: {str(e)}')  # Log de error detallado
         return jsonify({'success': False, 'message': str(e)}), 500
-
+    
+    
 # Ruta para servir archivos estáticos
 @app.route('/static/<path:path>')
 def send_static(path):
@@ -54,4 +56,4 @@ def test():
     return "Ruta de prueba funcionando correctamente"
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3000)  # Cambia el puerto a 3000
+    app.run(debug=True, port=3000, host='0.0.0.0')  # Cambia el puerto a 3000
