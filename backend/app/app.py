@@ -9,6 +9,12 @@ from dotenv import load_dotenv
 # Cargar variables de entorno desde el archivo .env
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../../.env'))
 
+print(f"MAIL_SERVER: {os.getenv('MAIL_SERVER')}")
+print(f"MAIL_PORT: {os.getenv('MAIL_PORT')}")
+print(f"MAIL_USE_TLS: {os.getenv('MAIL_USE_TLS')}")
+print(f"MAIL_USERNAME: {os.getenv('MAIL_USERNAME')}")
+print(f"MAIL_PASSWORD: {os.getenv('MAIL_PASSWORD')}")
+
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para todas las rutas
 
