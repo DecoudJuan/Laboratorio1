@@ -10,24 +10,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link href="../static/css/styles.css" rel="stylesheet">
-    <style>
-        /* Estilos para el contenedor del campo de contraseña */
-        .password-field-container {
-            position: relative;
-        }
-
-        /* Estilos para el botón de mostrar/ocultar contraseña */
-        .password-toggle-btn {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            z-index: 100;
-        }
-    </style>
 </head>
 <body>
 <div class="container">
@@ -51,16 +33,23 @@
                     </button>
                 </div>
             </div>
-            <button type="submit" class="button">Iniciar Sesión</button>
+              <button type="submit" class="button">Iniciar Sesión</button>
             <div id="loginMessage" class="message"></div>
         </form>
 
         <!-- Botón de Recuperar Contraseña -->
         <button onclick="window.location.href='passwordrecup.html'" class="button">Recuperar Contraseña</button>
-
+        
+        <!-- Texto de Registro -->
+        
+        <p class="text-center mt-3">¿No tienes cuenta? <a href="#" id="showRegisterLink" data-bs-toggle="modal" data-bs-target="#registerModal">Regístrate aquí</a></p>
+        
         <!-- Botones de Registro -->
+        
+        
         <button id="showRegisterBtn" class="button register-button">Registrarse</button>
         <button id="showAdminRegisterBtn" class="button admin-button">Registrarse como Administrador</button>
+    
     </div>
 
     <!-- Formulario de Registro Normal (inicialmente oculto) -->
@@ -139,6 +128,7 @@
         </form>
     </div>
 </div>
+
 
 <!-- Bootstrap JS, Popper.js, and jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

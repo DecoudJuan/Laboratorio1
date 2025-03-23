@@ -130,3 +130,20 @@ h2 {
 #registerForm, #adminRegisterForm {
     display: none;
 }
+
+/* Estilos para el contenedor del campo de contraseña */
+.password-field-container {
+    position: relative;
+}
+
+/* Estilos para el botón de mostrar/ocultar contraseña */
+.password-toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 100;
+}
