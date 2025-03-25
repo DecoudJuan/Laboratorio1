@@ -7,8 +7,6 @@ const ADMIN_CODE = "admin123"; // Código de ejemplo para registrarse como admin
 const loginContainer = document.getElementById('loginContainer');
 
 
-
-
 // Formulario de inicio de sesión
 document.getElementById('loginForm').addEventListener('submit', function(event) {
     event.preventDefault();
