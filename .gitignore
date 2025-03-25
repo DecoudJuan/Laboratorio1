@@ -1,5 +1,4 @@
-/node_modules  # node.js
-/venv   # virtualenv
-/.idea  # pycharm
-/.vscode    # vscode
-.env    # dotenv
+/frontend/node_modules 
+/venv 
+/.vscode
+.env   
