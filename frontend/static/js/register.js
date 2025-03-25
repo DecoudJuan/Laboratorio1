@@ -23,6 +23,22 @@ showAdminRegisterBtn.addEventListener('click', function() {
     document.getElementById('registerModalContainer').style.display = 'none';
 
 });
+
+// Volver a opciones de registro desde formulario de registro normal
+backToRegisterOptions.addEventListener('click', function() {
+
+    registerForm.style.display = 'none';
+    document.getElementById('registerModalContainer').style.display = 'block';
+    $('#registerModal').modal('show');
+});
+
+// Volver a opciones de registro desde formulario de registro de administrador
+backToRegisterOptionsAdmin.addEventListener('click', function() {
+    adminRegisterForm.style.display = 'none';
+    document.getElementById('registerModalContainer').style.display = 'block';
+    $('#registerModal').modal('show');
+});
+
 // Volver a inicio de sesión desde registro normal
 backToLoginBtn.addEventListener('click', function() {
     window.location.href = 'index.html';

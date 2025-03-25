@@ -35,6 +35,9 @@
 
     <!-- Formulario de Registro Normal (inicialmente oculto) -->
     <div class="form-container" id="registerForm" style="display: none;">
+        <button type="button" class="btn btn-link back-button" id="backToRegisterOptions" style="position: relative; top: 10px; left: 10px;">
+            <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
+        </button>
         <h2>Registrarse</h2>
         <form id="registerUserForm" action="/register" method="post">
             <div class="input-group">
@@ -58,6 +61,9 @@
 
     <!-- Formulario de Registro de Administrador (inicialmente oculto) -->
     <div class="form-container" id="adminRegisterForm" style="display: none;">
+        <button type="button" class="btn btn-link back-button" id="backToRegisterOptionsAdmin" style="position: relative; top: 10px; left: 10px;">
+            <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
+        </button>
         <h2>Registrarse como Administrador</h2>
         <form id="registerAdminForm" action="/register" method="post">
             <div class="input-group">
