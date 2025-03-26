@@ -1,5 +1,5 @@
 {
     "server": {
-      "baseDir": ["./frontend/templates", "./frontend", "./"]
+      "baseDir": [".", "./templates"]
     }
   }

@@ -13,7 +13,7 @@
   "license": "ISC",
   "author": "Larisa Beni & Juan Decoud",
   "type": "commonjs",
-  "main": "frontend/templates/index.html",
+  "main": "/templates/index.html",
   "scripts": {
     "dev": "lite-server --port=8080",
     "test": "echo \"Error: no test specified\" && exit 1"
