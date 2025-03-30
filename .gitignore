@@ -4,3 +4,7 @@
 .env   
 /frontend/tests
 /.idea
+<<<<<<< HEAD
+=======
+/backend/database/.idea
+>>>>>>> 9fb349359554ba58f61366c5bc82cdb701afc3ce
