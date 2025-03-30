@@ -28,7 +28,11 @@
     "lite-server": "^2.6.1"
   },
   "dependencies": {
+    "body-parser": "^2.2.0",
     "bootstrap": "^5.3.3",
-    "jquery": "^3.7.1"
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jquery": "^3.7.1",
+    "pg": "^8.14.1"
   }
 }
