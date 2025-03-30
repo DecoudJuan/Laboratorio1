@@ -13,13 +13,12 @@
   "license": "ISC",
   "author": "Larisa Beni & Juan Decoud",
   "type": "commonjs",
-  "main": "/templates/index.html",
+  "main": "index.js",
   "scripts": {
     "dev": "lite-server --port=8080",
     "test": "echo \"Error: no test specified\" && exit 1",
     "setup-db": "node backend/database/init-db.js"
   },
-
   "devDependencies": {
     "@babel/core": "^7.26.10",
     "@babel/preset-env": "^7.26.9",
@@ -31,7 +30,6 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.3",
-    "jquery": "^3.7.1",
-    "popper.js": "^1.16.1"
+    "jquery": "^3.7.1"
   }
 }
