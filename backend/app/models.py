@@ -6,16 +6,16 @@ class User(db.Model):
     __tablename__ = 'user'
 
     idUser = db.Column(db.Integer, primary_key=True)
-    FullName = db.Column(db.Text, nullable=False)
-    Phone = db.Column(db.Text)
-    Email = db.Column(db.Text, unique=True, nullable=False)
-    UserType = db.Column(db.Text)
-    Password = db.Column(db.Text, nullable=False)
-    UserRole = db.Column(db.Text, nullable=False)
-
+    username = db.Column(db.Text, nullable=False)
+    phone = db.Column(db.Text)
+    email = db.Column(db.Text, unique=True, nullable=False)
+    password = db.Column(db.Text, nullable=False)
+    userRole = db.Column(db.Text, nullable=False)
+    
     messages = db.relationship('Message', backref='user', cascade='all, delete-orphan')
-    reported = db.relationship('Reported', foreign_keys='Reported.SenderId', backref='reporting_user', cascade='all, delete-orphan')
-    received_reports = db.relationship('Reported', foreign_keys='Reported.ReportedUserId', backref='reported_user', cascade='all, delete-orphan')
+    reported = db.relationship('Reported', foreign_keys='Reported.senderId', backref='reporting_user', cascade='all, delete-orphan')
+    receivedReports = db.relationship('Reported', foreign_keys='Reported.reportedUserId', backref='reported_user', cascade='all, delete-orphan')
+    
 
 
 
@@ -24,30 +24,30 @@ class Message(db.Model):
 
     idMessage = db.Column(db.Integer, primary_key=True)
     idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
-    Content = db.Column(db.Text, nullable=False)
-    Timestamp = db.Column(db.DateTime, server_default=db.func.current_timestamp())
+    content = db.Column(db.Text, nullable=False)
+    timeStamp = db.Column(db.DateTime, server_default=db.func.current_timestamp())
 
 
 class Reported(db.Model):
     __tablename__ = 'reported'
 
     idReport = db.Column(db.Integer, primary_key=True)
-    SenderId = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
-    ReportedUserId = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
-    Reason = db.Column(db.Text, nullable=False)
-    Content = db.Column(db.Text)
+    senderId = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
+    reportedUserId = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
+    reason = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text)
 
 
 class Vehicle(db.Model):
     __tablename__ = 'vehicle'
 
     idVehicle = db.Column(db.Integer, primary_key=True)
-    LicensePlate = db.Column(db.Text)
-    Brand = db.Column(db.Text)
-    Model = db.Column(db.Text)
-    CheckInTime = db.Column(db.DateTime)
-    CheckOutTime = db.Column(db.DateTime)
-    OccupiedParkingSpot = db.Column(db.Integer)
+    licensePlate = db.Column(db.Text)
+    brand = db.Column(db.Text)
+    model = db.Column(db.Text)
+    checkInTime = db.Column(db.DateTime)
+    checkOutTime = db.Column(db.DateTime)
+    occupiedParkingSpot = db.Column(db.Integer)
 
 
 class EstablishmentAdmin(db.Model):
@@ -82,10 +82,10 @@ class Sectors(db.Model):
 
     idSector = db.Column(db.Integer, primary_key=True)
     idEstablishment = db.Column(db.Integer, db.ForeignKey('establishment.idEstablishment', ondelete='CASCADE'))
-    Name = db.Column(db.Text, nullable=False)
-    OpeningHour = db.Column(db.Integer)
-    ClosingHour = db.Column(db.Integer)
-    AvailableParkingSpots = db.Column(db.Integer)
+    name = db.Column(db.Text, nullable=False)
+    openingHour = db.Column(db.Integer)
+    closingHour = db.Column(db.Integer)
+    availableParkingSpots = db.Column(db.Integer)
 
 
 class ParkingSpotSector(db.Model):
@@ -106,6 +106,6 @@ class Establishment(db.Model):
     __tablename__ = 'establishment'
 
     idEstablishment = db.Column(db.Integer, primary_key=True)
-    TotalParkingSpots = db.Column(db.Integer, nullable=False)
-    TotalSectors = db.Column(db.Integer, nullable=False)
-    GeographicLocation = db.Column(db.Text, nullable=False)
+    totalParkingSpots = db.Column(db.Integer, nullable=False)
+    totalSectors = db.Column(db.Integer, nullable=False)
+    geographicLocation = db.Column(db.Text, nullable=False)
