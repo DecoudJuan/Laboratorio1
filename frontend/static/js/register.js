@@ -47,8 +47,35 @@ backToLoginBtn3.addEventListener('click', function() {
     window.location.href = 'index.html';
 });
 
-// Función de registro 
-function handleRegistration(event, isAdmin = false) {
+// Base URL para las peticiones API (ajustar según tu backend)
+const API_BASE_URL = 'http://localhost:5000';
+
+// Función para realizar peticiones a la API
+async function apiRequest(endpoint, method, data) {
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: data ? JSON.stringify(data) : null
+        });
+        
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(responseData.message || 'Ocurrió un error en la petición');
+        }
+        
+        return responseData;
+    } catch (error) {
+        console.error('Error en la petición API:', error);
+        throw error;
+    }
+}
+
+// Función de registro modificada para usar API
+async function handleRegistration(event, isAdmin = false) {
     event.preventDefault();
     
     const form = event.target;
@@ -65,41 +92,47 @@ function handleRegistration(event, isAdmin = false) {
     // Campo adminCode solo para formulario de admin
     const adminCode = isAdmin ? form.querySelector('[name="adminCode"]').value : '';
 
-    // Validaciones
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    
-    if (users.some(user => user.email === email)) {
-        showMessage(messageElement, 'El correo electrónico ya está registrado.', 'error');
-        return;
-    }
-    
+    // Validaciones en el cliente
     if (password !== confirmPassword) {
         showMessage(messageElement, 'Las contraseñas no coinciden.', 'error');
         return;
     }
     
-    // Validación de admin
-    let rol = 'usuario';
-    if (isAdmin) {
-        if (adminCode !== 'admin123') {
-            showMessage(messageElement, 'Código de administrador incorrecto.', 'error');
-            return;
+    try {
+        // Preparar datos para enviar
+        const userData = {
+            username,
+            email,
+            password,
+            rol: isAdmin ? 'administrador' : 'usuario'
+        };
+        
+        // Si es admin, incluir código de administrador
+        if (isAdmin) {
+            userData.adminCode = adminCode;
         }
-        rol = 'administrador';
+        
+        // Endpoint según tipo de registro
+        const endpoint = isAdmin ? '/api/register/admin' : '/api/register';
+        
+        // Enviar datos a la API
+        const response = await apiRequest(endpoint, 'POST', userData);
+        
+        // Mostrar mensaje de éxito
+        showMessage(messageElement, response.message || `Registro como ${userData.rol} exitoso! Redirigiendo...`, 'success');
+        
+        // Redireccionar después de un tiempo
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2000);
+        
+    } catch (error) {
+        // Mostrar mensaje de error
+        showMessage(messageElement, error.message || 'Error en el registro.', 'error');
     }
-    
-    // Registrar usuario
-    users.push({ username, email, password, rol });
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    showMessage(messageElement, `Registro como ${rol} exitoso! Redirigiendo...`, 'success');
-    
-    setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 2000);
 }
 
-// Función para mostrar mensajes
+// Función para mostrar mensajes (mantener igual)
 function showMessage(element, text, type) {
     element.textContent = text;
     element.className = `message ${type}`;
@@ -109,6 +142,3 @@ function showMessage(element, text, type) {
 // Manejadores de eventos para ambos formularios
 document.getElementById('registerUserForm')?.addEventListener('submit', (e) => handleRegistration(e, false));
 document.getElementById('registerAdminForm')?.addEventListener('submit', (e) => handleRegistration(e, true));
-
-/* TESTS ACA ABAJO*/
-
