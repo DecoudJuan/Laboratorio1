@@ -18,9 +18,136 @@
     cursor: pointer;
 }
 
+/* LOG OUT BOTON VIEJO
+.logout-button {
+    position: fixed;
+    top: 5px;
+    right: 20px;
+    background-color: rgba(137, 157, 120, 0.2);
+    color: #1f0322; 
+    border: 1px solid #1f0322;
+    padding: 10px 16px;
+    border-radius: 4px;
+    font-size: 16px; 
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.logout-button:hover {
+    background-color: rgba(137, 157, 120, 0.3);
+}
+
+*/
+.top-bar {
+    display: flex;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+/* Barra superior */
+.top-bar {
+    display: flex;
+    width: 100%;
+    height: 50px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.dark-section {
+    background-color: #1f0322;
+    height: 50px;
+    flex-grow: 1;
+    position: relative;
+}
+
+.dark-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -30px;
+    width: 60px;
+    height: 100%;
+    background-color: #1f0322;
+    transform: skewX(-13deg);
+    transform-origin: top right;
+    z-index: 2;
+    -webkit-transform: skewX(-13deg);
+    -moz-transform: skewX(-13deg);
+    -ms-transform: skewX(-13deg);
+    -o-transform: skewX(-13deg);
+}
+
+.green-section {
+    background-color: #899d78;
+    height: 50px;
+    width: 25%;
+    position: relative;
+}
+
+.logout-button {
+    position: absolute;
+    top: 5px;
+    right: 20px;
+    background-color: transparent;
+    color: #1f0322;
+    border: 1px solid #1f0322;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.logout-button:hover {
+    background-color: rgba(31, 3, 34, 0.1);
+}
+
+/* Media query para dispositivos móviles */
+@media (max-width: 768px) {
+    .green-section {
+        width: 15%; /* En móviles ocupará solo 15% */
+    
+    .logout-button {
+        font-size: 14px;
+        padding: 6px 12px;
+        right: 10px;
+    }
+}
+}
+
+/* Media query para dispositivos muy pequeños */
+@media (max-width: 480px) {
+    .green-section {
+        width: 10%; /* En dispositivos muy pequeños, aún menos */
+    }
+}
+
+/* Resto de estilos de la página */
+.main-content {
+    margin-top: 70px; /* Espacio para la barra superior */
+    padding: 20px;
+}
 
 body {
+    margin: 0;
+    padding: 20PX;
     font-family: Arial, sans-serif;
+    background-color: #F1DEDE;
+    display: flex;
+    font-family: Arial, sans-serif;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* BODY VIEJO
+body {
     background-image: url(../images/background.png);
     background-color: #F1DEDE;
     margin: 0;
@@ -30,6 +157,7 @@ body {
     align-items: center;
     min-height: 100vh;
 }
+*/
 
 .container {
     max-width: 400px;
