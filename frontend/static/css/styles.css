@@ -153,3 +153,12 @@ h2 {
     cursor: pointer;
     z-index: 100;
 }
+
+.mensaje-bienvenida {
+    position: relative;
+    top: 200px; /* Ajusta según necesites */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%; /* Ajusta el ancho si es necesario */
+    text-align: center;
+}

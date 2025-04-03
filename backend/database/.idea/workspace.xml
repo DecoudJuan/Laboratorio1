@@ -5,19 +5,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2e39f368-4566-4265-b41e-c6a9c361e1fc" name="Changes" comment="">
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/../../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../../.gitignore" afterDir="false" />
+=======
+<<<<<<< HEAD
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+=======
+>>>>>>> f12c0fab562626b04bb9ecdf8d2342ec4a15edbb
       <change beforePath="$PROJECT_DIR$/../app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../app/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources/997dd8c9-7237-4248-8cf8-e3269f6a9490.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/997dd8c9-7237-4248-8cf8-e3269f6a9490.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources/997dd8c9-7237-4248-8cf8-e3269f6a9490/storage_v2/_src_/database/postgres.edMnLQ.meta" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources/997dd8c9-7237-4248-8cf8-e3269f6a9490/storage_v2/_src_/database/postgres.edMnLQ/schema/public.abK9xQ.meta" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/997dd8c9-7237-4248-8cf8-e3269f6a9490/storage_v2/_src_/database/postgres.edMnLQ/schema/public.abK9xQ.meta" afterDir="false" />
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/.idea/database.iml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/ORM.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/parking.db" beforeDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../frontend/static/js/register.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../frontend/static/js/register.js" afterDir="false" />
+>>>>>>> b3ab8ac34b66fdbd126ae550562a114ae4ed97e5
+>>>>>>> f12c0fab562626b04bb9ecdf8d2342ec4a15edbb
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
