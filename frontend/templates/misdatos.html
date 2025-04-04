@@ -40,10 +40,9 @@
 
 </a>
 
-<a href="ediciondatos.html">
-  <button type="button" class="button" style="background-color: #FF1E1E; position: absolute; top: 600px; left: 765px; width: auto;">Eliminar</button>
+<button type="button" class="button" style="background-color: #FF1E1E; position: absolute; top: 600px; left: 765px; width: auto;"
+        onclick="confirmarBorrado()">Borrar</button>
 
-</a>
 
 <a href="principal.html">
   <button type="button" class="button" style="background-color: #45a049; position: absolute; top: 650px; left: 680px; width: auto;">Página Principal</button>
@@ -51,9 +50,40 @@
 </a>
 
 
-<div class="container flex;">
+<div class="container flex;"> </div>
+<script>
+  function confirmarBorrado() {
+  const confirmacion = confirm("¿Estás seguro de que deseas borrar tu usuario?");
+  if (confirmacion) {
+    const dni = document.getElementById("passport").value;
 
-</div>
+    fetch('/borrar_usuario', {
+      method: 'DELETE',  
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')  
+      },
+      body: JSON.stringify({ dni: dni })
+    })
+    .then(response => {
+      if (response.ok) {
+        alert("Usuario borrado.");
+        window.location.href = "/";  // redirige a home o donde quieras
+      } else {
+        alert("Error al borrar el usuario.");
+      }
+    })
+    .catch(error => {
+      console.error("Error en la solicitud:", error);
+      alert("Hubo un problema con la conexión al servidor.");
+    });
+  } else {
+    alert("Operación cancelada. Tu usuario no fue borrado.");
+  }
+}
+
+</script>
+
 
 </body>
 </html>
