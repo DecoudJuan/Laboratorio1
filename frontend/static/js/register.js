@@ -80,6 +80,7 @@ async function handleRegistration(event, isAdmin = false) {
     
     const form = event.target;
     const username = form.querySelector('[name="username"]').value;
+    const phone = form.querySelector('[name="phone"]').value;
     const email = form.querySelector('[name="email"]').value;
     const password = form.querySelector('[name="password"]').value;
     const confirmPassword = form.querySelector('[name="confirmPassword"]').value;
@@ -102,6 +103,7 @@ async function handleRegistration(event, isAdmin = false) {
         // Preparar datos para enviar
         const userData = {
             username,
+            phone,
             email,
             password,
             rol: isAdmin ? 'administrador' : 'usuario'

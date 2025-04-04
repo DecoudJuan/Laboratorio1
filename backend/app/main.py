@@ -2,6 +2,10 @@ import random
 from flask import Flask, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
+# MODULOS PARA LOGIN
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from werkzeug.security import check_password_hash
+
 # MAIL
 import string
 import os
@@ -15,42 +19,45 @@ from werkzeug.security import generate_password_hash
 from models import *  
 from flask_cors import CORS  # Importar CORS para permitir solicitudes del frontend
 
-
 # Cargar variables de entorno desde el archivo .env
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
 
 def create_app(enviroment):
     app = Flask(__name__)
 
-    # Configurar CORS para permitir solicitudes desde el frontend
+    # CONFIGURAR CORS
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     app.config.from_object(enviroment)
     
-    # Configuración de SMTPLIB usando variables de entorno
+    # CONFIGURAR SMTPLIB
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
     app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
     app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
     app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 
-    # Inicializar la base de datos con la app
-    db.init_app(app)
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-fallback-secret-key')  
 
-    # Inicializar la configuracion de mail
+    # INICIALIZAR LA BASE DE DATOS
+    db.init_app(app)
     
     return app
 
 enviroment = config['development']
 app = create_app(enviroment)
 
+jwt = JWTManager(app)
+
 # MAIL RECOVERY 
 
+"""
 print(f"MAIL_SERVER: {os.getenv('MAIL_SERVER')}")
 print(f"MAIL_PORT: {os.getenv('MAIL_PORT')}")
 print(f"MAIL_USE_TLS: {os.getenv('MAIL_USE_TLS')}")
 print(f"MAIL_USERNAME: {os.getenv('MAIL_USERNAME')}")
 print(f"MAIL_PASSWORD: {os.getenv('MAIL_PASSWORD')}")
+"""
 
 # POR AHORA MOCKEADO PARA NO IMPLEMENTAR TODO EL SISTEMA
 def generate_recovery_code(length=6):
@@ -96,20 +103,59 @@ def send_recovery_email():
         body = f'Hola,\n\nHas solicitado recuperar tu contraseña.\n\nTu código de recuperación es: {recovery_code}\n\nEste código expirará en 15 minutos.\n\nSi no solicitaste este cambio, ignora este mensaje.\n\nSaludos,\nEquipo de Soporte'
         msg.attach(MIMEText(body, 'plain'))
         
-        # Enviar el correo
+        # ENVIAR CORREO
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()  # Activar el modo seguro
             server.login(smtp_username, smtp_password)
             server.send_message(msg)
             
-        print(f"Correo enviado a {email} con código {recovery_code}")  # Log para depuración
+        print(f"Correo enviado a {email} con código {recovery_code}")  # DEPURACIÓN
         
         return jsonify({'success': True, 'message': 'Si el email existe, recibirás un código de recuperación.'}), 200
     except Exception as e:
-        print(f'Error detallado: {str(e)}')  # Log de error detallado
+        print(f'Error detallado: {str(e)}')  # LOG DE ERROR 
         return jsonify({'success': False, 'message': 'Ocurrió un error al enviar el email. Por favor intenta más tarde.'}), 500
     
-
+# NUEVA RUTA PARA LOGIN
+@app.route('/api/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+        
+        # Validaciones básicas
+        if not email or not password:
+            return jsonify({'success': False, 'message': 'Email y contraseña son requeridos'}), 400
+        
+        # Buscar usuario en la base de datos
+        user = User.query.filter_by(email=email).first()
+        
+        if not user or not check_password_hash(user.password, password):
+            return jsonify({'success': False, 'message': 'Credenciales inválidas'}), 401
+        
+        # Crear token JWT
+        access_token = create_access_token(identity={
+            'id': user.idUser,
+            'email': user.email,
+            'userRole': user.userRole
+        })
+        
+        return jsonify({
+            'success': True,
+            'message': 'Inicio de sesión exitoso',
+            'token': access_token,
+            'user': {
+                'id': user.idUser,
+                'username': user.username,
+                'email': user.email,
+                'userRole': user.userRole
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f'Error en login: {str(e)}')
+        return jsonify({'success': False, 'message': 'Error en el servidor'}), 500
 
 # RUTAS PREDEFINIDAS
 
@@ -144,6 +190,7 @@ def register_user():
     # Obtener datos del request
     data = request.get_json()
     username = data.get('username')
+    phone = data.get('phone')
     email = data.get('email')
     password = data.get('password')
     userRole = data.get('rol', 'usuario')  # Valor por defecto: usuario
@@ -166,6 +213,7 @@ def register_user():
         new_user = User(
             username=username,
             email=email,
+            phone=phone,
             password=hashed_password,
             userRole=userRole,
         )
