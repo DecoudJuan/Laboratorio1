@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
 # MODULOS PARA LOGIN
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import check_password_hash
 
 # MAIL

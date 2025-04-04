@@ -15,7 +15,9 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "dev": "lite-server --port=8080",
+    "frontend": "lite-server --port=8080",
+    "backend": "python ../backend/app/main.py",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "setup-db": "node backend/database/init-db.js"
   },
@@ -25,6 +27,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "babel-jest": "^29.7.0",
+    "concurrently": "^9.1.2",
     "jest": "^29.7.0",
     "lite-server": "^2.6.1"
   },
