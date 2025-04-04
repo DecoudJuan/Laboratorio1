@@ -1,25 +1,118 @@
-from flask import Flask, jsonify, request
+import random
+from flask import Flask, jsonify, request, send_from_directory
+from dotenv import load_dotenv
+
+# MAIL
+import string
+import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+# MANEJO DEL RESTO DE REQUESTS
 from config import config
-from werkzeug.security import generate_password_hash, check_password_hash
-from models import *  # Asumo que tienes un modelo User
+from werkzeug.security import generate_password_hash
+from models import *  
 from flask_cors import CORS  # Importar CORS para permitir solicitudes del frontend
+
+
+# Cargar variables de entorno desde el archivo .env
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
 
 def create_app(enviroment):
     app = Flask(__name__)
-    app.config.from_object(enviroment)
-    
+
     # Configurar CORS para permitir solicitudes desde el frontend
     CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+    app.config.from_object(enviroment)
     
+    # Configuración de SMTPLIB usando variables de entorno
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+
     # Inicializar la base de datos con la app
     db.init_app(app)
+
+    # Inicializar la configuracion de mail
     
     return app
 
 enviroment = config['development']
 app = create_app(enviroment)
 
-# Rutas existentes
+# MAIL RECOVERY 
+
+print(f"MAIL_SERVER: {os.getenv('MAIL_SERVER')}")
+print(f"MAIL_PORT: {os.getenv('MAIL_PORT')}")
+print(f"MAIL_USE_TLS: {os.getenv('MAIL_USE_TLS')}")
+print(f"MAIL_USERNAME: {os.getenv('MAIL_USERNAME')}")
+print(f"MAIL_PASSWORD: {os.getenv('MAIL_PASSWORD')}")
+
+# POR AHORA MOCKEADO PARA NO IMPLEMENTAR TODO EL SISTEMA
+def generate_recovery_code(length=6):
+    letters_and_digits = string.ascii_letters + string.digits
+    return ''.join(random.choice(letters_and_digits) for i in range(length))
+
+@app.route('/api/send-recovery-email', methods=['POST'])
+def send_recovery_email():
+    try:
+
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'success': False, 'message': 'Email no proporcionado'}), 400
+            
+        # Verificar si el email existe en la base de datos
+        existing_user = User.query.filter_by(email=email).first()
+        if not existing_user:
+            # Por seguridad, no indicamos si el email existe o no
+            return jsonify({'success': True, 'message': 'Si el email existe, recibirás un código de recuperación.'}), 200
+        
+        recovery_code = generate_recovery_code()
+        
+        # Aquí podrías almacenar el código en la base de datos asociado al usuario
+        # existing_user.recovery_code = recovery_code
+        # existing_user.recovery_expiry = datetime.now() + timedelta(minutes=15)
+        # db.session.commit()
+        
+        # Configuración del servidor SMTP
+        smtp_server = os.getenv('MAIL_SERVER')
+        smtp_port = int(os.getenv('MAIL_PORT', 587))
+        smtp_username = os.getenv('MAIL_USERNAME')
+        smtp_password = os.getenv('MAIL_PASSWORD')
+        
+        # Crear el mensaje
+        msg = MIMEMultipart()
+        msg['From'] = smtp_username
+        msg['To'] = email
+        msg['Subject'] = 'Recuperación de Contraseña'
+        
+        # Cuerpo del mensaje
+        body = f'Hola,\n\nHas solicitado recuperar tu contraseña.\n\nTu código de recuperación es: {recovery_code}\n\nEste código expirará en 15 minutos.\n\nSi no solicitaste este cambio, ignora este mensaje.\n\nSaludos,\nEquipo de Soporte'
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # Enviar el correo
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # Activar el modo seguro
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+            
+        print(f"Correo enviado a {email} con código {recovery_code}")  # Log para depuración
+        
+        return jsonify({'success': True, 'message': 'Si el email existe, recibirás un código de recuperación.'}), 200
+    except Exception as e:
+        print(f'Error detallado: {str(e)}')  # Log de error detallado
+        return jsonify({'success': False, 'message': 'Ocurrió un error al enviar el email. Por favor intenta más tarde.'}), 500
+    
+
+
+# RUTAS PREDEFINIDAS
+
 @app.route('/api/v1/users', methods=['GET'])
 def get_users():
     response = {'message': 'success'}
@@ -45,8 +138,7 @@ def delete_user(id):
     response = {'message': 'success'}
     return jsonify(response)
 
-# ENDPOINTS PARA REGISTRO
-
+# REGISTRO NORMAL
 @app.route('/api/register', methods=['POST'])
 def register_user():
     # Obtener datos del request
@@ -95,6 +187,7 @@ def register_user():
             'success': False
         }), 500
 
+# REGISTRO ADMIN
 @app.route('/api/register/admin', methods=['POST'])
 def register_admin():
     # Obtener datos del request
@@ -152,6 +245,7 @@ def register_admin():
             'success': False
         }), 500
 
+# CHEQUEA MAIL
 @app.route('/api/check-email', methods=['POST'])
 def check_email():
     data = request.get_json()
@@ -166,6 +260,16 @@ def check_email():
         'exists': existing_user is not None,
         'success': True
     })
+
+# Ruta para servir archivos estáticos
+@app.route('/static/<path:path>')
+def send_static(path):
+    return send_from_directory('../../frontend/static', path)
+
+# Ruta para servir la página de recuperación de contraseña
+@app.route('/passwordrecup.html')
+def password_recovery_page():
+    return send_from_directory('../../frontend/templates', 'passwordrecup.html')
 
 
 if __name__ == '__main__':
