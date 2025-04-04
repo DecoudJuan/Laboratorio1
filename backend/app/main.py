@@ -74,10 +74,10 @@ def send_recovery_email():
         if not email:
             return jsonify({'success': False, 'message': 'Email no proporcionado'}), 400
             
-        # Verificar si el email existe en la base de datos
+        # VERIFICACION DE EXISTENCIA DEL MAIL
         existing_user = User.query.filter_by(email=email).first()
         if not existing_user:
-            # Por seguridad, no indicamos si el email existe o no
+            # MENSAJE GENERAL AL USUARIO
             return jsonify({'success': True, 'message': 'Si el email existe, recibirás un código de recuperación.'}), 200
         
         recovery_code = generate_recovery_code()
@@ -87,25 +87,25 @@ def send_recovery_email():
         # existing_user.recovery_expiry = datetime.now() + timedelta(minutes=15)
         # db.session.commit()
         
-        # Configuración del servidor SMTP
+        # CONFIGURACION DEL SERVER SMTP
         smtp_server = os.getenv('MAIL_SERVER')
         smtp_port = int(os.getenv('MAIL_PORT', 587))
         smtp_username = os.getenv('MAIL_USERNAME')
         smtp_password = os.getenv('MAIL_PASSWORD')
         
-        # Crear el mensaje
+        # CREA EL MENSAJE
         msg = MIMEMultipart()
         msg['From'] = smtp_username
         msg['To'] = email
         msg['Subject'] = 'Recuperación de Contraseña'
         
-        # Cuerpo del mensaje
+        # CUERPO DEL MENSAJE
         body = f'Hola,\n\nHas solicitado recuperar tu contraseña.\n\nTu código de recuperación es: {recovery_code}\n\nEste código expirará en 15 minutos.\n\nSi no solicitaste este cambio, ignora este mensaje.\n\nSaludos,\nEquipo de Soporte'
         msg.attach(MIMEText(body, 'plain'))
         
         # ENVIAR CORREO
         with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()  # Activar el modo seguro
+            server.starttls() # INICIA TLS
             server.login(smtp_username, smtp_password)
             server.send_message(msg)
             
@@ -124,17 +124,17 @@ def login():
         email = data.get('email')
         password = data.get('password')
         
-        # Validaciones básicas
+        # SI LOS CAMPOS NO ESTAN RELLENADOS
         if not email or not password:
             return jsonify({'success': False, 'message': 'Email y contraseña son requeridos'}), 400
         
-        # Buscar usuario en la base de datos
+        # BUSCA EL USUARIO EN LA BASE DE DATOS
         user = User.query.filter_by(email=email).first()
         
         if not user or not check_password_hash(user.password, password):
             return jsonify({'success': False, 'message': 'Credenciales inválidas'}), 401
         
-        # Crear token JWT
+        # CREA TOKEN JWT
         access_token = create_access_token(identity={
             'id': user.idUser,
             'email': user.email,
@@ -187,29 +187,29 @@ def delete_user(id):
 # REGISTRO NORMAL
 @app.route('/api/register', methods=['POST'])
 def register_user():
-    # Obtener datos del request
+    # OBTIENE LOS DATOS Y LOS ASIGNA A UNA VARIABLE
     data = request.get_json()
     username = data.get('username')
     phone = data.get('phone')
     email = data.get('email')
     password = data.get('password')
-    userRole = data.get('rol', 'usuario')  # Valor por defecto: usuario
+    userRole = data.get('rol', 'usuario')  # POR DEFECTO USUARIO
     
-    # Validaciones básicas
+    # SI LOS CAMPOS NO ESTAN RELLENADOS
     if not username or not email or not password:
         return jsonify({'message': 'Todos los campos son obligatorios', 'success': False}), 400
     
-    # Verificar si el email ya existe
+    # VERIFICA LA EXISTENCIA DEL MAIL
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return jsonify({'message': 'El correo electrónico ya está registrado', 'success': False}), 400
     
-    # Crear nuevo usuario
+    # CREAR USUARIO
     try:
-        # Encriptar contraseña
+        # HASHEAR CONTRASEÑA
         hashed_password = generate_password_hash(password)
         
-        # Crear objeto de usuario según tu modelo
+        # CREA OBJETO USUARIO
         new_user = User(
             username=username,
             email=email,
@@ -218,14 +218,14 @@ def register_user():
             userRole=userRole,
         )
         
-        # Guardar en la base de datos
+        # GUARDA EN LA BASE DE DATOS
         db.session.add(new_user)
         db.session.commit()
         
         return jsonify({
             'message': 'Registro exitoso',
             'success': True,
-            'user_id': new_user.idUser  # Nota el cambio a idUser
+            'user_id': new_user.idUser 
         }), 201
         
     except Exception as e:
