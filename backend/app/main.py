@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import check_password_hash
 
-# MAIL
+# MAILpip
 import string
 import os
 import smtplib
@@ -318,6 +318,19 @@ def send_static(path):
 @app.route('/passwordrecup.html')
 def password_recovery_page():
     return send_from_directory('../../frontend/templates', 'passwordrecup.html')
+#Ruta para eliminar el usuario 
+@app.route("/borrar_usuario", methods=["DELETE"])
+@jwt_required()
+def borrar_usuario():
+    dni = request.json.get("dni")
+    user = User.query.filter_by(dni=dni).first()
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"mensaje": "Usuario borrado exitosamente"}), 200
+    return jsonify({"mensaje": "Usuario no encontrado"}), 404
+
+
 
 
 if __name__ == '__main__':
