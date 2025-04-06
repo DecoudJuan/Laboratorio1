@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
 # MODULOS PARA LOGIN
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 from werkzeug.security import check_password_hash
 
 # MAIL
@@ -26,7 +26,10 @@ def create_app(enviroment):
     app = Flask(__name__)
 
     # CONFIGURAR CORS
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={
+    r"/api/*": {"origins": "*"},
+    r"api/borrar_usuario": {"origins": "*"}
+})
 
     app.config.from_object(enviroment)
     
@@ -46,6 +49,44 @@ def create_app(enviroment):
 
 enviroment = config['development']
 app = create_app(enviroment)
+
+# Añade esto después de crear la app Flask
+@app.before_request
+def force_json_response():
+    if request.endpoint and not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 415
+
+# Manejo de errores global (ANTES de las rutas)
+@app.errorhandler(404)
+@app.errorhandler(500)
+@app.errorhandler(401)
+def handle_error(e):
+    return jsonify({
+        "error": str(getattr(e, 'description', 'Error interno')),
+        "code": getattr(e, 'code', 500)
+    }), getattr(e, 'code', 500)
+
+# Ruta de borrado ACTUALIZADA
+@app.route('/borrar_usuario', methods=['DELETE'])
+@jwt_required()
+def borrar_usuario():
+    try:
+        # Obtiene el email del token (identity es el dict que creaste en login)
+        user_email = get_jwt_identity()['email']  
+        
+        user = User.query.filter_by(email=user_email).first()
+        if not user:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+            
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({"success": True}), 200
+        
+    except KeyError:
+        return jsonify({"error": "Token inválido: falta email"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 jwt = JWTManager(app)
 
@@ -126,41 +167,25 @@ def send_recovery_email():
 def login():
     try:
         data = request.get_json()
-        email = data.get('email')
-        password = data.get('password')
+        user = User.query.filter_by(email=data.get('email')).first()
         
-        # SI LOS CAMPOS NO ESTAN RELLENADOS
-        if not email or not password:
-            return jsonify({'success': False, 'message': 'Email y contraseña son requeridos'}), 400
-        
-        # BUSCA EL USUARIO EN LA BASE DE DATOS
-        user = User.query.filter_by(email=email).first()
-        
-        if not user or not check_password_hash(user.password, password):
-            return jsonify({'success': False, 'message': 'Credenciales inválidas'}), 401
-        
-        # CREA TOKEN JWT
+        if not user or not check_password_hash(user.password, data.get('password')):
+            return jsonify({"error": "Credenciales inválidas"}), 401
+
+        # ¡Asegúrate que el identity incluya el email!
         access_token = create_access_token(identity={
+            'email': user.email,  # Campo crítico para el borrado
             'id': user.idUser,
-            'email': user.email,
-            'userRole': user.userRole
+            'role': user.userRole
         })
         
         return jsonify({
-            'success': True,
-            'message': 'Inicio de sesión exitoso',
-            'token': access_token,
-            'user': {
-                'id': user.idUser,
-                'username': user.username,
-                'email': user.email,
-                'userRole': user.userRole
-            }
+            "token": access_token,
+            "email": user.email  # Opcional: para verificación en frontend
         }), 200
         
     except Exception as e:
-        print(f'Error en login: {str(e)}')
-        return jsonify({'success': False, 'message': 'Error en el servidor'}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/users/', methods=['POST'])
 def create_user():
@@ -301,9 +326,6 @@ def send_static(path):
 @app.route('/passwordrecup.html')
 def password_recovery_page():
     return send_from_directory('../../frontend/templates', 'passwordrecup.html')
-
-
-
 
 
 # ADMINISTRADOR
