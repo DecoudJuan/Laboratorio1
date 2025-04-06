@@ -3,94 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administrador de Usuarios</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .btn {
-            padding: 5px 10px;
-            color: white;
-            background-color: #007BFF;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-danger {
-            background-color: #DC3545;
-        }
-    </style>
+    <title>Administración de Usuarios</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Iconos de Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">    
+    <!-- Custom CSS -->
+    <link href="../static/css/styles.css" rel="stylesheet">
 </head>
+
 <body>
-    <h1>Administrador de Usuarios</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="userTableBody">
-            <!-- Aquí se llenarán los usuarios registrados -->
-        </tbody>
-    </table>
+    <div class="top-bar">
+        <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Administración</h1>
+        <div class="dark-section"></div>
+        <div class="green-section"></div>
+        <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
+    </div>
 
-    <script>
-        // Ejemplo de datos de usuarios
-        const users = [
-            { id: 1, name: 'Julian Ritondale', email: 'jritondale@mail.austral.edu.ar' },
-            { id: 2, name: 'Maria Lopez', email: 'maria@example.com' },
-            { id: 3, name: 'Carlos Sanchez', email: 'carlos@example.com' }
-        ];
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <div class="general-container">
+            <!-- Barra de búsqueda -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Buscar por nombre o email">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-        function loadUsers() {
-            const userTableBody = document.getElementById('userTableBody');
-            userTableBody.innerHTML = '';
-            users.forEach(user => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${user.id}</td>
-                    <td>${user.name}</td>
-                    <td>${user.email}</td>
-                    <td>
-                        <button class="btn" onclick="viewUser(${user.id})">Ver</button>
-                        <button class="btn btn-danger" onclick="deleteUser(${user.id})">Eliminar</button>
-                    </td>
-                `;
-                userTableBody.appendChild(row);
-            });
-        }
+            <!-- Tabla de usuarios -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover user-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre de usuario</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Fecha creación</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los usuarios se cargarán dinámicamente aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-        function viewUser(id) {
-            const user = users.find(u => u.id === id);
-            if (user) {
-                alert(`ID: ${user.id}\nNombre: ${user.name}\nEmail: ${user.email}`);
-            }
-        }
+    <!-- Modal para editar usuario -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Editar Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="mb-3">
+                            <label for="editUsername" class="form-label">Nombre de usuario</label>
+                            <input type="text" class="form-control" id="editUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPassword" class="form-label">Nueva contraseña (dejar en blanco para mantener la actual)</label>
+                            <div class="password-container">
+                                <input type="password" class="form-control" id="editPassword">
+                                <button type="button" class="password-toggle-btn">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editRole" class="form-label">Rol</label>
+                            <select class="form-select" id="editRole" required>
+                                <option value="administrador">Administrador</option>
+                                <option value="usuario">Usuario</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editStatus" class="form-label">Estado</label>
+                            <select class="form-select" id="editStatus" required>
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        function deleteUser(id) {
-            const userIndex = users.findIndex(u => u.id === id);
-            if (userIndex !== -1) {
-                users.splice(userIndex, 1);
-                loadUsers();
-            }
-        }
+    <!-- Modal de confirmación para eliminar -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmModalLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro de que desea eliminar este usuario? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger btn-delete">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Cargar usuarios al iniciar la página
-        window.onload = loadUsers;
-    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.min.js"></script>
+    
+    <script src="../static/js/admin.js"> </script>
+
 </body>
 </html>
