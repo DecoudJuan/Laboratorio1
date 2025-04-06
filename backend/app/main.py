@@ -3,10 +3,10 @@ from flask import Flask, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
 # MODULOS PARA LOGIN
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import check_password_hash
 
-# MAILpip
+# MAIL
 import string
 import os
 import smtplib
@@ -58,6 +58,11 @@ print(f"MAIL_USE_TLS: {os.getenv('MAIL_USE_TLS')}")
 print(f"MAIL_USERNAME: {os.getenv('MAIL_USERNAME')}")
 print(f"MAIL_PASSWORD: {os.getenv('MAIL_PASSWORD')}")
 """
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5000; style-src 'self' 'unsafe-inline';"
+    return response
 
 # POR AHORA MOCKEADO PARA NO IMPLEMENTAR TODO EL SISTEMA
 def generate_recovery_code(length=6):
@@ -157,30 +162,8 @@ def login():
         print(f'Error en login: {str(e)}')
         return jsonify({'success': False, 'message': 'Error en el servidor'}), 500
 
-# RUTAS PREDEFINIDAS
-
-@app.route('/api/v1/users', methods=['GET'])
-def get_users():
-    response = {'message': 'success'}
-    return jsonify(response)
-
-@app.route('/api/v1/users/<id>', methods=['GET'])
-def get_user(id):
-    response = {'message': 'success'}
-    return jsonify(response)
-
 @app.route('/api/v1/users/', methods=['POST'])
 def create_user():
-    response = {'message': 'success'}
-    return jsonify(response)
-
-@app.route('/api/v1/users/<id>', methods=['PUT'])
-def update_user(id):
-    response = {'message': 'success'}
-    return jsonify(response)
-
-@app.route('/api/v1/users/<id>', methods=['DELETE'])
-def delete_user(id):
     response = {'message': 'success'}
     return jsonify(response)
 
@@ -318,20 +301,12 @@ def send_static(path):
 @app.route('/passwordrecup.html')
 def password_recovery_page():
     return send_from_directory('../../frontend/templates', 'passwordrecup.html')
-#Ruta para eliminar el usuario 
-@app.route("/borrar_usuario", methods=["DELETE"])
-@jwt_required()
-def borrar_usuario():
-    dni = request.json.get("dni")
-    user = User.query.filter_by(dni=dni).first()
-    if user:
-        db.session.delete(user)
-        db.session.commit()
-        return jsonify({"mensaje": "Usuario borrado exitosamente"}), 200
-    return jsonify({"mensaje": "Usuario no encontrado"}), 404
 
 
 
+
+
+# ADMINISTRADOR
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
