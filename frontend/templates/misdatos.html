@@ -8,7 +8,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Custom CSS -->
   <link href="../static/css/styles.css" rel="stylesheet">
-
 </head>
 <body>
 
@@ -24,72 +23,103 @@
       <input type="text" id="registerName" class="form-control" required>
     </div>
     <div class="input-group">
-      <label for="registerName">Apellido(s)</label>
+      <label for="registerSurname">Apellido(s)</label>
       <input type="text" id="registerSurname" class="form-control" required>
     </div>
     <div class="input-group">
-      <label for="registerName">DNI/Pasaporte</label>
-      <input type="text" id="passport" class="form-control" required>
+      <label for="cuentaMail">Cuenta de Mail</label>
+      <input type="email" id="cuentaMail" class="form-control" required>
     </div>
     <div class="input-group">
-      <label for="registerName">Vehículo Principal</label>
+      <label for="VP">Vehículo Principal</label>
       <input type="text" id="VP" class="form-control" required>
     </div>
     <div class="input-group">
-      <label for="registerName">Vehículos Secundarios</label>
+      <label for="VS">Vehículos Secundarios</label>
       <input type="text" id="VS" class="form-control" required>
     </div>
   </ul>
 
-<a href="ediciondatos.html">
-  <button type="button" class="button" style="background-color: #45a049; position: absolute; top: 600px; left: 675px; width: auto;">Editar</button>
+  <a href="ediciondatos.html">
+    <button type="button" class="button" style="background-color: #45a049; position: absolute; top: 600px; left: 675px; width: auto;">Editar</button>
+  </a>
 
-</a>
+  <button type="button" class="button" style="background-color: #FF1E1E; position: absolute; top: 600px; left: 765px; width: auto;"
+          onclick="confirmarBorrado()">Borrar</button>
 
-<button type="button" class="button" style="background-color: #FF1E1E; position: absolute; top: 600px; left: 765px; width: auto;"
-        onclick="confirmarBorrado()">Borrar</button>
+  <a href="principal.html">
+    <button type="button" class="button" style="background-color: #45a049; position: absolute; top: 650px; left: 680px; width: auto;">Página Principal</button>
+  </a>
 
+  <div class="container flex;"></div>
 
-<a href="principal.html">
-  <button type="button" class="button" style="background-color: #45a049; position: absolute; top: 650px; left: 680px; width: auto;">Página Principal</button>
-
-</a>
-
-
-<div class="container flex;"> </div>
-<script>
-  function confirmarBorrado() {
-  const confirmacion = confirm("¿Estás seguro de que deseas borrar tu usuario?");
-  if (confirmacion) {
-    const dni = document.getElementById("passport").value;
-
-    fetch('/borrar_usuario', {
-      method: 'DELETE',  
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')  
-      },
-      body: JSON.stringify({ dni: dni })
-    })
-    .then(response => {
-      if (response.ok) {
-        alert("Usuario borrado.");
-        window.location.href = "/";  // redirige a home o donde quieras
-      } else {
-        alert("Error al borrar el usuario.");
+  <script>
+    // Cargar datos del usuario al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'index.html';
+        return;
       }
-    })
-    .catch(error => {
-      console.error("Error en la solicitud:", error);
-      alert("Hubo un problema con la conexión al servidor.");
+
+      fetch('/api/user-info', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        
+        // Llenar campos con datos del usuario
+        document.getElementById('registerName').value = data.nombre || '';
+        document.getElementById('registerSurname').value = data.apellido || '';
+        document.getElementById('cuentaMail').value = data.email || '';
+        document.getElementById('VP').value = data.vehiculo_principal || '';
+        document.getElementById('VS').value = data.vehiculos_secundarios || '';
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cargar datos: ' + error.message);
+      });
     });
-  } else {
-    alert("Operación cancelada. Tu usuario no fue borrado.");
-  }
-}
 
-</script>
+    // Función para borrar cuenta
+    async function confirmarBorrado() {
+      const email = document.getElementById('cuentaMail').value;
+      if (!email) {
+        alert('❌ No se encontró tu email');
+        return;
+      }
 
+      if (!confirm(`⚠️ ¿ESTÁS SEGURO DE ELIMINAR TU CUENTA (${email})? ESTA ACCIÓN ES IRREVERSIBLE`)) {
+        return;
+      }
 
+      try {
+        const response = await fetch('/api/borrar_usuario', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: email })
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Error al eliminar cuenta');
+        }
+
+        alert('✅ Cuenta eliminada correctamente');
+        localStorage.clear();
+        window.location.href = 'index.html';
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error: ' + error.message);
+      }
+    }
+  </script>
 </body>
 </html>
