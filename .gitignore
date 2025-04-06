@@ -6,3 +6,4 @@ backend/.env
 /.idea
 backend/.idea
 backend/database
+backend/app/__pycache__
