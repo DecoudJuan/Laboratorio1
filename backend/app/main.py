@@ -1,9 +1,10 @@
 import random
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, redirect, request, send_from_directory, render_template
 from dotenv import load_dotenv
-
+import psycopg2
+from models import User
 # MODULOS PARA LOGIN
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import check_password_hash
 
 # MAILpip
@@ -26,10 +27,7 @@ def create_app(enviroment):
     app = Flask(__name__)
 
     # CONFIGURAR CORS
-    CORS(app, resources={
-    r"/api/*": {"origins": "*"},
-    r"api/borrar_usuario": {"origins": "*"}
-})
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     app.config.from_object(enviroment)
     
@@ -41,7 +39,7 @@ def create_app(enviroment):
     app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 
     app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-fallback-secret-key')  
-
+    app.config['JWT_VERIFY_SUB'] = False
     # INICIALIZAR LA BASE DE DATOS
     db.init_app(app)
     
@@ -50,43 +48,6 @@ def create_app(enviroment):
 enviroment = config['development']
 app = create_app(enviroment)
 
-# Añade esto después de crear la app Flask
-@app.before_request
-def force_json_response():
-    if request.endpoint and not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 415
-
-# Manejo de errores global (ANTES de las rutas)
-@app.errorhandler(404)
-@app.errorhandler(500)
-@app.errorhandler(401)
-def handle_error(e):
-    return jsonify({
-        "error": str(getattr(e, 'description', 'Error interno')),
-        "code": getattr(e, 'code', 500)
-    }), getattr(e, 'code', 500)
-
-# Ruta de borrado ACTUALIZADA
-@app.route('/borrar_usuario', methods=['DELETE'])
-@jwt_required()
-def borrar_usuario():
-    try:
-        # Obtiene el email del token (identity es el dict que creaste en login)
-        user_email = get_jwt_identity()['email']  
-        
-        user = User.query.filter_by(email=user_email).first()
-        if not user:
-            return jsonify({"error": "Usuario no encontrado"}), 404
-            
-        db.session.delete(user)
-        db.session.commit()
-        
-        return jsonify({"success": True}), 200
-        
-    except KeyError:
-        return jsonify({"error": "Token inválido: falta email"}), 401
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 jwt = JWTManager(app)
 
@@ -162,25 +123,41 @@ def send_recovery_email():
 def login():
     try:
         data = request.get_json()
-        user = User.query.filter_by(email=data.get('email')).first()
+        email = data.get('email')
+        password = data.get('password')
         
-        if not user or not check_password_hash(user.password, data.get('password')):
-            return jsonify({"error": "Credenciales inválidas"}), 401
-
-        # ¡Asegúrate que el identity incluya el email!
+        # SI LOS CAMPOS NO ESTAN RELLENADOS
+        if not email or not password:
+            return jsonify({'success': False, 'message': 'Email y contraseña son requeridos'}), 400
+        
+        # BUSCA EL USUARIO EN LA BASE DE DATOS
+        user = User.query.filter_by(email=email).first()
+        
+        if not user or not check_password_hash(user.password, password):
+            return jsonify({'success': False, 'message': 'Credenciales inválidas'}), 401
+        
+        # CREA TOKEN JWT
         access_token = create_access_token(identity={
-            'email': user.email,  # Campo crítico para el borrado
             'id': user.idUser,
-            'role': user.userRole
+            'email': user.email,
+            'userRole': user.userRole
         })
         
         return jsonify({
-            "token": access_token,
-            "email": user.email  # Opcional: para verificación en frontend
+            'success': True,
+            'message': 'Inicio de sesión exitoso',
+            'token': access_token,
+            'user': {
+                'id': user.idUser,
+                'username': user.username,
+                'email': user.email,
+                'userRole': user.userRole
+            }
         }), 200
         
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f'Error en login: {str(e)}')
+        return jsonify({'success': False, 'message': 'Error en el servidor'}), 500
 
 # RUTAS PREDEFINIDAS
 
@@ -204,10 +181,6 @@ def update_user(id):
     response = {'message': 'success'}
     return jsonify(response)
 
-@app.route('/api/v1/users/<id>', methods=['DELETE'])
-def delete_user(id):
-    response = {'message': 'success'}
-    return jsonify(response)
 
 # REGISTRO NORMAL
 @app.route('/api/register', methods=['POST'])
@@ -344,6 +317,106 @@ def send_static(path):
 def password_recovery_page():
     return send_from_directory('../../frontend/templates', 'passwordrecup.html')
 
+@app.route('/api/misdatos/<username>', methods=['GET'])
+@jwt_required()
+def mis_datos(username):
+    identidad = get_jwt_identity()
+    return render_template("misdatos.html", username=identidad['username'])  # o identidad['username'] si preferís mostrar el username
+
+
+# Ruta para eliminar el usuario 
+@app.route('/api/borrar_usuario/<username>', methods=['DELETE'])
+@jwt_required()
+def borrar_usuario(username):
+    try:
+     
+        print(username)
+        # Obtener usuario actual desde el token JWT
+        current_user = get_jwt_identity()
+    
+        
+        # Buscar usuario a borrar (case sensitive)
+        usuario = User.query.filter_by(username=username).first()
+        
+        if not usuario:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
+
+        # Verificar que el usuario que borra es el mismo o es admin
+        if current_user['email'] != usuario.email and current_user['userRole'] != 'administrador':
+            return jsonify({
+                'success': False,
+                'message': 'No tienes permiso para borrar este usuario'
+            }), 403
+
+        # Proceder con el borrado
+        db.session.delete(usuario)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Usuario {username} borrado exitosamente'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error al borrar usuario: {str(e)}'
+        }), 500
+    
+@app.route('/api/usuario/<username>')
+def obtener_datos_usuario(username):
+    user = db.session.query(User).filter_by(username=username).first()
+    owns = db.session.query(Owns).filter_by(username=username).all()
+
+    return jsonify({
+        'nombre_completo': user.full_name,
+        'email': user.email,
+        'vehiculo_principal': user.main_vehicle,
+        'vehiculos_secundarios': [o.vehicle for o in owns if o.vehicle != user.main_vehicle]
+    })
+
+conn = psycopg2.connect(
+    host="localhost",
+    database="postgres",
+    user="postgres",
+    password="qwerty"
+)
+
+
+@app.route('/api/guardar_datos', methods=['POST'])
+def guardar_datos():
+    try:
+        # Obtener valores desde el formulario
+        username = request.form.get('username')
+        nombre_anterior = request.form.get('nombre_anterior')
+        
+
+        if not username or not nombre_anterior:
+            return jsonify({'success': False, 'message': 'El nombre de usuario es requerido'}), 400
+
+        # Buscar si existe un usuario con el nombre anterior
+        user = User.query.filter_by(username=nombre_anterior).first()
+
+        if user:
+            # Si existe, actualiza el nombre de usuario
+            user.username = username
+        else:
+            # Si no existe, crea un nuevo usuario
+            new_user = User(username=username)
+            db.session.add(new_user)
+
+        # Confirmar los cambios en la base de datos
+        db.session.commit()
+
+        return redirect('/misdatos')  # Redirigir tras éxito
+
+    except Exception as e:
+        db.session.rollback()  # Asegúrate de usar SQLAlchemy para el rollback
+        return jsonify({'success': False, 'message': f'Error al guardar datos: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

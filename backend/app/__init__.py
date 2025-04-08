@@ -1,19 +1,21 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy()
 
-def create_app():
-    app = Flask(__name__)
-    
-    app.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://postgres:qwerty@localhost:5432/postgres'
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app = Flask(__name__)
 
-    db.init_app(app)
+from models import db
+# Usar directamente la cadena sin variables de entorno
+app.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://postgres:qwerty@localhost:5432/postgres'
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    # Registro del blueprint
-    from .main import main as main_blueprint
-    app.register_blueprint(main_blueprint, url_prefix="/api")
+db.init_app(app)
 
-    return app
+with app.app_context():
+    print(db.engine)
+    # Crear las tablas
+    db.create_all()
+    print("Tablas creadas correctamente")
+    print(f"Base de datos actual: {db.engine.url.database}")
+    print(f"Esquema actual: {db.engine.url.query.get('schema', 'public')}")
 
