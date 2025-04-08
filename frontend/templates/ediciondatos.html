@@ -20,35 +20,34 @@
 
     <h1 style="color: white; position: absolute; left: 25px; margin-top: -650px;">Mis Datos - Editar</h1>
     <ul style="color: black; list-style-type: none; padding-left: 0;">
-        <div class="input-group">
-            <label for="registerName">Nombre(s)</label>
-            <input type="text" id="registerName" class="form-control" required>
-        </div>
-        <div class="input-group">
-            <label for="registerName">Apellido(s)</label>
-            <input type="text" id="registerSurname" class="form-control" required>
-        </div>
-        <div class="input-group">
-            <label for="registerName">DNI/Pasaporte</label>
-            <input type="text" id="passport" class="form-control" required>
-        </div>
-        <div class="input-group">
-            <label for="registerName">Vehículo Principal</label>
-            <input type="text" id="VP" class="form-control" required>
-        </div>
-        <div class="input-group">
-            <label for="registerName">Vehículos Secundarios</label>
-            <input type="text" id="VS" class="form-control" required>
-        </div>
+        <form action="/guardar_datos" method="POST" class="p-4">
+            <div class="input-group">
+                <label for="registerName">Username</label>
+                <input type="text" id="registerName" name="username" class="form-control" required>
+            </div>
+            <input type="hidden" id="nombreAnterior" name="nombre_anterior">
+            <!-- 
+            <div class="input-group">
+                <label for="VP">Vehículo Principal</label>
+                <input type="text" id="VP" name="vehiculo_principal" class="form-control" required>
+            </div>
+            <div class="input-group">
+                <label for="VS">Vehículos Secundarios</label>
+                <input type="text" id="VS" name="vehiculo_secundario" class="form-control">
+            </div> 
+         -->
+        
+            <button id="editar" type="submit" class="btn btn-success mt-3" style="background-color: #45a049; position: absolute; top: 600px; left: 720px; width: auto;">Guardar</button>
+        </form>
+
+        
     </ul>
 
-<a href="misdatos.html">
-    <button type="button" class="button" style="background-color: #45a049; position: absolute; top: 600px; left: 720px; width: auto;">Guardar</button>
-</a>
 
 <div class="container flex;">
 
-</div>
 
+</div>
+<script src="../static/js/ediciondatos.js"></script>
 </body>
 </html>
