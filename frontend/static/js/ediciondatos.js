@@ -13,4 +13,3 @@ editar.addEventListener('click', function() {
 });
 
 document.getElementById('editar')?.addEventListener('submit', (e) => handleRegistration(e, false));
-
