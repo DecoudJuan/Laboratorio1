@@ -412,7 +412,7 @@ def guardar_datos():
         # Confirmar los cambios en la base de datos
         db.session.commit()
 
-        return redirect('/misdatos')  # Redirigir tras éxito
+        return redirect('index.html')  # Redirigir tras éxito
 
     except Exception as e:
         db.session.rollback()  # Asegúrate de usar SQLAlchemy para el rollback
