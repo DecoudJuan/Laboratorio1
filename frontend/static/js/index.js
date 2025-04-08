@@ -33,6 +33,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Verificar al cargar la página si el usuario ya está logueado
+document.addEventListener('DOMContentLoaded', function() {
+    // NO REDIRECCIONAR EN REGISTER.HTML
+    const isRegisterPage = window.location.pathname.includes('register.html') || 
+    window.location.pathname === '/register.html';
+
+    if (isLoggedIn() && !isRegisterPage) {
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    redirectByRole(user.userRole);
+    }
+});
+
 // Formulario de inicio de sesión
 document.getElementById('loginForm').addEventListener('submit', function(event) {
     event.preventDefault();
