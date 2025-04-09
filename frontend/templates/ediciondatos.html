@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Datos - Editar</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
@@ -18,36 +20,32 @@
         <div class="green-section"></div>
     </div>
 
-    <h1 style="color: white; position: absolute; left: 25px; margin-top: -650px;">Mis Datos - Editar</h1>
-    <ul style="color: black; list-style-type: none; padding-left: 0;">
-        <form action="http://172.22.100.116:5000/api/guardar_datos" method="POST" class="p-4">
-            <div class="input-group">
-                <label for="registerName">Username</label>
-                <input type="text" id="registerName" name="username" class="form-control" required>
-            </div>
-            <input type="hidden" id="nombreAnterior" name="nombre_anterior">
-            <!-- 
-            <div class="input-group">
-                <label for="VP">Vehículo Principal</label>
-                <input type="text" id="VP" name="vehiculo_principal" class="form-control" required>
-            </div>
-            <div class="input-group">
-                <label for="VS">Vehículos Secundarios</label>
-                <input type="text" id="VS" name="vehiculo_secundario" class="form-control">
-            </div> 
-         -->
-        
-            <button id="editar" type="submit" class="btn btn-success mt-3" style="background-color: #45a049; position: absolute; top: 600px; left: 720px; width: auto;">Guardar</button>
-        </form>
-
-        
-    </ul>
+    <div clasS="main-content">    
+        <h1 style="color: white; position: absolute; left: 25px; margin-top: -650px;">Mis Datos - Editar</h1>
+        <ul style="color: black; list-style-type: none; padding-left: 0;">
+            <form action="http://172.22.100.116:5000/api/guardar_datos" method="POST" class="p-4">
+                <div class="input-group">
+                    <label for="registerName">Username</label>
+                    <input type="text" id="registerName" name="username" class="form-control" required>
+                </div>
+                <input type="hidden" id="nombreAnterior" name="nombre_anterior">
+                <!-- 
+                <div class="input-group">
+                    <label for="VP">Vehículo Principal</label>
+                    <input type="text" id="VP" name="vehiculo_principal" class="form-control" required>
+                </div>
+                <div class="input-group">
+                    <label for="VS">Vehículos Secundarios</label>
+                    <input type="text" id="VS" name="vehiculo_secundario" class="form-control">
+                </div> 
+             -->
+            
+                <button id="editar" type="submit" class="btn btn-success mt-3" style="background-color: #45a049; position: absolute; top: 600px; left: 720px; width: auto;">Guardar</button>
+            </form>
 
 
-<div class="container flex;">
-
-
-</div>
+        </ul>
+    </div>
 <script src="../static/js/ediciondatos.js"></script>
 </body>
 </html>

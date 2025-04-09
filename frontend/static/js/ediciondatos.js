@@ -9,7 +9,7 @@ editar.addEventListener('click', function() {
     }
 
     document.getElementById('nombreAnterior').value = nombreAnterior;
-    window.location.href = 'index.html'
+    window.location.href = 'principal.html'
 });
 
 document.getElementById('editar')?.addEventListener('submit', (e) => handleRegistration(e, false));

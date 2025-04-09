@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mis Datos</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Custom CSS -->
@@ -18,126 +20,47 @@
     <div class="green-section"></div>
   </div>
 
-  <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-    <ul style="
-      color: black;
-      list-style-type: none;
-      padding-left: 5000;
-      width: 400px;
-    ">
-      <div class="input-group">
-        <label for="registerName" style="position: absolute; top: -80px; left: 175%;">Nombre Completo</label>
-        <span id="nombre-completo"></span>
+  <div class="main-content" style="display: flex;">
+    <div class="general-container">
+      <ul>
+        <div>
+          <label for="registerName">Nombre Completo</label>
+          <span id="nombre-completo"></span>
+        </div>
+        <div>
+          <label for="registerName">Email</label>
+          <span id="Email"></span>
+        </div>
+        <div>
+          <label for="registerName">Vehículo Principal</label>
+          <span id="VehiculoPrincipal"></span>
+        </div>
+        <div> 
+          <label for="registerName">Vehículos Secundarios</label>
+          <ul id="VehiculasSecundarios"></ul>
+        </div>
+      </ul>
+      <div style="align-items: center; display: flex; flex-direction: column; margin-top: 20px;">
+        <div style="display: flex; gap: 10%; position: relative;">
+          <a href="ediciondatos.html">
+            <button type="button" class="button">Editar </button>
+          </a>
+          <a>
+            <input type="hidden" id="username" value="{{ username }}">
+            <button type="button" class="button" data-username="{{ username }}" onclick="confirmarBorrado(this)">
+                Borrar
+            </button>
+          </a>
+        </div>
+        <a href="principal.html">
+          <button type="button" class="button">Página Principal</button>
+        </a>
       </div>
-      <div class="input-group">
-        <label for="registerName" style="position: absolute; top: -20px; left: 175%;">Email</label>
-        <span id="Email"></span>
-      </div>
-      <div class="input-group">
-        <label for="registerName" style="position: absolute; top: 40px; left: 175%;">Vehículo Principal</label>
-        <span id="VehiculoPrincipal"></span>
-      </div>
-      <div class="input-group">
-        <label for="registerName" style="position: absolute; top: 100px; left: 175%;">Vehículos Secundarios</label>
-        <ul id="VehiculasSecundarios"></ul>
-      </div>
-    </ul>
+    </div>
+    
   </div>
 
-<a href="ediciondatos.html">
-  <button type="button" class="button" style="background-color: #45a049; position: absolute; top: 600px; left: 675px; width: auto;">Editar</button>
-
-</a>
-
-<input type="hidden" id="username" value="{{ username }}">
-<button type="button" 
-        class="button" 
-        style="background-color: #FF1E1E; position: absolute; top: 600px; left: 765px; width: auto;" 
-        data-username="{{ username }}" 
-        onclick="confirmarBorrado(this)">
-    Borrar
-</button>
-
-
-
-<a href="principal.html">
-  <button type="button" class="button" style="background-color: #45a049; position: absolute; top: 650px; left: 680px; width: auto;">Página Principal</button>
-
-</a>
-
-
-<div class="container flex;"> </div>
-<script>
-  function confirmarBorrado() {
-    const username = prompt("Por favor, ingresa tu nombre de usuario para confirmar el borrado:");
-
-    if (!username) {
-      alert("Operación cancelada. No se ingresó nombre de usuario.");
-      return;
-    }
-
-    const confirmacion = confirm(`¿Estás seguro de que deseas borrar el usuario "${username}"?`);
-    if (confirmacion) {
-      fetch(`http://localhost:5000/api/borrar_usuario/${username}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + localStorage.getItem('authToken')  // si usas tokens
-        },
-        body: JSON.stringify({ username: username })
-      })
-      .then(response => {
-        if (response.ok) {
-          alert("Usuario borrado.");
-          window.location.href = "/";
-        } else {
-          alert("Error al borrar el usuario.");
-        }
-      })
-      .catch(error => {
-        console.error("Error en la solicitud:", error);
-        alert("Hubo un problema con la conexión al servidor.");
-      });
-    } else {
-      alert("Operación cancelada.");
-    }
-  }
-</script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const username = String(document.getElementById('username').value);
-  
-    if (!username) {
-      console.error("No se encontró el nombre de usuario.");
-      return;
-    }
-  
-    fetch(`/api/usuario/${username}`)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error("No se pudo obtener el usuario");
-        }
-        return res.json();
-      })
-      .then(data => {
-        document.getElementById('nombre-completo').textContent = data.nombre_completo;
-        document.getElementById('email').textContent = data.email;
-        document.getElementById('vehiculo-principal').textContent = data.vehiculo_principal;
-  
-        const listaSecundarios = document.getElementById('vehiculos-secundarios');
-        listaSecundarios.innerHTML = ''; // por si recargas
-        data.vehiculos_secundarios.forEach(v => {
-          const li = document.createElement('li');
-          li.textContent = v;
-          listaSecundarios.appendChild(li);
-        });
-      })
-      .catch(err => {
-        console.error("Error al obtener datos del usuario:", err);
-      });
-  });
-  </script>
+  <script src="../static/js/misdatos.js">  </script>
   
 
 </body>
