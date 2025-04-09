@@ -1,5 +1,5 @@
 import random
-from flask import Flask, jsonify, redirect, request, send_from_directory, render_template
+from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, url_for
 from dotenv import load_dotenv
 import psycopg2
 from models import User
@@ -387,6 +387,8 @@ conn = psycopg2.connect(
 )
 
 
+# EDICION DE DATOS
+
 @app.route('/api/guardar_datos', methods=['POST'])
 def guardar_datos():
     try:
@@ -394,9 +396,8 @@ def guardar_datos():
         username = request.form.get('username')
         nombre_anterior = request.form.get('nombre_anterior')
         
-
         if not username or not nombre_anterior:
-            return jsonify({'success': False, 'message': 'El nombre de usuario es requerido'}), 400
+            return jsonify({'message': 'El nombre de usuario es requerido', 'success': False}), 400
 
         # Buscar si existe un usuario con el nombre anterior
         user = User.query.filter_by(username=nombre_anterior).first()
@@ -404,19 +405,25 @@ def guardar_datos():
         if user:
             # Si existe, actualiza el nombre de usuario
             user.username = username
+            db.session.commit()
+            
+            return jsonify({
+                'message': 'Datos actualizados correctamente',
+                'success': True
+            }), 200
         else:
-            # Si no existe, crea un nuevo usuario
-            new_user = User(username=username)
-            db.session.add(new_user)
-
-        # Confirmar los cambios en la base de datos
-        db.session.commit()
-
-        return redirect('index.html')  # Redirigir tras éxito
+            # Si no existe
+            return jsonify({
+                'message': 'Usuario no encontrado',
+                'success': False
+            }), 404
 
     except Exception as e:
-        db.session.rollback()  # Asegúrate de usar SQLAlchemy para el rollback
-        return jsonify({'success': False, 'message': f'Error al guardar datos: {str(e)}'}), 500
+        db.session.rollback()
+        return jsonify({
+            'message': f'Error al guardar datos: {str(e)}',
+            'success': False
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
