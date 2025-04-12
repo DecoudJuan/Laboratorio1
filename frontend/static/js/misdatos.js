@@ -1,4 +1,4 @@
-backToLoginBtn = document.getElementById('backToLoginBtn');
+backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
   
-    fetch(`/api/usuario/${username}`)
+    fetch(`http://localhost:5000/api/usuario/${username}`)
       .then(res => {
         if (!res.ok) {
           throw new Error("No se pudo obtener el usuario");
@@ -34,8 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   });
 
-backToLoginBtn.addEventListener('click', function() {
-    window.location.href = 'index.html';
+backToPrincipalBtn.addEventListener('click', function() {
+    window.location.href = 'principal.html';
 });
 
 // Base URL para las peticiones API (ajustar según tu backend)
@@ -98,7 +98,7 @@ function confirmarBorrado() {
     }
 
     // Paso 3: Enviar solicitud a tu ruta específica
-    fetch(`/api/borrar_usuario/${username}`, {
+    fetch(`http://localhost:5000/api/borrar_usuario/${username}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',

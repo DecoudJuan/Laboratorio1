@@ -324,7 +324,7 @@ def mis_datos(username):
     return render_template("misdatos.html", username=identidad['username'])  # o identidad['username'] si preferís mostrar el username
 
 
-# Ruta para eliminar el usuario 
+# BORRADO DE USUARIO
 @app.route('/api/borrar_usuario/<username>', methods=['DELETE'])
 @jwt_required()
 def borrar_usuario(username):
