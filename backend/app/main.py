@@ -343,7 +343,6 @@ def mis_datos():
         return jsonify({'message': str(e), 'success': False}), 500
 
 
-
 # BORRADO DE USUARIO
 @app.route('/api/borrar_usuario/<username>', methods=['DELETE'])
 @jwt_required()

@@ -1,31 +1,47 @@
-backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
+// Elementos DOM (manteniendo tus IDs originales)
+const registerForm = document.getElementById('registerForm');
+const adminRegisterForm = document.getElementById('adminRegisterForm');
+const showRegisterBtn = document.getElementById('showRegisterBtn');
+const showAdminRegisterBtn = document.getElementById('showAdminRegisterBtn');
+const backToLoginBtn = document.getElementById('backToLoginBtn');
+const backToLoginBtn2 = document.getElementById('backToLoginBtn2');
+const backToLoginBtn3 = document.getElementById('backToLoginBtn3');
+const backToRegisterOptions = document.getElementById('backToRegisterOptions');
+const backToRegisterOptionsAdmin = document.getElementById('backToRegisterOptionsAdmin');
 
+// Mostrar formularios (manteniendo tu lógica original)
+showRegisterBtn.addEventListener('click', function() {
+    registerForm.style.display = 'block';
+    adminRegisterForm.style.display = 'none';
+    document.getElementById('registerModalContainer').style.display = 'none';
+});
 
-document.addEventListener('DOMContentLoaded', () => {
-    const username = String(document.getElementById('username').value);
-  
-    if (!username) {
-      console.error("No se encontró el nombre de usuario.");
-      return;
-    }
-  
-    fetch(`http://localhost:5000/api/usuario/${username}`)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error("No se pudo obtener el usuario");
-        }
-        return res.json();
-      })
-      .then(data => {
-        document.getElementById('nombre-completo').textContent = data.nombre_completo;
-        document.getElementById('email').textContent = data.email;
-        document.getElementById('vehiculo-principal').textContent = data.vehiculo_principal;
-        document.getElementById('vehiculo-secundario').textContent = data.vehiculo_secundario;
-      })
-      .catch(err => {
-        console.error("Error al obtener datos del usuario:", err);
-      });
-  });
+showAdminRegisterBtn.addEventListener('click', function() {
+    registerForm.style.display = 'none';
+    adminRegisterForm.style.display = 'block';
+    document.getElementById('registerModalContainer').style.display = 'none';
+});
+
+// Botones de volver (manteniendo tus IDs originales)
+backToRegisterOptions.addEventListener('click', function() {
+    registerForm.style.display = 'none';
+    document.getElementById('registerModalContainer').style.display = 'block';
+    $('#registerModal').modal('show');
+});
+
+backToRegisterOptionsAdmin.addEventListener('click', function() {
+    adminRegisterForm.style.display = 'none';
+    document.getElementById('registerModalContainer').style.display = 'block';
+    $('#registerModal').modal('show');
+});
+
+backToLoginBtn.addEventListener('click', function() {
+    window.location.href = 'index.html';
+});
+
+backToLoginBtn2.addEventListener('click', function() {
+    window.location.href = 'index.html';
+});
 
 backToPrincipalBtn.addEventListener('click', function() {
     window.location.href = 'principal.html';
@@ -118,3 +134,6 @@ function confirmarBorrado() {
         alert(`Error al borrar usuario: ${error.message}`);
     });
 }
+// Manejadores de eventos para ambos formularios
+document.getElementById('registerUserForm')?.addEventListener('submit', (e) => handleRegistration(e, false));
+document.getElementById('registerAdminForm')?.addEventListener('submit', (e) => handleRegistration(e, true));
