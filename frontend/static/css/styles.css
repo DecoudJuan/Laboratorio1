@@ -298,3 +298,186 @@ h2 {
     width: 80%; /* Ajusta el ancho si es necesario */
     text-align: center;
 }
+
+:root {
+    /* Colors */
+    --color-black: #1D1E21;
+    --color-white: #FFF;
+    --color-background: #E8E8E8;
+    --color-green: #43B72A;
+
+    /* Fonts */
+    --font-body: Arial;
+
+    /* Gaps */
+    --gap-s: 0.9rem;
+    --gap-m: 1rem;
+    --gap-l: 1.5rem;
+    --gap-xl: 2rem;
+    --gap-xxl: 3rem;
+}
+
+/* Animaciones */
+@keyframes ani-pulse {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* Generales */
+
+body {
+    font-family: var(--font-body);
+}
+
+/* Componentes */
+
+.button {
+    display: inline-block;
+    background-color: initial;
+    border: 0;
+    padding: var(--gap-s);
+    min-width: var(--gap-l);
+}
+
+/* Chat */
+
+.chat {
+    position: fixed;
+    bottom: 0;
+    right: var(--gap-xxl);
+    width: 20rem;
+    background-color: var(--color-white);
+    border-top-left-radius: var(--gap-l);
+    border-top-right-radius: var(--gap-l);
+    .chat__header {
+        background-color: var(--color-black);
+        color: var(--color-white);
+        border-top-left-radius: var(--gap-l);
+        border-top-right-radius: var(--gap-l);
+        padding: var(--gap-m);
+        box-sizing: border-box;
+        position: relative;
+        &::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -2rem;
+            height: 2rem;
+            background-image: linear-gradient(var(--color-background), transparent);
+            z-index: 10;
+        }
+    }
+    .chat__close {
+        display: block;
+        margin-left: auto;
+    }
+    .chat__name {
+        margin: 0;
+        font-size: var(--gap-l);
+        font-weight: normal;
+        margin-bottom: .4rem;
+    }
+    .chat__status {
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        &:hover {
+            white-space: initial;
+            overflow: initial;
+            text-overflow: initial;
+        }
+    }
+    .chat__led {
+        --size: .6rem;
+        display: inline-block;
+        width: var(--size);
+        height: var(--size);
+        border-radius: 50%;
+        background-color: var(--color-green);
+        animation-name: ani-pulse;
+        animation-duration: 1s;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+    }
+
+    .chat__messages {
+        height: 20rem;
+        padding-inline: var(--gap-s);
+        overflow-y: auto;
+        background-color: var(--color-background);
+    }
+
+    .message {
+        width: 14rem;
+        background-color: var(--color-green);
+        padding: var(--gap-m);
+        margin-block: var(--gap-l);
+        border-radius: var(--gap-s);
+        position: relative;
+        margin-left: auto;
+        &::before {
+            --lado: 0;
+            display: block;
+            content: "";
+            width: var(--lado);
+            height: var(--lado);
+            position: absolute;
+            bottom: -12px;
+            right: 1rem;
+            transform: rotate(-136deg);
+            border: 1rem solid var(--color-green);
+            border-left-color: transparent;
+            border-bottom-color: transparent;
+            border-right-color: transparent;
+    }
+    .message__username {
+        font-weight: normal;
+        margin: 0;
+        font-size: var(--gap-m);
+        color: var(--color-white);
+    }
+    .message__text {
+        margin: 0;
+        margin-top: var(--gap-s);
+        font-size: var(--gap-s);
+    }
+    }
+    .message--receptor {
+        margin-left: initial;
+        &::before {
+            right: 0;
+            left: 1rem;
+            transform: rotate(275deg);
+            bottom: -16px;
+        }
+    }
+
+    .chat__footer {
+        .chat__form {
+            display: flex;
+            align-items: flex-end;
+        }
+        .chat__input {
+            border: 0;
+            background-color: initial;
+            width: 100%;
+            padding: var(--gap-s);
+            max-height: 5rem;
+            overflow-y: auto;
+            &:focus {
+                outline: none;
+            }
+            &:empty::before {
+                position: absolute;
+                content: "Escribe tu mensaje...";
+            }
+        }
+    }
+}

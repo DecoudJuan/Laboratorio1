@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Datos - Editar</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
     <!-- Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="../static/css/styles.css" rel="stylesheet">
 
@@ -13,41 +15,47 @@
 <body>
 
     <div class="top-bar">
-        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">¡Bienvenido a la página principal!</h1>
+        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Mis Datos - Editar</h1>
         <div class="dark-section"></div>
         <div class="green-section"></div>
     </div>
 
-    <h1 style="color: white; position: absolute; left: 25px; margin-top: -650px;">Mis Datos - Editar</h1>
-    <ul style="color: black; list-style-type: none; padding-left: 0;">
-        <form action="http://172.22.100.116:5000/api/guardar_datos" method="POST" class="p-4">
-            <div class="input-group">
-                <label for="registerName">Username</label>
-                <input type="text" id="registerName" name="username" class="form-control" required>
-            </div>
-            <input type="hidden" id="nombreAnterior" name="nombre_anterior">
-            <!-- 
-            <div class="input-group">
-                <label for="VP">Vehículo Principal</label>
-                <input type="text" id="VP" name="vehiculo_principal" class="form-control" required>
-            </div>
-            <div class="input-group">
-                <label for="VS">Vehículos Secundarios</label>
-                <input type="text" id="VS" name="vehiculo_secundario" class="form-control">
-            </div> 
-         -->
-        
-            <button id="editar" type="submit" class="btn btn-success mt-3" style="background-color: #45a049; position: absolute; top: 600px; left: 720px; width: auto;">Guardar</button>
-        </form>
+    <div class="main-content">    
+        <h1 style="color: rgb(0, 0, 0);">Mis Datos - Editar</h1>
+        <ul style="color: black; list-style-type: none; padding-left: 0;">
+            <form id="editUserForm" action="guardar_datos" method="post">
+                <div class="input-group">
+                    <div class="password-field-container">
+                        <label for="registerName">Nombre Completo</label>
+                        <input type="text" id="registerName" name="username" class="form-control" required>
+                    </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Email</label>
+                        <input type="text" id="registerEmail" name="email" class="form-control" required>
+                    </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Vehiculo Principal</label>
+                        <input type="text" id="registerVP" name="VP" class="form-control" required>
+                    </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Vehiculo Secundario</label>
+                        <input type="text" id="registerVP2" name="VP2" class="form-control" required>
+                    </div>
+                </div>
+                <input type="hidden" id="nombreAnterior" name="nombre_anterior">
+                <!-- Otros campos... -->
+                <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
+                <button type="button" class="btn btn-success mt-3" style="background-color: #45a049;" onclick="location.href='edicionvehiculo.html';">
+                Editar Vehiculo
+                </button>
+                
+            </form>
+        </ul>
+    </div>
 
-        
-    </ul>
 
-
-<div class="container flex;">
-
-
-</div>
+        </ul>
+    </div>
 <script src="../static/js/ediciondatos.js"></script>
 </body>
 </html>

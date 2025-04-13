@@ -1,5 +1,5 @@
 import random
-from flask import Flask, jsonify, redirect, request, send_from_directory, render_template
+from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, url_for
 from dotenv import load_dotenv
 import psycopg2
 from models import User
@@ -317,14 +317,34 @@ def send_static(path):
 def password_recovery_page():
     return send_from_directory('../../frontend/templates', 'passwordrecup.html')
 
-@app.route('/api/misdatos/<username>', methods=['GET'])
-@jwt_required()
-def mis_datos(username):
-    identidad = get_jwt_identity()
-    return render_template("misdatos.html", username=identidad['username'])  # o identidad['username'] si preferís mostrar el username
+@app.route('/api/mis_datos', methods=['GET'])
+def mis_datos():
+    try:
+        # Suponiendo que el usuario está autenticado y tienes el ID del usuario
+        user = User.query.filter_by(username=user.username).first()  # Suponiendo que usas Flask-Login
+        
+        if user:
+            # Obtener los vehículos del usuario
+            vehicles = db.session.query(Vehicle).join(Owns).filter(Owns.idUser == user.idUser).all()
+
+            # Formatear los datos para enviarlos como respuesta JSON
+            data = {
+                'username': user.username,
+                'email': user.email,
+                'vehiculo_principal': vehicles[0].idVehicle if vehicles else None,  # Asumimos que el primer vehículo es el principal
+                'vehiculos_secundarios': [v.idVehicle for v in vehicles[1:]]  # Los demás vehículos son secundarios
+            }
+
+            return jsonify(data), 200
+        else:
+            return jsonify({'message': 'Usuario no encontrado', 'success': False}), 404
+
+    except Exception as e:
+        return jsonify({'message': str(e), 'success': False}), 500
 
 
-# Ruta para eliminar el usuario 
+
+# BORRADO DE USUARIO
 @app.route('/api/borrar_usuario/<username>', methods=['DELETE'])
 @jwt_required()
 def borrar_usuario(username):
@@ -387,36 +407,146 @@ conn = psycopg2.connect(
 )
 
 
+# EDICION DE DATOS
+
 @app.route('/api/guardar_datos', methods=['POST'])
 def guardar_datos():
     try:
         # Obtener valores desde el formulario
         username = request.form.get('username')
+        email = request.form.get('email')
+        VP = request.form.get('VP')  # Vehículo Principal
+        VP2 = request.form.get('VP2')  # Vehículo Secundario
         nombre_anterior = request.form.get('nombre_anterior')
         
-
         if not username or not nombre_anterior:
-            return jsonify({'success': False, 'message': 'El nombre de usuario es requerido'}), 400
+            return jsonify({'message': 'El nombre de usuario es requerido', 'success': False}), 400
 
         # Buscar si existe un usuario con el nombre anterior
         user = User.query.filter_by(username=nombre_anterior).first()
 
         if user:
-            # Si existe, actualiza el nombre de usuario
+            # Actualizamos los datos del usuario
             user.username = username
+            user.email = email
+
+            # Si se proporciona el VP, buscamos o creamos el vehículo
+            if VP:
+                vehiculo = Vehicle.query.filter_by(idVehicle=VP).first()
+                if not vehiculo:
+                    vehiculo = Vehicle(idVehicle=VP, brand='Marca Ejemplo', model='Modelo Ejemplo')
+                    db.session.add(vehiculo)
+                # Relacionamos el vehículo con el usuario
+                # Verificamos si la relación ya existe en 'Owns'
+                if not db.session.query(Owns).filter_by(idUser=user.idUser, idVehicle=vehiculo.idVehicle).first():
+                    new_own = Owns(idUser=user.idUser, idVehicle=vehiculo.idVehicle)
+                    db.session.add(new_own)
+
+            # Si se proporciona el VP2, buscamos o creamos el vehículo
+            if VP2:
+                vehiculo2 = Vehicle.query.filter_by(idVehicle=VP2).first()
+                if not vehiculo2:
+                    vehiculo2 = Vehicle(idVehicle=VP2, brand='Marca Ejemplo', model='Modelo Ejemplo')
+                    db.session.add(vehiculo2)
+                # Relacionamos el vehículo con el usuario
+                # Verificamos si la relación ya existe en 'Owns'
+                if not db.session.query(Owns).filter_by(idUser=user.idUser, idVehicle=vehiculo2.idVehicle).first():
+                    new_own2 = Owns(idUser=user.idUser, idVehicle=vehiculo2.idVehicle)
+                    db.session.add(new_own2)
+
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Datos actualizados correctamente',
+                'success': True
+            }), 200
         else:
-            # Si no existe, crea un nuevo usuario
-            new_user = User(username=username)
-            db.session.add(new_user)
-
-        # Confirmar los cambios en la base de datos
-        db.session.commit()
-
-        return redirect('index.html')  # Redirigir tras éxito
+            # Si no existe el usuario
+            return jsonify({
+                'message': 'Usuario no encontrado',
+                'success': False
+            }), 404
 
     except Exception as e:
-        db.session.rollback()  # Asegúrate de usar SQLAlchemy para el rollback
-        return jsonify({'success': False, 'message': f'Error al guardar datos: {str(e)}'}), 500
+        db.session.rollback()
+        return jsonify({
+            'message': f'Error al guardar datos: {str(e)}',
+            'success': False
+        }), 500
+
+
+@app.route('/api/guardar_datos_vehiculo', methods=['POST'])
+def guardar_datos_vehiculo():
+    try:
+        # Obtener valores desde el formulario
+        marca = request.form.get('marca')
+        modelo = request.form.get('modelo')
+        patente = request.form.get('patente')
+        patenteActual = request.form.get('patenteActual')
+        
+        # Validar campos requeridos
+        if not patenteActual:
+            return jsonify({'message': 'La patente actual es requerida', 'success': False}), 400
+            
+        if not patente:
+            return jsonify({'message': 'La nueva patente es requerida', 'success': False}), 400
+
+        # Buscar si existe un vehículo con la patente actual
+        vehiculo = Vehicle.query.filter_by(idVehicle=patenteActual).first()
+
+        if vehiculo:
+            # Si se está cambiando la patente, verificar que la nueva no exista ya
+            if patente != patenteActual:
+                vehiculo_existente = Vehicle.query.filter_by(idVehicle=patente).first()
+                if vehiculo_existente:
+                    return jsonify({
+                        'message': 'Ya existe un vehículo con esa patente',
+                        'success': False
+                    }), 400
+            
+            # Si existe, actualiza los datos del vehículo
+            vehiculo.idVehicle = patente
+            if marca:  # Solo actualiza si se proporciona un valor
+                vehiculo.brand = marca
+            if modelo:  # Solo actualiza si se proporciona un valor
+                vehiculo.model = modelo
+      
+            db.session.commit()
+        
+            # También actualizar cualquier referencia al vehículo en la tabla Owns
+            if patente != patenteActual:
+                owns_registros = Owns.query.filter_by(idVehicle=patenteActual).all()
+                for registro in owns_registros:
+                    registro.vehicle = patente
+                db.session.commit()
+              
+            
+            return jsonify({
+                'message': 'Datos del vehículo actualizados correctamente',
+                'success': True
+            }), 200
+        else:
+            # Si no existe, crear un nuevo vehículo
+            nuevo_vehiculo = Vehicle(
+                idVehicle=patente,
+                brand=marca if marca else "",
+                model=modelo if modelo else ""
+            )
+            db.session.add(nuevo_vehiculo)
+            db.session.commit()
+            
+            return jsonify({
+                'message': 'Nuevo vehículo creado correctamente',
+                'success': True
+            }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error en guardar_datos_vehiculo: {str(e)}")  # Para debugging
+        return jsonify({
+            'message': f'Error al guardar datos del vehículo: {str(e)}',
+            'success': False
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
