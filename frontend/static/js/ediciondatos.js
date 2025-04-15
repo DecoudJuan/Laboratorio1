@@ -17,20 +17,6 @@ function checkToken() {
         window.location.replace('index.html');
         return;
     }
-    
-    // Verificar si el usuario es administrador
-    try {
-        const userData = JSON.parse(currentUser);
-        if (userData.userRole !== 'administrador') {
-            alert('No tienes permisos de administrador');
-            window.location.replace('index.html');
-        }
-    } catch (e) {
-        console.error('Error al procesar datos de usuario:', e);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
-        window.location.replace('index.html');
-    }
 }
 
 // Verificar autenticación cuando la página vuelve a estar activa

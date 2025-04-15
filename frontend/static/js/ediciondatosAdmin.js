@@ -1,3 +1,41 @@
+function preventCaching() {
+    // NO ALMACENA CACHÉ
+    if (window.location.protocol != 'file:') {
+        window.history.replaceState(null, document.title, window.location.href);
+    }
+}
+
+preventCaching();
+
+// Verificación inmediata de autenticación (se ejecuta al cargar el script)
+function checkToken() {
+    const authToken = localStorage.getItem('authToken');
+    const currentUser = localStorage.getItem('currentUser');
+
+    // Si no hay token o usuario, redirigir al login
+    if (!authToken || !currentUser) {
+        window.location.replace('index.html');
+        return;
+    }
+}
+
+// Verificar autenticación cuando la página vuelve a estar activa
+window.addEventListener('pageshow', (event) => {
+    // Si la página se restaura desde el caché (botón atrás)
+    if (event.persisted) {
+        console.log('Página restaurada desde caché - verificando autenticación');
+        checkToken();
+    }
+});
+
+// También verificar cuando la página vuelve a estar visible
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        console.log('Página visible - verificando autenticación');
+        checkToken();
+    }
+});
+
 const API_BASE_URL = 'http://localhost:5000';
 
 // JavaScript corregido
