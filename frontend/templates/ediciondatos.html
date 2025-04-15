@@ -15,24 +15,40 @@
 <body>
 
     <div class="top-bar">
-        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">¡Bienvenido a la página principal!</h1>
+        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Mis Datos - Editar</h1>
         <div class="dark-section"></div>
         <div class="green-section"></div>
     </div>
 
     <div class="main-content">    
-        <h1 style="color: rgb(188, 19, 197);">Mis Datos - Editar</h1>
+        <h1 style="color: rgb(0, 0, 0);">Mis Datos - Editar</h1>
         <ul style="color: black; list-style-type: none; padding-left: 0;">
             <form id="editUserForm" action="guardar_datos" method="post">
                 <div class="input-group">
                     <div class="password-field-container">
-                        <label for="registerName">Username</label>
+                        <label for="registerName">Nombre Completo</label>
                         <input type="text" id="registerName" name="username" class="form-control" required>
+                    </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Email</label>
+                        <input type="text" id="registerEmail" name="email" class="form-control" required>
+                    </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Vehiculo Principal</label>
+                        <input type="text" id="registerVP" name="VP" class="form-control" required>
+                    </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Vehiculo Secundario</label>
+                        <input type="text" id="registerVP2" name="VP2" class="form-control" required>
                     </div>
                 </div>
                 <input type="hidden" id="nombreAnterior" name="nombre_anterior">
                 <!-- Otros campos... -->
                 <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
+                <button type="button" class="btn btn-success mt-3" style="background-color: #45a049;" onclick="location.href='edicionvehiculo.html';">
+                Editar Vehiculo
+                </button>
+                
             </form>
         </ul>
     </div>

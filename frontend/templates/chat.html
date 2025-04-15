@@ -1,0 +1,43 @@
+<section class="chat">
+    <header class="chat__header">
+        <button class="button chat__close" aria-label="Cerrar">✖️</button>
+        <h2 class="chat__name">Advertencias</h2>
+        <p class="chat__status">
+            <span class="chat__led"></span>
+            ¡Alerta a tus conocidos de problemas en el camino!
+        </p>
+    </header>
+    <!-- Contenedor de mensajes -->
+    <div class="chat__messages" aria-live="polite">
+        <!-- Componente de mensaje receptor -->
+        <article class="message message--receptor">
+            <h3 class="message__username">Caballero blanca luna</h3>
+            <p class="message__text">
+                Tortor vitae purus faucibus ornare. Velit euismod in pellentesque massa placerat duis ultricies lacus sed turpis tincidunt id aliquet risus feugiat in ante metus, dictum at tempor commodo, ullamcorper a?
+            </p>
+        </article>
+        <!-- Componente de mensaje emisor -->
+        <article class="message message--emisor">
+            <h3 class="message__username">Don Quijote</h3>
+            <p class="message__text">
+                Quis ipsum suspendisse ultrices gravida dictum fusce ut placerat orci nulla pellentesque dignissim.
+            </p>
+        </article>
+    </div>
+    <footer class="chat__footer">
+        <form class="chat__form">
+            <!-- Input que crece con el texto -->
+            <div
+                role="textbox"
+                aria-label="Nuevo mensaje"
+                aria-placeholder="Escribe tu mensaje..."
+                contenteditable="true"
+                class="chat__input"
+                name="mensaje"
+            ></div>
+            <!-- Botones con funciones secundarias -->
+            <button type="button" class="button chat__button" aria-label="Abrir emojis">😀</button>
+            <button type="button" class="button chat__attachment" aria-label="Adjuntar archivo">📎</button>
+        </form>
+    </footer>
+</section>
