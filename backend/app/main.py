@@ -162,25 +162,44 @@ def login():
 
 # RUTAS PREDEFINIDAS
 
-@app.route('/api/v1/users', methods=['GET'])
-def get_users():
-    response = {'message': 'success'}
-    return jsonify(response)
+@app.route('/api/users', methods=['GET'])
+@jwt_required()
+def get_all_users():
+    try:
+        # Verificar que el usuario actual es administrador
+        current_user = get_jwt_identity()
+        if current_user['userRole'] != 'administrador':
+            return jsonify({
+                'success': False,
+                'message': 'No tienes permisos de administrador'
+            }), 403
+        
+        # Obtener todos los usuarios de la base de datos
+        users = User.query.all()
+        
+        # Convertir la lista de usuarios a formato JSON
+        users_list = []
+        for user in users:
+            users_list.append({
+                'idUser': user.idUser,
+                'username': user.username,
+                'phone': user.phone,
+                'email': user.email,
+                'userRole': user.userRole
+            })
+        
+        return jsonify({
+            'success': True,
+            'users': users_list
+        }), 200
+        
+    except Exception as e:
+        print(f'Error al obtener usuarios: {str(e)}')
+        return jsonify({
+            'success': False,
+            'message': 'Error al obtener la lista de usuarios'
+        }), 500
 
-@app.route('/api/v1/users/<id>', methods=['GET'])
-def get_user(id):
-    response = {'message': 'success'}
-    return jsonify(response)
-
-@app.route('/api/v1/users/', methods=['POST'])
-def create_user():
-    response = {'message': 'success'}
-    return jsonify(response)
-
-@app.route('/api/v1/users/<id>', methods=['PUT'])
-def update_user(id):
-    response = {'message': 'success'}
-    return jsonify(response)
 
 
 # REGISTRO NORMAL
