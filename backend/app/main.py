@@ -373,6 +373,12 @@ def borrar_usuario(username):
         # Proceder con el borrado
         db.session.delete(usuario)
         db.session.commit()
+
+        vehiculos = db.session.query(Vehicle).join(Owns).filter(Owns.idUser == usuario.idUser).all()
+
+        # Eliminar vehículos
+        for v in vehiculos:
+            db.session.delete(v)
         
         return jsonify({
             'success': True,
