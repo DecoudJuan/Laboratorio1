@@ -512,6 +512,101 @@ def guardar_datos():
             'success': False
         }), 500
 
+@app.route('/api/datos_Admin', methods=['POST'])
+def datos_Admin():
+    try:
+        # Obtener valores desde el formulario
+        username = request.form.get('username')
+        email = request.form.get('email')
+        sector_id = request.form.get('establecimiento')       # ID del sector
+        establecimiento_id = request.form.get('sector')       # ID del establecimiento
+        nombre_anterior = request.form.get('nombre_anterior')
+
+        if not username or not nombre_anterior:
+            return jsonify({'message': 'El nombre de usuario es requerido', 'success': False}), 400
+
+        # Buscar el usuario por el nombre anterior
+        user = User.query.filter_by(username=nombre_anterior).first()
+
+        if user:
+            # Actualizar datos del usuario
+            user.username = username
+            user.email = email
+
+            establecimiento_obj = None
+
+            if establecimiento_id:
+                # Buscar establecimiento por ID
+                establecimiento_obj = Establishment.query.filter_by(idEstablishment=establecimiento_id).first()
+
+                if not establecimiento_obj:
+                    # Crear nuevo establecimiento si no existe
+                    establecimiento_obj = Establishment(
+                        idEstablishment=establecimiento_id,
+                        totalParkingSpots=3,
+                        totalSectors=3,
+                        geographicLocation='unknown'
+                    )
+                    db.session.add(establecimiento_obj)
+                    db.session.flush()  # Para obtener el ID asignado
+
+                # Crear relación con EstablishmentAdmin si no existe
+                if not db.session.query(EstablishmentAdmin).filter_by(
+                    idAdmin=user.idUser,
+                    idEstablishment=establecimiento_obj.idEstablishment
+                ).first():
+                    new_EstAdmin = EstablishmentAdmin(
+                        idAdmin=user.idUser,
+                        idEstablishment=establecimiento_obj.idEstablishment
+                    )
+                    db.session.add(new_EstAdmin)
+
+            if sector_id and establecimiento_obj:
+                # Buscar sector por ID
+                sector_obj = Sectors.query.filter_by(idSector=sector_id).first()
+
+                if not sector_obj:
+                    # Crear nuevo sector si no existe
+                    sector_obj = Sectors(
+                        idSector=sector_id,
+                        idEstablishment=establecimiento_obj.idEstablishment,
+                        name='unknown',
+                        openingHour=1,
+                        closingHour=0,
+                        availableParkingSpots=0
+                    )
+                    db.session.add(sector_obj)
+                    db.session.flush()  # Para obtener el ID asignado
+
+                # Crear relación con SectorEstablishment si no existe
+                if not db.session.query(SectorEstablishment).filter_by(
+                    idSector=sector_obj.idSector,
+                    idEstablishment=establecimiento_obj.idEstablishment
+                ).first():
+                    new_secEst = SectorEstablishment(
+                        idSector=sector_obj.idSector,
+                        idEstablishment=establecimiento_obj.idEstablishment
+                    )
+                    db.session.add(new_secEst)
+
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Datos actualizados correctamente',
+                'success': True
+            }), 200
+
+        else:
+            return jsonify({'message': 'Usuario no encontrado', 'success': False}), 404
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'message': f'Error al guardar datos: {str(e)}',
+            'success': False
+        }), 500
+
+
 
 @app.route('/api/guardar_datos_vehiculo', methods=['POST'])
 def guardar_datos_vehiculo():

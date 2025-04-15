@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Datos - Editar</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../static/css/styles.css" rel="stylesheet">
+
+</head>
+<body>
+
+    <div class="top-bar">
+        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Mis Datos - Editar</h1>
+        <div class="dark-section"></div>
+        <div class="green-section"></div>
+    </div>
+
+    <div class="main-content">    
+        <h1 style="color: rgb(0, 0, 0);">Mis Datos - Editar</h1>
+        <ul style="color: black; list-style-type: none; padding-left: 0;">
+            <form id="editUserForm" action="guardar_datos_Admin" method="post">
+                <div class="input-group">
+                    <div class="password-field-container">
+                        <label for="registerName">Nombre Completo</label>
+                        <input type="text" id="registerName" name="username" class="form-control" required>
+                    </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Email</label>
+                        <input type="text" id="registerEmail" name="email" class="form-control" required>
+                    </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Establecimiento</label>
+                        <input type="text" id="registerEstablecimiento" name="establecimiento" class="form-control" required>
+                    </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Sector</label>
+                        <input type="text" id="registerSector" name="sector" class="form-control" required>
+                    </div>
+                </div>
+                <input type="hidden" id="nombreAnterior" name="nombre_anterior">
+                <!-- Otros campos... -->
+                <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
+                
+            </form>
+        </ul>
+    </div>
+
+
+        </ul>
+    </div>
+<script src="../static/js/ediciondatosAdmin.js"></script>
+</body>
+</html>
