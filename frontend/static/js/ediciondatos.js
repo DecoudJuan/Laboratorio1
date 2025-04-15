@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
             alert("Debes ingresar tu nombre actual para continuar.");
             return;
         }
-        
         document.getElementById('nombreAnterior').value = nombreAnterior;
         form.submit(); // Envía el formulario correctamente
     });

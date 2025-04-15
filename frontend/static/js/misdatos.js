@@ -1,93 +1,170 @@
-backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
-
-
 document.addEventListener('DOMContentLoaded', () => {
-    const username = String(document.getElementById('username').value);
-  
-    if (!username) {
-      console.error("No se encontró el nombre de usuario.");
-      return;
+    // Obtener el token almacenado en localStorage
+    const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+        // Si no hay token, redirigir a la página de login
+        window.location.href = 'index.html';
+        return;
     }
-  
-    fetch(`http://localhost:5000/api/usuario/${username}`)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error("No se pudo obtener el usuario");
-        }
-        return res.json();
-      })
-      .then(data => {
-        document.getElementById('nombre-completo').textContent = data.nombre_completo;
-        document.getElementById('email').textContent = data.email;
-        document.getElementById('vehiculo-principal').textContent = data.vehiculo_principal;
-  
-        const listaSecundarios = document.getElementById('vehiculos-secundarios');
-        listaSecundarios.innerHTML = ''; // por si recargas
-        data.vehiculos_secundarios.forEach(v => {
-          const li = document.createElement('li');
-          li.textContent = v;
-          listaSecundarios.appendChild(li);
-        });
-      })
-      .catch(err => {
-        console.error("Error al obtener datos del usuario:", err);
-      });
-  });
 
-backToPrincipalBtn.addEventListener('click', function() {
-    window.location.href = 'principal.html';
+    // Configurar botones
+    const backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
+    backToPrincipalBtn.addEventListener('click', function() {
+        window.location.href = 'principal.html';
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        // Eliminar token y datos de usuario del localStorage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        
+        // Redireccionar a la página de inicio de sesión
+        window.location.href = 'index.html';
+    });
+
+    // Decodificar token para obtener datos del usuario
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(window.atob(base64));
+        } catch (e) {
+            console.error('Error al decodificar el token:', e);
+            return null;
+        }
+    }
+
+    const userData = parseJwt(token);
+    
+    // Verificar la estructura del token y mostrar en consola para depuración
+    console.log('Datos del token decodificado:', userData);
+    
+    // Verificar si el token tiene la estructura esperada
+    if (!userData) {
+        alert('Error al obtener los datos del usuario. Por favor inicia sesión nuevamente.');
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // Extraer información del usuario del token según su estructura
+    let username, email;
+    
+    // Maneja ambas estructuras posibles (con sub o directamente en el token)
+    if (userData.sub) {
+        // Si los datos están dentro de 'sub'
+        username = userData.sub.username;
+        email = userData.sub.email;
+    } else {
+        // Si los datos están directamente en el token
+        username = userData.username;
+        email = userData.email;
+    }
+
+    // Mostrar los datos básicos del token
+    document.getElementById('nombre-completo').textContent = username || 'No disponible';
+    document.getElementById('email').textContent = email || 'No disponible';
+    document.getElementById('vehiculo-principal').textContent = 'No asignado';
+    
+    // Configurar lista de vehículos secundarios inicialmente vacía
+    const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
+    vehiculosSecundariosElement.innerHTML = '';
+    
+    const li = document.createElement('li');
+    li.className = 'list-group-item';
+    li.textContent = 'No tiene vehículos secundarios';
+    vehiculosSecundariosElement.appendChild(li);
+    
+    // Intentar obtener datos adicionales del servidor
+    fetch(`http://localhost:5000/api/usuario/${username}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            console.log('No se pudieron obtener datos adicionales del servidor');
+            return null;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            // Actualizar con datos más completos del servidor
+            document.getElementById('vehiculo-principal').textContent = data.vehiculo_principal || 'No asignado';
+            
+            // Actualizar vehículos secundarios
+            vehiculosSecundariosElement.innerHTML = '';
+            
+            if (data.vehiculos_secundarios && data.vehiculos_secundarios.length > 0) {
+                data.vehiculos_secundarios.forEach(vehiculo => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = vehiculo;
+                    vehiculosSecundariosElement.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = 'No tiene vehículos secundarios';
+                vehiculosSecundariosElement.appendChild(li);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error al obtener datos adicionales:', error);
+    });
 });
 
-// Base URL para las peticiones API (ajustar según tu backend)
-const API_BASE_URL = 'http://localhost:5000';
-
-// Función para realizar peticiones a la API
-async function apiRequest(endpoint, method, data) {
-    try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: data ? JSON.stringify(data) : null
-        });
-        
-        const responseData = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(responseData.message || 'Ocurrió un error en la petición');
-        }
-        
-        return responseData;
-    } catch (error) {
-        console.error('Error en la petición API:', error);
-        throw error;
-    }
-}
-
-function getUsernameFromToken() {
-    const token = localStorage.getItem("authToken");
-    if (!token) return null;
-
-    const payloadBase64 = token.split('.')[1];
-    try {
-        const payload = JSON.parse(atob(payloadBase64));
-        return payload.username; // Asegurate que el token tenga un campo llamado "username"
-    } catch (e) {
-        console.error("Error al decodificar el token:", e);
-        return null;
-    }
-}
-
-
-// Función de borrado modificada para usar API
-// Función para mostrar el modal de confirmación
+// Función para confirmar borrado
 function confirmarBorrado() {
+    // Obtener token y decodificarlo para obtener el username
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        alert('Debes iniciar sesión para realizar esta acción');
+        return;
+    }
+    
+    // Decodificar token para obtener username
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(window.atob(base64));
+        } catch (e) {
+            console.error('Error al decodificar el token:', e);
+            return null;
+        }
+    }
+    
+    const userData = parseJwt(token);
+    
+    // Extraer username según la estructura del token
+    let username;
+    if (userData.sub) {
+        username = userData.sub.username;
+    } else {
+        username = userData.username;
+    }
+    
+    if (!username) {
+        alert('Error al obtener datos de sesión. Por favor inicia sesión nuevamente.');
+        return;
+    }
+    
     // Paso 1: Pedir nombre de usuario para confirmación
-    const username = prompt("Para confirmar el borrado, ingresa tu nombre de usuario:");
-    print(username)
-    if (!username || username.trim() === "") {
+    const confirmUsername = prompt("Para confirmar el borrado, ingresa tu nombre de usuario:");
+    
+    if (!confirmUsername || confirmUsername.trim() === "") {
         alert("Debes ingresar un nombre de usuario válido.");
+        return;
+    }
+
+    // Verificar que el nombre coincida
+    if (confirmUsername !== username) {
+        alert("El nombre de usuario no coincide con tu cuenta actual.");
         return;
     }
 
@@ -97,12 +174,12 @@ function confirmarBorrado() {
         return;
     }
 
-    // Paso 3: Enviar solicitud a tu ruta específica
+    // Paso 3: Enviar solicitud a la API
     fetch(`http://localhost:5000/api/borrar_usuario/${username}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            'Authorization': `Bearer ${token}`
         }
     })
     .then(response => {
@@ -114,14 +191,15 @@ function confirmarBorrado() {
     .then(data => {
         if (data.success) {
             alert(data.message);
-            localStorage.removeItem('authToken'); // Limpiar sesión
-            window.location.href = "/"; // Redirigir al inicio
+            localStorage.removeItem('authToken'); 
+            localStorage.removeItem('currentUser');
+            window.location.href = "index.html";
         } else {
             throw new Error(data.message);
         }
     })
     .catch(error => {
         console.error("Error:", error);
-        alert(`Error al borrar usuario: ${error.message}`);
+        alert(`Error al borrar usuario: ${error.message || 'Error desconocido'}`);
     });
 }

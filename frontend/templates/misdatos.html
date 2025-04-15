@@ -20,29 +20,39 @@
     <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -50px; padding: 50px;">Mis Datos</h1>
     <div class="dark-section"></div>
     <div class="green-section"></div>
+    <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
+
   </div>
 
-  <div class="main-content" style="display: flex;">
+  <div class="main-content" style="display: flex; justify-content: center; align-items: center;">
     <div class="general-container">
       <button type="button" class="back-button" id="backToPrincipalBtn">
         <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
       </button>
+
+      <!-- Nombre Completo -->
+      <div>
+        <label class="form-label fw-bold">Nombre Completo:</label>
+        <span id="nombre-completo" class="form-control-plaintext"></span>
+      </div>
       
+      <!-- Email -->
       <div>
-        <label for="registerName">Nombre Completo</label>
-        <span id="nombre-completo"></span>
+        <label class="form-label fw-bold">Email:</label>
+        <span id="email" class="form-control-plaintext"></span>
       </div>
+      
+      <!-- Vehículo Principal -->
       <div>
-        <label for="registerName">Email</label>
-        <span id="Email"></span>
+        <label class="form-label fw-bold">Vehículo Principal:</label>
+        <span id="vehiculo-principal" class="form-control-plaintext"></span>
       </div>
-      <div>
-        <label for="registerName">Vehículo Principal</label>
-        <span id="VehiculoPrincipal"></span>
-      </div>
-      <div> 
-        <label for="registerName">Vehículos Secundarios</label>
-        <ul id="VehiculasSecundarios"></ul>
+      
+      <!-- Vehículos Secundarios -->
+      <div class="row">
+        <label class="form-label fw-bold">Vehículos Secundarios:</label>
+        <ul id="vehiculos-secundarios" class="list-group list-group-flush">
+        <!-- Los items se agregarán dinámicamente con JS -->
       </div>
 
       <div>
@@ -58,7 +68,7 @@
           </a>
         </div>
         <a href="principal.html">
-          <button type="button" class="button">Página Principal</button>
+          <button type="button" class="button" style="width: 50%;">Página Principal</button>
         </a>
       </div>
     </div>

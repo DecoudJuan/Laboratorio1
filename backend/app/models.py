@@ -41,8 +41,7 @@ class Reported(db.Model):
 class Vehicle(db.Model):
     __tablename__ = 'vehicle'
 
-    idVehicle = db.Column(db.Integer, primary_key=True)
-    licensePlate = db.Column(db.Text)
+    idVehicle = db.Column(db.Text, primary_key=True)
     brand = db.Column(db.Text)
     model = db.Column(db.Text)
     checkInTime = db.Column(db.DateTime)
@@ -67,14 +66,14 @@ class Owns(db.Model):
     __tablename__ = 'owns'
 
     idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'), primary_key=True)
-    idVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
+    idVehicle = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
 
 
 class Occupies(db.Model):
     __tablename__ = 'occupies'
 
     idParkingSpot = db.Column(db.Integer, db.ForeignKey('parking_spot.idParkingSpot', ondelete='CASCADE'), primary_key=True)
-    idVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
+    idVehicle = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
 
 
 class Sectors(db.Model):
@@ -92,7 +91,7 @@ class ParkingSpotSector(db.Model):
     __tablename__ = 'parking_spot_sector'
 
     idParkingSpot = db.Column(db.Integer, db.ForeignKey('parking_spot.idParkingSpot', ondelete='CASCADE'), primary_key=True)
-    idVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
+    idVehicle = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
 
 
 class SectorEstablishment(db.Model):
