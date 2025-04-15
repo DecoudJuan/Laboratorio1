@@ -42,7 +42,7 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
     .then(data => {
         if (data.success) {
             alert(data.message || 'Datos actualizados correctamente');
-            window.location.href = 'principal.html';
+            window.location.href = 'admin.html';
         } else {
             alert(data.message || 'Error al guardar los datos');
         }

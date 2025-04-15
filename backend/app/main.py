@@ -537,8 +537,8 @@ def datos_Admin():
         # Obtener valores desde el formulario
         username = request.form.get('username')
         email = request.form.get('email')
-        sector_id = request.form.get('establecimiento')       # ID del sector
-        establecimiento_id = request.form.get('sector')       # ID del establecimiento
+        sectorName = request.form.get('sector')
+        establecimientoName = request.form.get('establecimiento')
         nombre_anterior = request.form.get('nombre_anterior')
 
         if not username or not nombre_anterior:
@@ -554,14 +554,14 @@ def datos_Admin():
 
             establecimiento_obj = None
 
-            if establecimiento_id:
-                # Buscar establecimiento por ID
-                establecimiento_obj = Establishment.query.filter_by(idEstablishment=establecimiento_id).first()
+            if establecimientoName:
+                # Buscar establecimiento por nombre
+                establecimiento_obj = Establishment.query.filter_by(nameEst=establecimientoName).first()
 
                 if not establecimiento_obj:
                     # Crear nuevo establecimiento si no existe
                     establecimiento_obj = Establishment(
-                        idEstablishment=establecimiento_id,
+                        nameEst=establecimientoName,
                         totalParkingSpots=3,
                         totalSectors=3,
                         geographicLocation='unknown'
@@ -580,22 +580,24 @@ def datos_Admin():
                     )
                     db.session.add(new_EstAdmin)
 
-            if sector_id and establecimiento_obj:
-                # Buscar sector por ID
-                sector_obj = Sectors.query.filter_by(idSector=sector_id).first()
+            if sectorName and establecimiento_obj:
+                # Buscar sector por nombre dentro del establecimiento
+                sector_obj = Sectors.query.filter_by(
+                    nameSec=sectorName,
+                    idEstablishment=establecimiento_obj.idEstablishment
+                ).first()
 
                 if not sector_obj:
                     # Crear nuevo sector si no existe
                     sector_obj = Sectors(
-                        idSector=sector_id,
+                        nameSec=sectorName,
                         idEstablishment=establecimiento_obj.idEstablishment,
-                        name='unknown',
                         openingHour=1,
                         closingHour=0,
                         availableParkingSpots=0
                     )
                     db.session.add(sector_obj)
-                    db.session.flush()  # Para obtener el ID asignado
+                    db.session.flush()
 
                 # Crear relación con SectorEstablishment si no existe
                 if not db.session.query(SectorEstablishment).filter_by(

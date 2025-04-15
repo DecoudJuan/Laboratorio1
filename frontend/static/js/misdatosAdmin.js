@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Configurar botones
     const backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
     backToPrincipalBtn.addEventListener('click', function() {
-        window.location.href = 'principal.html';
+        window.location.href = 'admin.html';
     });
 
     document.getElementById('logoutBtn').addEventListener('click', function() {

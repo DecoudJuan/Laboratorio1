@@ -81,7 +81,7 @@ class Sectors(db.Model):
 
     idSector = db.Column(db.Integer, primary_key=True)
     idEstablishment = db.Column(db.Integer, db.ForeignKey('establishment.idEstablishment', ondelete='CASCADE'))
-    name = db.Column(db.Text, nullable=False)
+    nameSec = db.Column(db.Text, nullable=False)
     openingHour = db.Column(db.Integer)
     closingHour = db.Column(db.Integer)
     availableParkingSpots = db.Column(db.Integer)
@@ -105,6 +105,7 @@ class Establishment(db.Model):
     __tablename__ = 'establishment'
 
     idEstablishment = db.Column(db.Integer, primary_key=True)
+    nameEst = db.Column(db.Text, nullable=False)
     totalParkingSpots = db.Column(db.Integer, nullable=False)
     totalSectors = db.Column(db.Integer, nullable=False)
     geographicLocation = db.Column(db.Text, nullable=False)
