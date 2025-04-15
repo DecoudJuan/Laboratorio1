@@ -1,102 +1,170 @@
-// Elementos DOM (manteniendo tus IDs originales)
-const registerForm = document.getElementById('registerForm');
-const adminRegisterForm = document.getElementById('adminRegisterForm');
-const showRegisterBtn = document.getElementById('showRegisterBtn');
-const showAdminRegisterBtn = document.getElementById('showAdminRegisterBtn');
-const backToLoginBtn = document.getElementById('backToLoginBtn');
-const backToLoginBtn2 = document.getElementById('backToLoginBtn2');
-const backToLoginBtn3 = document.getElementById('backToLoginBtn3');
-const backToRegisterOptions = document.getElementById('backToRegisterOptions');
-const backToRegisterOptionsAdmin = document.getElementById('backToRegisterOptionsAdmin');
+document.addEventListener('DOMContentLoaded', () => {
+    // Obtener el token almacenado en localStorage
+    const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+        // Si no hay token, redirigir a la página de login
+        window.location.href = 'index.html';
+        return;
+    }
 
-// Mostrar formularios (manteniendo tu lógica original)
-showRegisterBtn.addEventListener('click', function() {
-    registerForm.style.display = 'block';
-    adminRegisterForm.style.display = 'none';
-    document.getElementById('registerModalContainer').style.display = 'none';
-});
+    // Configurar botones
+    const backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
+    backToPrincipalBtn.addEventListener('click', function() {
+        window.location.href = 'principal.html';
+    });
 
-showAdminRegisterBtn.addEventListener('click', function() {
-    registerForm.style.display = 'none';
-    adminRegisterForm.style.display = 'block';
-    document.getElementById('registerModalContainer').style.display = 'none';
-});
-
-// Botones de volver (manteniendo tus IDs originales)
-backToRegisterOptions.addEventListener('click', function() {
-    registerForm.style.display = 'none';
-    document.getElementById('registerModalContainer').style.display = 'block';
-    $('#registerModal').modal('show');
-});
-
-backToRegisterOptionsAdmin.addEventListener('click', function() {
-    adminRegisterForm.style.display = 'none';
-    document.getElementById('registerModalContainer').style.display = 'block';
-    $('#registerModal').modal('show');
-});
-
-backToLoginBtn.addEventListener('click', function() {
-    window.location.href = 'index.html';
-});
-
-backToLoginBtn2.addEventListener('click', function() {
-    window.location.href = 'index.html';
-});
-
-backToPrincipalBtn.addEventListener('click', function() {
-    window.location.href = 'principal.html';
-});
-
-// Base URL para las peticiones API (ajustar según tu backend)
-const API_BASE_URL = 'http://localhost:5000';
-
-// Función para realizar peticiones a la API
-async function apiRequest(endpoint, method, data) {
-    try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: data ? JSON.stringify(data) : null
-        });
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        // Eliminar token y datos de usuario del localStorage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
         
-        const responseData = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(responseData.message || 'Ocurrió un error en la petición');
+        // Redireccionar a la página de inicio de sesión
+        window.location.href = 'index.html';
+    });
+
+    // Decodificar token para obtener datos del usuario
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(window.atob(base64));
+        } catch (e) {
+            console.error('Error al decodificar el token:', e);
+            return null;
         }
-        
-        return responseData;
-    } catch (error) {
-        console.error('Error en la petición API:', error);
-        throw error;
     }
-}
 
-function getUsernameFromToken() {
-    const token = localStorage.getItem("authToken");
-    if (!token) return null;
-
-    const payloadBase64 = token.split('.')[1];
-    try {
-        const payload = JSON.parse(atob(payloadBase64));
-        return payload.username; // Asegurate que el token tenga un campo llamado "username"
-    } catch (e) {
-        console.error("Error al decodificar el token:", e);
-        return null;
+    const userData = parseJwt(token);
+    
+    // Verificar la estructura del token y mostrar en consola para depuración
+    console.log('Datos del token decodificado:', userData);
+    
+    // Verificar si el token tiene la estructura esperada
+    if (!userData) {
+        alert('Error al obtener los datos del usuario. Por favor inicia sesión nuevamente.');
+        window.location.href = 'index.html';
+        return;
     }
-}
 
+    // Extraer información del usuario del token según su estructura
+    let username, email;
+    
+    // Maneja ambas estructuras posibles (con sub o directamente en el token)
+    if (userData.sub) {
+        // Si los datos están dentro de 'sub'
+        username = userData.sub.username;
+        email = userData.sub.email;
+    } else {
+        // Si los datos están directamente en el token
+        username = userData.username;
+        email = userData.email;
+    }
 
-// Función de borrado modificada para usar API
-// Función para mostrar el modal de confirmación
+    // Mostrar los datos básicos del token
+    document.getElementById('nombre-completo').textContent = username || 'No disponible';
+    document.getElementById('email').textContent = email || 'No disponible';
+    document.getElementById('vehiculo-principal').textContent = 'No asignado';
+    
+    // Configurar lista de vehículos secundarios inicialmente vacía
+    const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
+    vehiculosSecundariosElement.innerHTML = '';
+    
+    const li = document.createElement('li');
+    li.className = 'list-group-item';
+    li.textContent = 'No tiene vehículos secundarios';
+    vehiculosSecundariosElement.appendChild(li);
+    
+    // Intentar obtener datos adicionales del servidor
+    fetch(`http://localhost:5000/api/usuario/${username}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            console.log('No se pudieron obtener datos adicionales del servidor');
+            return null;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            // Actualizar con datos más completos del servidor
+            document.getElementById('vehiculo-principal').textContent = data.vehiculo_principal || 'No asignado';
+            
+            // Actualizar vehículos secundarios
+            vehiculosSecundariosElement.innerHTML = '';
+            
+            if (data.vehiculos_secundarios && data.vehiculos_secundarios.length > 0) {
+                data.vehiculos_secundarios.forEach(vehiculo => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = vehiculo;
+                    vehiculosSecundariosElement.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = 'No tiene vehículos secundarios';
+                vehiculosSecundariosElement.appendChild(li);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error al obtener datos adicionales:', error);
+    });
+});
+
+// Función para confirmar borrado
 function confirmarBorrado() {
+    // Obtener token y decodificarlo para obtener el username
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        alert('Debes iniciar sesión para realizar esta acción');
+        return;
+    }
+    
+    // Decodificar token para obtener username
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(window.atob(base64));
+        } catch (e) {
+            console.error('Error al decodificar el token:', e);
+            return null;
+        }
+    }
+    
+    const userData = parseJwt(token);
+    
+    // Extraer username según la estructura del token
+    let username;
+    if (userData.sub) {
+        username = userData.sub.username;
+    } else {
+        username = userData.username;
+    }
+    
+    if (!username) {
+        alert('Error al obtener datos de sesión. Por favor inicia sesión nuevamente.');
+        return;
+    }
+    
     // Paso 1: Pedir nombre de usuario para confirmación
-    const username = prompt("Para confirmar el borrado, ingresa tu nombre de usuario:");
-    print(username)
-    if (!username || username.trim() === "") {
+    const confirmUsername = prompt("Para confirmar el borrado, ingresa tu nombre de usuario:");
+    
+    if (!confirmUsername || confirmUsername.trim() === "") {
         alert("Debes ingresar un nombre de usuario válido.");
+        return;
+    }
+
+    // Verificar que el nombre coincida
+    if (confirmUsername !== username) {
+        alert("El nombre de usuario no coincide con tu cuenta actual.");
         return;
     }
 
@@ -106,12 +174,12 @@ function confirmarBorrado() {
         return;
     }
 
-    // Paso 3: Enviar solicitud a tu ruta específica
+    // Paso 3: Enviar solicitud a la API
     fetch(`http://localhost:5000/api/borrar_usuario/${username}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            'Authorization': `Bearer ${token}`
         }
     })
     .then(response => {
@@ -123,17 +191,15 @@ function confirmarBorrado() {
     .then(data => {
         if (data.success) {
             alert(data.message);
-            localStorage.removeItem('authToken'); // Limpiar sesión
-            window.location.href = "/"; // Redirigir al inicio
+            localStorage.removeItem('authToken'); 
+            localStorage.removeItem('currentUser');
+            window.location.href = "index.html";
         } else {
             throw new Error(data.message);
         }
     })
     .catch(error => {
         console.error("Error:", error);
-        alert(`Error al borrar usuario: ${error.message}`);
+        alert(`Error al borrar usuario: ${error.message || 'Error desconocido'}`);
     });
 }
-// Manejadores de eventos para ambos formularios
-document.getElementById('registerUserForm')?.addEventListener('submit', (e) => handleRegistration(e, false));
-document.getElementById('registerAdminForm')?.addEventListener('submit', (e) => handleRegistration(e, true));

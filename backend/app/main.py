@@ -2,7 +2,7 @@ import random
 from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, url_for
 from dotenv import load_dotenv
 import psycopg2
-from models import User
+from models import User, Owns
 # MODULOS PARA LOGIN
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import check_password_hash
@@ -139,6 +139,7 @@ def login():
         # CREA TOKEN JWT
         access_token = create_access_token(identity={
             'id': user.idUser,
+            'username': user.username,
             'email': user.email,
             'userRole': user.userRole
         })
@@ -391,18 +392,50 @@ def borrar_usuario(username):
             'success': False,
             'message': f'Error al borrar usuario: {str(e)}'
         }), 500
-    
+
 @app.route('/api/usuario/<username>')
 def obtener_datos_usuario(username):
-    user = db.session.query(User).filter_by(username=username).first()
-    owns = db.session.query(Owns).filter_by(username=username).all()
-
-    return jsonify({
-        'nombre_completo': user.full_name,
-        'email': user.email,
-        'vehiculo_principal': user.main_vehicle,
-        'vehiculos_secundarios': [o.vehicle for o in owns if o.vehicle != user.main_vehicle]
-    })
+    try:
+        # Debug: Imprimir el nombre de usuario recibido
+        print(f"Buscando usuario: '{username}'")
+        
+        # Buscar al usuario por su nombre de usuario
+        user = User.query.filter_by(username=username).first()
+        
+        # Debug: Imprimir el resultado de la búsqueda
+        print(f"Usuario encontrado: {user}")
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
+            
+        # Obtener los vehículos del usuario
+        owns = Owns.query.filter_by(username=username).all()
+        
+        # Preparar la lista de vehículos secundarios
+        vehiculos_secundarios = []
+        if owns:
+            for o in owns:
+                if o.vehicle != user.main_vehicle and o.vehicle:
+                    vehiculos_secundarios.append(o.vehicle)
+        
+        # Construir y devolver la respuesta
+        return jsonify({
+            'success': True,
+            'nombre_completo': user.full_name if hasattr(user, 'full_name') else user.username,
+            'email': user.email,
+            'vehiculo_principal': user.main_vehicle if hasattr(user, 'main_vehicle') else '',
+            'vehiculos_secundarios': vehiculos_secundarios
+        }), 200
+        
+    except Exception as e:
+        print(f"Error al obtener datos del usuario: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Error al obtener datos del usuario'
+        }), 500
 
 conn = psycopg2.connect(
     host="localhost",
