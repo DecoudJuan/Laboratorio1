@@ -41,30 +41,19 @@
                     <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
                 </button>
                 <h2>     Añadir Vehiculo     </h2>
-                <form id="registerUserForm" action="/register_vehicle" method="post">
+                <form id="addVehicle">
                     Formatos válidos por país:
                     <ul>
-                        <li><strong>Argentina:</strong> AAA 000 | AA 000 AA </li>
-                        <li><strong>Brasil:</strong> AAA0000 | AAA0A00 </li>
-                        <li><strong>Paraguay:</strong> AAAA 000 | AAAA 000 </li>
-                        <li><strong>Uruguay:</strong> AAA 0000 | AAA 0000 </li>
-                        <li><strong>Chile:</strong> AA-0000 | AAAA-00 </li>
-                        <li><strong>Bolivia:</strong> AAA-000 | AA-00-000</li>
+                        <li><strong>Argentina:</strong> AAA000 | AA000AA</li>
+                        <li><strong>Brasil:</strong> AAA0000 | AAA0A00</li>
+                        <li><strong>Paraguay:</strong> AAAA000 | AAAA000</li>
+                        <li><strong>Uruguay:</strong> AAA0000 | AAA0000</li>
+                        <li><strong>Chile:</strong> AA0000 | AAAA00</li>
+                        <li><strong>Bolivia:</strong> AAA000 | AA00000</li>
                         <li><strong>Venezuela:</strong> AA000AA | AAA00A</li>
                         <li><strong>Colombia:</strong> AAA000 | AAA00A</li>
                     </ul>
-                    <label for="country">Seleccione el país:</label>
-                    <select id="country" name="country">
-                        <option value="all">Todos los países</option>
-                        <option value="argentina">Argentina</option>
-                        <option value="brasil">Brasil</option>
-                        <option value="paraguay">Paraguay</option>
-                        <option value="uruguay">Uruguay</option>
-                        <option value="chile">Chile</option>
-                        <option value="bolivia">Bolivia</option>
-                        <option value="venezuela">Venezuela</option>
-                        <option value="colombia">Colombia</option>
-                    </select>
+                                      
                     <div class="input-group">
                         <label for="username">Patente</label>
                         <input type="text" id="patent" name="patent" required>
