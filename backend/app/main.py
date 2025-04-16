@@ -626,6 +626,71 @@ def datos_Admin():
             'message': f'Error al guardar datos: {str(e)}',
             'success': False
         }), 500
+    
+@app.route('/api/datos_Sector', methods=['POST'])
+def datos_Sector():
+    try:
+        # Obtener valores desde el formulario
+        nombre = request.form.get('name')
+        horario_apertura = request.form.get('HorarioApertura')
+        horario_cierre = request.form.get('Horariocierre')
+        cocheras_disponibles = request.form.get('CocherasDisponibles')
+        nombre_anterior = request.form.get('nombre_anterior')
+
+        if not nombre or not nombre_anterior:
+            return jsonify({'message': 'El nombre del sector es requerido', 'success': False}), 400
+
+        # Buscar el sector por el nombre anterior
+        sector = Sectors.query.filter_by(nameSec=nombre_anterior).first()
+
+        if sector:
+            # Actualizar datos del sector
+            sector.nameSec = nombre
+            sector.openingHour = horario_apertura
+            sector.closingHour = horario_cierre
+            sector.availableParkingSpots = cocheras_disponibles
+
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Datos del sector actualizados correctamente',
+                'success': True
+            }), 200
+        else:
+            return jsonify({'message': 'Sector no encontrado', 'success': False}), 404
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'message': f'Error al actualizar datos del sector: {str(e)}',
+            'success': False
+        }), 500
+
+@app.route('/api/datos_SectorBorrar/<string:nombre>', methods=['DELETE'])
+def eliminar_sector(nombre):
+    try:
+        # Buscar el sector por el nombre
+        sector = Sectors.query.filter_by(nameSec=nombre).first()
+
+        if sector:
+            # Eliminar el sector
+            db.session.delete(sector)
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Sector eliminado correctamente',
+                'success': True
+            }), 200
+        else:
+            return jsonify({'message': 'Sector no encontrado', 'success': False}), 404
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'message': f'Error al eliminar el sector: {str(e)}',
+            'success': False
+        }), 500
+
 
 
 
