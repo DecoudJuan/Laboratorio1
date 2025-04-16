@@ -38,6 +38,51 @@ document.addEventListener('visibilitychange', () => {
 
 const API_BASE_URL = 'http://localhost:5000';
 
+const addVehicleForm = document.getElementById('addVehicleForm');
+const editVehicleForm = document.getElementById('editVehicleForm');
+
+const vehicleForm = document.getElementById('vehicleForm');
+const showAddVehicleBtn = document.getElementById('showAddVehicleBtn');
+const showEditVehicleBtn = document.getElementById('showEditVehicleBtn');
+
+const backTobackToVehicleOptionsFromAdd = document.getElementById('backTobackToVehicleOptionsFromAdd');
+const backTobackToVehicleOptionsFromEdit = document.getElementById('backTobackToVehicleOptionsFromEdit');
+
+const backTo = document.getElementById('backTo');
+
+// Mostrar formularios
+showAddVehicleBtn.addEventListener('click', function() {
+    addVehicleForm.style.display = 'block';
+    editVehicleForm.style.display = 'none';
+    document.getElementById('vehicleForm').style.display = 'none';
+});
+
+showEditVehicleBtn.addEventListener('click', function() {
+    addVehicleForm.style.display = 'none';
+    editVehicleForm.style.display = 'block';
+    document.getElementById('vehicleForm').style.display = 'none';
+});
+
+// Botones de volver (manteniendo tus IDs originales)
+backTobackToVehicleOptionsFromAdd.addEventListener('click', function() {
+    addVehicleForm.style.display = 'none';
+    document.getElementById('vehicleForm').style.display = 'block';
+    $('#vehicleForm').modal('show');
+});
+
+backTobackToVehicleOptionsFromEdit.addEventListener('click', function() {
+    editVehicleForm.style.display = 'none';
+    document.getElementById('vehicleForm').style.display = 'block';
+    $('#vehicleForm').modal('show');
+});
+
+backTo.addEventListener('click', function() {
+    window.location.href = 'principal.html';
+});
+
+
+
+
 // JavaScript corregido
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');

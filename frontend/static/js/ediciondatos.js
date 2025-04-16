@@ -38,24 +38,56 @@ document.addEventListener('visibilitychange', () => {
 
 const API_BASE_URL = 'http://localhost:5000';
 
-// JavaScript corregido
+// Variables para almacenar los datos actuales del usuario
+let datosActuales = {
+    username: '',
+    email: '',
+    VP: '',
+    VP2: ''
+};
+
+// Cargar los datos actuales del usuario al iniciar la página
 document.addEventListener('DOMContentLoaded', function() {
+    // Obtener datos actuales del usuario
+    const currentUser = localStorage.getItem('currentUser');
+    
+    if (currentUser) {
+        // Cargar datos desde localStorage
+        try {
+            const userData = JSON.parse(currentUser);
+            datosActuales.username = userData.username || '';
+            datosActuales.email = userData.email || '';
+            datosActuales.VP = userData.VP || '';
+            datosActuales.VP2 = userData.VP2 || '';
+            
+            // Mostrar los datos actuales en el formulario como placeholders
+            document.getElementById('registerName').placeholder = datosActuales.username;
+            document.getElementById('registerEmail').placeholder = datosActuales.email;
+            document.getElementById('registerVP').placeholder = datosActuales.VP;
+            document.getElementById('registerVP2').placeholder = datosActuales.VP2;
+        } catch (e) {
+            console.error('Error al parsear datos del usuario:', e);
+        }
+    }
+    
     const form = document.querySelector('form');
     const editarBtn = document.getElementById('editar');
     
-    editarBtn.addEventListener('click', function() {
-        const nombreAnterior = prompt("Ingrese su nombre actual para confirmar el cambio:");
-        
-        if (!nombreAnterior) {
-            alert("Debes ingresar tu nombre actual para continuar.");
-            return;
-        }
-        document.getElementById('nombreAnterior').value = nombreAnterior;
-        form.submit(); // Envía el formulario correctamente
-    });
+    if (editarBtn) {
+        editarBtn.addEventListener('click', function() {
+            const nombreAnterior = prompt("Ingrese su nombre actual para confirmar el cambio:");
+            
+            if (!nombreAnterior) {
+                alert("Debes ingresar tu nombre actual para continuar.");
+                return;
+            }
+            document.getElementById('nombreAnterior').value = nombreAnterior;
+            form.submit();
+        });
+    }
 });
 
-// Agrega esto al final de tu archivo js
+// Manejar el envío del formulario de edición
 document.getElementById('editUserForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -68,11 +100,25 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
     
     document.getElementById('nombreAnterior').value = nombreAnterior;
     
-    // Usando la misma estructura que tienes para register
-    const form = e.target;
-    const formData = new FormData(form);
+    // Crear un objeto con los datos actualizados, manteniendo los valores actuales si los campos están vacíos
+    const datosActualizados = {
+        nombre_anterior: nombreAnterior,
+        username: document.getElementById('registerName').value || datosActuales.username,
+        email: document.getElementById('registerEmail').value || datosActuales.email,
+        VP: document.getElementById('registerVP').value || datosActuales.VP,
+        VP2: document.getElementById('registerVP2').value || datosActuales.VP2
+    };
     
-    fetch('http://localhost:5000/api/guardar_datos', {
+    // Crear FormData para el envío
+    const formData = new FormData();
+    
+    // Agregar todos los campos al FormData
+    Object.keys(datosActualizados).forEach(key => {
+        formData.append(key, datosActualizados[key]);
+    });
+    
+    // Enviar los datos al servidor
+    fetch(`${API_BASE_URL}/api/guardar_datos`, {
         method: 'POST',
         body: formData
     })
@@ -80,6 +126,17 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
     .then(data => {
         if (data.success) {
             alert(data.message || 'Datos actualizados correctamente');
+            
+            // Actualizar los datos en localStorage
+            try {
+                const currentUserData = JSON.parse(localStorage.getItem('currentUser')) || {};
+                const updatedUserData = {...currentUserData, ...datosActualizados};
+                delete updatedUserData.nombre_anterior; // No guardar este campo
+                localStorage.setItem('currentUser', JSON.stringify(updatedUserData));
+            } catch (e) {
+                console.error('Error al actualizar datos locales:', e);
+            }
+            
             window.location.href = 'principal.html';
         } else {
             alert(data.message || 'Error al guardar los datos');

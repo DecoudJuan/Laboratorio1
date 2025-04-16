@@ -21,6 +21,7 @@
     </div>
 
     <div class="main-content">    
+        <div class="general-container">
         <h1 style="color: rgb(0, 0, 0);">Mis Datos - Editar</h1>
         <ul style="color: black; list-style-type: none; padding-left: 0;">
             <form id="editUserForm" action="guardar_datos" method="post">
@@ -44,13 +45,16 @@
                 </div>
                 <input type="hidden" id="nombreAnterior" name="nombre_anterior">
                 <!-- Otros campos... -->
-                <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
-                <button type="button" class="btn btn-success mt-3" style="background-color: #45a049;" onclick="location.href='edicionvehiculo.html';">
-                Editar Vehiculo
-                </button>
+                <div class="d-flex justify-content-center" style="gap: 10%;">
+                    <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
+                    <button type="button" class="btn btn-success mt-3" style="background-color: #45a049;" onclick="location.href='edicionvehiculo.html';">
+                    Editar Vehiculo/s
+                    </button>
+                </div>
                 
             </form>
         </ul>
+    </div>
     </div>
 
 

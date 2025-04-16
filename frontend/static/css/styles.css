@@ -9,6 +9,10 @@ body {
     padding: 20PX;
 }
 
+#addVehicleForm, #editVehicleForm {
+    display: none;
+}
+
 .password-container {
     position: relative;
     width: 100%;
@@ -292,10 +296,10 @@ h2 {
 
 .mensaje-bienvenida {
     position: relative;
-    top: 200px; /* Ajusta según necesites */
+    top: 200px; 
     left: 50%;
     transform: translateX(-50%);
-    width: 80%; /* Ajusta el ancho si es necesario */
+    width: 80%; 
     text-align: center;
 }
 
