@@ -23,7 +23,7 @@
     </div>
 
     <div class="main-content">  
-            <!-- Modal de Registro -->
+            <!-- Modal de Vehiculo -->
             <div class="general-container" id="vehicleForm">
                 <button type="button" class="back-button" id="backTo">
                     <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
@@ -41,84 +41,58 @@
                     <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
                 </button>
                 <h2>     Añadir Vehiculo     </h2>
-                <form id="registerUserForm" action="/register" method="post">
+                <form id="registerUserForm" action="/register_vehicle" method="post">
+                    Formatos válidos por país:
+                    <ul>
+                        <li><strong>Argentina:</strong> AAA 000 | AA 000 AA </li>
+                        <li><strong>Brasil:</strong> AAA0000 | AAA0A00 </li>
+                        <li><strong>Paraguay:</strong> AAAA 000 | AAAA 000 </li>
+                        <li><strong>Uruguay:</strong> AAA 0000 | AAA 0000 </li>
+                        <li><strong>Chile:</strong> AA-0000 | AAAA-00 </li>
+                        <li><strong>Bolivia:</strong> AAA-000 | AA-00-000</li>
+                        <li><strong>Venezuela:</strong> AA000AA | AAA00A</li>
+                        <li><strong>Colombia:</strong> AAA000 | AAA00A</li>
+                    </ul>
+                    <label for="country">Seleccione el país:</label>
+                    <select id="country" name="country">
+                        <option value="all">Todos los países</option>
+                        <option value="argentina">Argentina</option>
+                        <option value="brasil">Brasil</option>
+                        <option value="paraguay">Paraguay</option>
+                        <option value="uruguay">Uruguay</option>
+                        <option value="chile">Chile</option>
+                        <option value="bolivia">Bolivia</option>
+                        <option value="venezuela">Venezuela</option>
+                        <option value="colombia">Colombia</option>
+                    </select>
                     <div class="input-group">
-                        <label for="username">Nombre Completo</label>
-                        <input type="text" id="username" name="username" required>
+                        <label for="username">Patente</label>
+                        <input type="text" id="patent" name="patent" required>
+                    </div>                    
+                    <div class="input-group">
+                        <label for="brand">Marca</label>
+                        <select id="brand" name="brand" required>
+                            <option value="">Seleccione una marca</option>
+                        </select>
                     </div>
                     <div class="input-group">
-                        <label for="phone">Teléfono</label>
-                        <input type="tel" id="phone" name="phone" required>
+                        <label for="model">Modelo</label>
+                        <select id="model" name="model" required disabled>
+                            <option value="">Seleccione un modelo</option>
+                        </select>
                     </div>
-                    <div class="input-group">
-                        <label for="email">Correo Electrónico</label>
-                        <input type="email" id="email" name="email" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="userpassword">Contraseña</label>
-                        <div class="password-field-container">
-                            <input type="password" id="userpassword" name="password" required>
-                            <button type="button" class="password-toggle-btn toggle-password" data-target="userpassword">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="userconfirmPassword">Confirmar Contraseña</label>
-                        <div class="password-field-container">
-                            <input type="password" id="userconfirmPassword" name="confirmPassword" required>
-                            <button type="button" class="password-toggle-btn toggle-password" data-target="userconfirmPassword">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="button">Guardar</button>
+                    <button type="submit" class="button">Añadir</button>
                     <div id="registerMessage" class="message"></div>
                 </form>
             </div>
 
-            <!-- Formulario de Registro de Administrador (inicialmente oculto) -->
+            <!-- Editar Vehiculo (inicialmente oculto) -->
             <div class="general-container" id="editVehicleForm">
                 <button type="button" class="back-button" id="backTobackToVehicleOptionsFromEdit">
                     <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
                 </button>
                 <h2>     Editar Vehiculo     </h2>
                 <form id="registerAdminForm" action="/register" method="post">
-                    <div class="input-group">
-                        <label for="adminUsername">Nombre Completo</label>
-                        <input type="text" id="adminUsername" name="username" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="adminPhone">Teléfono</label>
-                        <input type="tel" id="adminPhone" name="phone" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="adminEmail">Correo Electrónico</label>
-                        <input type="email" id="adminEmail" name="email" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="adminpassword">Contraseña</label>
-                        <div class="password-field-container">
-                            <input type="password" id="adminpassword" name="password" required minlength="6">
-                            <button type="button" class="password-toggle-btn toggle-password" data-target="adminpassword">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="adminconfirmPassword">Confirmar Contraseña</label>
-                        <div class="password-field-container">
-                            <input type="password" id="adminconfirmPassword" name="confirmPassword" required>
-                            <button type="button" class="password-toggle-btn toggle-password" data-target="loginPassword">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="adminCode">Código de Administrador</label>
-                        <input type="text" id="adminCode" name="adminCode" required>
-                    </div>
                     <button type="submit" class="button admin-button">Guardar</button>
                     <div id="adminRegisterMessage" class="message"></div>
                 </form>

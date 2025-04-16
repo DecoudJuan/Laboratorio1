@@ -2,6 +2,7 @@ import random
 from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, url_for
 from dotenv import load_dotenv
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from models import User, Owns
 # MODULOS PARA LOGIN
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -463,7 +464,6 @@ conn = psycopg2.connect(
     password="qwerty"
 )
 
-
 # EDICION DE DATOS
 
 @app.route('/api/guardar_datos', methods=['POST'])
@@ -692,79 +692,242 @@ def eliminar_sector(nombre):
         }), 500
 
 
+def get_db_connection():
+    conn = psycopg2.connect(
+    host="localhost",
+    database="postgres",
+    user="postgres",
+    password="qwerty"
+    )
+    conn.cursor_factory = RealDictCursor
+    return conn
 
+# Endpoints para marcas y modelos
 
-@app.route('/api/guardar_datos_vehiculo', methods=['POST'])
-def guardar_datos_vehiculo():
+@app.route('/api/brands')
+def get_brands():
+    """Endpoint para obtener todas las marcas de autos."""
     try:
-        # Obtener valores desde el formulario
-        marca = request.form.get('marca')
-        modelo = request.form.get('modelo')
-        patente = request.form.get('patente')
-        patenteActual = request.form.get('patenteActual')
-        
-        # Validar campos requeridos
-        if not patenteActual:
-            return jsonify({'message': 'La patente actual es requerida', 'success': False}), 400
-            
-        if not patente:
-            return jsonify({'message': 'La nueva patente es requerida', 'success': False}), 400
+        conn = get_db_connection()  # Asegúrate de tener esta función definida en tu app
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("SELECT brand_id, brand_name FROM car_brands ORDER BY brand_name")
+        brands = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(brands)
+    except Exception as e:
+        print(f"Error al obtener marcas: {e}")
+        return jsonify([]), 500
 
-        # Buscar si existe un vehículo con la patente actual
-        vehiculo = Vehicle.query.filter_by(idVehicle=patenteActual).first()
+@app.route('/api/models/<int:brand_id>')
+def get_models(brand_id):
+    """Endpoint para obtener modelos de una marca específica."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute(
+            "SELECT model_id, model_name FROM car_models WHERE brand_id = %s AND is_currently_sold = TRUE ORDER BY model_name",
+            (brand_id,)
+        )
+        models = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(models)
+    except Exception as e:
+        print(f"Error al obtener modelos: {e}")
+        return jsonify([]), 500
+    
 
-        if vehiculo:
-            # Si se está cambiando la patente, verificar que la nueva no exista ya
-            if patente != patenteActual:
-                vehiculo_existente = Vehicle.query.filter_by(idVehicle=patente).first()
-                if vehiculo_existente:
-                    return jsonify({
-                        'message': 'Ya existe un vehículo con esa patente',
-                        'success': False
-                    }), 400
+@app.route('/api/register_vehicle', methods=['POST'])
+@jwt_required()
+def register_vehicle():
+    try:
+        # Obtener el usuario actual desde el token JWT
+        current_user = get_jwt_identity()
+        user_id = current_user['id']
+
+        # Obtener datos del vehículo del formulario
+        data = request.get_json()
+        vehicle_id = data.get('patent')  # La patente sirve como ID del vehículo
+        brand = data.get('brand')
+        model = data.get('model')
+
+        # Validar datos requeridos
+        if not vehicle_id or not brand or not model:
+            return jsonify({
+                'success': False,
+                'message': 'Todos los campos son obligatorios'
+            }), 400
+
+        # Verificar si el vehículo ya existe
+        existing_vehicle = Vehicle.query.filter_by(idVehicle=vehicle_id).first()
+        if existing_vehicle:
+            # Si ya existe, verificar si ya pertenece a este usuario
+            existing_ownership = Owns.query.filter_by(
+                idUser=user_id, idVehicle=vehicle_id
+            ).first()
             
-            # Si existe, actualiza los datos del vehículo
-            vehiculo.idVehicle = patente
-            if marca:  # Solo actualiza si se proporciona un valor
-                vehiculo.brand = marca
-            if modelo:  # Solo actualiza si se proporciona un valor
-                vehiculo.model = modelo
-      
-            db.session.commit()
-        
-            # También actualizar cualquier referencia al vehículo en la tabla Owns
-            if patente != patenteActual:
-                owns_registros = Owns.query.filter_by(idVehicle=patenteActual).all()
-                for registro in owns_registros:
-                    registro.vehicle = patente
+            if existing_ownership:
+                return jsonify({
+                    'success': False,
+                    'message': 'Este vehículo ya está registrado a tu nombre'
+                }), 400
+            else:
+                # Si el vehículo existe pero no pertenece al usuario, crear la relación
+                new_ownership = Owns(idUser=user_id, idVehicle=vehicle_id)
+                db.session.add(new_ownership)
                 db.session.commit()
-              
-            
-            return jsonify({
-                'message': 'Datos del vehículo actualizados correctamente',
-                'success': True
-            }), 200
-        else:
-            # Si no existe, crear un nuevo vehículo
-            nuevo_vehiculo = Vehicle(
-                idVehicle=patente,
-                brand=marca if marca else "",
-                model=modelo if modelo else ""
-            )
-            db.session.add(nuevo_vehiculo)
-            db.session.commit()
-            
-            return jsonify({
-                'message': 'Nuevo vehículo creado correctamente',
-                'success': True
-            }), 201
-
+                
+                return jsonify({
+                    'success': True,
+                    'message': 'Vehículo asociado correctamente a tu cuenta'
+                }), 200
+        
+        # Si el vehículo no existe, crearlo
+        new_vehicle = Vehicle(
+            idVehicle=vehicle_id,
+            brand=brand,
+            model=model
+        )
+        
+        # Guardar el vehículo
+        db.session.add(new_vehicle)
+        db.session.flush()  # Para obtener el ID antes de crear la relación
+        
+        # Crear la relación de propiedad
+        new_ownership = Owns(idUser=user_id, idVehicle=vehicle_id)
+        db.session.add(new_ownership)
+        
+        # Guardar todos los cambios
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Vehículo registrado correctamente',
+            'vehicle_id': vehicle_id
+        }), 201
+        
     except Exception as e:
         db.session.rollback()
-        print(f"Error en guardar_datos_vehiculo: {str(e)}")  # Para debugging
+        print(f"Error al registrar vehículo: {str(e)}")
         return jsonify({
-            'message': f'Error al guardar datos del vehículo: {str(e)}',
-            'success': False
+            'success': False,
+            'message': f'Error al registrar el vehículo: {str(e)}'
+        }), 500
+    
+
+@app.route('/api/user_vehicles', methods=['GET'])
+@jwt_required()
+def get_user_vehicles():
+    try:
+        # Obtener el usuario actual desde el token JWT
+        current_user = get_jwt_identity()
+        user_id = current_user['id']
+        
+        # Consultar los vehículos del usuario
+        user_vehicles = db.session.query(Vehicle).join(Owns).filter(Owns.idUser == user_id).all()
+        
+        # Formatear los datos para enviarlos como respuesta JSON
+        vehicles_list = []
+        for vehicle in user_vehicles:
+            vehicles_list.append({
+                'idVehicle': vehicle.idVehicle,
+                'brand': vehicle.brand,
+                'model': vehicle.model
+            })
+        
+        return jsonify({
+            'success': True,
+            'vehicles': vehicles_list
+        }), 200
+        
+    except Exception as e:
+        print(f'Error al obtener vehículos del usuario: {str(e)}')
+        return jsonify({
+            'success': False,
+            'message': 'Error al obtener la lista de vehículos'
+        }), 500
+    
+# ACTUALIZA VEHICULO
+
+@app.route('/api/edit_vehicle', methods=['PUT'])
+@jwt_required()
+def update_vehicle():
+    try:
+        # OBTIENE USUARIO DESDE TOKEN
+        current_user = get_jwt_identity()
+        user_id = current_user['id']
+        
+        # Obtener datos del vehículo
+        data = request.get_json()
+        old_vehicle_id = data.get('oldPatent')
+        new_vehicle_id = data.get('newPatent')
+        brand = data.get('brand')
+        model = data.get('model')
+        
+        # Validar datos requeridos
+        if not old_vehicle_id or not new_vehicle_id or not brand or not model:
+            return jsonify({
+                'success': False,
+                'message': 'Todos los campos son obligatorios'
+            }), 400
+            
+        # Verificar que el vehículo existe y pertenece al usuario
+        ownership = db.session.query(Owns).filter_by(
+            idUser=user_id, idVehicle=old_vehicle_id
+        ).first()
+        
+        if not ownership:
+            return jsonify({
+                'success': False,
+                'message': 'No tienes permiso para editar este vehículo o no existe'
+            }), 403
+            
+        # Si la patente cambió, verificar que la nueva no exista
+        if old_vehicle_id != new_vehicle_id:
+            existing_vehicle = Vehicle.query.filter_by(idVehicle=new_vehicle_id).first()
+            if existing_vehicle:
+                return jsonify({
+                    'success': False,
+                    'message': 'La patente ya está registrada para otro vehículo'
+                }), 400
+                
+            # Crear nuevo vehículo con la nueva patente
+            new_vehicle = Vehicle(
+                idVehicle=new_vehicle_id,
+                brand=brand,
+                model=model
+            )
+            db.session.add(new_vehicle)
+            
+            # Actualizar la relación de propiedad
+            ownership.idVehicle = new_vehicle_id
+            
+            # Eliminar el vehículo anterior
+            old_vehicle = Vehicle.query.get(old_vehicle_id)
+            if old_vehicle:
+                db.session.delete(old_vehicle)
+        else:
+            # Si la patente no cambió, solo actualizar marca y modelo
+            vehicle = Vehicle.query.get(old_vehicle_id)
+            if vehicle:
+                vehicle.brand = brand
+                vehicle.model = model
+        
+        # Guardar cambios
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Vehículo actualizado correctamente'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al actualizar vehículo: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al actualizar el vehículo: {str(e)}'
         }), 500
 
 if __name__ == '__main__':
