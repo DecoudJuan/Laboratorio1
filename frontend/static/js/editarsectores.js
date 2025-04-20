@@ -1,68 +1,133 @@
+function preventCaching() {
+    // NO ALMACENA CACHÉ
+    if (window.location.protocol != 'file:') {
+        window.history.replaceState(null, document.title, window.location.href);
+    }
+}
+
+preventCaching();
+
+// Verificación inmediata de autenticación (se ejecuta al cargar el script)
+function checkToken() {
+    const authToken = localStorage.getItem('authToken');
+    const currentUser = localStorage.getItem('currentUser');
+
+    // Si no hay token o usuario, redirigir al login
+    if (!authToken || !currentUser) {
+        window.location.replace('admin.html');
+        return;
+    }
+}
+
+// Verificar autenticación cuando la página vuelve a estar activa
+window.addEventListener('pageshow', (event) => {
+    // Si la página se restaura desde el caché (botón atrás)
+    if (event.persisted) {
+        console.log('Página restaurada desde caché - verificando autenticación');
+        checkToken();
+    }
+});
+
+// También verificar cuando la página vuelve a estar visible
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        console.log('Página visible - verificando autenticación');
+        checkToken();
+    }
+});
+
+const API_BASE_URL = 'http://localhost:5000';
+
+// Variables para almacenar los datos actuales del usuario
+let datosActuales = {
+    name: '',
+    HorarioApertura: '',
+    HorarioCierre: '',
+    CocherasDisponibles: '',
+};
+
+// Cargar los datos actuales del usuario al iniciar la página
 document.addEventListener('DOMContentLoaded', function() {
-    const guardarBtn = document.getElementById('guardar');
-    const borrarBtn = document.getElementById('borrarSector');
-    const form = document.getElementById('sectorForm');
-
-    // Función para GUARDAR datos
-    guardarBtn.addEventListener('click', function() {
-        const nombreAnterior = prompt("Ingrese el nombre actual del sector para confirmar la modificación:");
-
-        if (!nombreAnterior) {
-            alert("Debes ingresar el nombre actual para continuar.");
-            return;
+    // Obtener datos actuales del usuario
+    const currentUser = localStorage.getItem('currentUser');
+    
+    if (currentUser) {
+        // Cargar datos desde localStorage
+        try {
+            const userData = JSON.parse(currentUser);
+            datosActuales.name = userData.name || '';
+            datosActuales.HorarioApertura = userData.HorarioApertura || '';
+            datosActuales.HorarioCierre = userData.HorarioCierre || '';
+            datosActuales.CocherasDisponibles = userData.CocherasDisponibles || '';
+            
+            // Mostrar los datos actuales en el formulario como placeholders
+            document.getElementById('registerName').placeholder = datosActuales.name;
+            document.getElementById('registerHorarioApertura').placeholder = datosActuales.HorarioApertura;
+            document.getElementById('registerHorariocierre').placeholder = datosActuales.HorarioCierre;
+            document.getElementById('registerCocherasDisponibles').placeholder = datosActuales.CocherasDisponibles;
+        } catch (e) {
+            console.error('Error al parsear datos del sector:', e);
         }
+    }
+});
 
-        document.getElementById('nombreAnterior').value = nombreAnterior;
-
-        const formData = new FormData(form);
-
-        fetch('http://localhost:5000/api/datos_Sector', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message || 'Datos actualizados correctamente');
-                window.location.href = 'index.html';
-            } else {
-                alert(data.message || 'Error al guardar los datos');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al procesar la solicitud');
-        });
+// Manejar el envío del formulario de edición
+document.getElementById('sectorForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const nombreAnterior = prompt("Ingrese su nombre actual para confirmar el cambio:");
+    
+    if (!nombreAnterior) {
+        alert("Debes ingresar tu nombre actual para continuar.");
+        return;
+    }
+    
+    document.getElementById('nombreAnterior').value = nombreAnterior;
+    
+    // Crear un objeto con los datos actualizados, manteniendo los valores actuales si los campos están vacíos
+    const datosActualizados = {
+        nombre_anterior: nombreAnterior,
+        name: document.getElementById('registerName').value || datosActuales.name,
+        HorarioApertura: document.getElementById('registerHorarioApertura').value || datosActuales.HorarioApertura,
+        HorarioCierre: document.getElementById('registerHorariocierre').value || datosActuales.HorarioCierre,
+        CocherasDisponibles: document.getElementById('registerCocherasDisponibles').value || datosActuales.CocherasDisponibles
+    };
+    
+    // Crear FormData para el envío
+    const formData = new FormData();
+    
+    // Agregar todos los campos al FormData
+    Object.keys(datosActualizados).forEach(key => {
+        formData.append(key, datosActualizados[key]);
     });
-
-    // Función para BORRAR sector
-    borrarBtn.addEventListener('click', function () {
-        const nombre = document.getElementById('registerName').value;
-
-        if (!nombre) {
-            alert("Por favor, ingrese el nombre del sector que desea borrar.");
-            return;
+    
+    // Enviar los datos al servidor
+    fetch(`${API_BASE_URL}/api/datos_Sector`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Datos actualizados correctamente');
+            
+            // Actualizar los datos en localStorage
+            try {
+                const currentUserData = JSON.parse(localStorage.getItem('currentUser')) || {};
+                const updatedUserData = {...currentUserData, ...datosActualizados};
+                delete updatedUserData.nombre_anterior; // No guardar este campo
+                localStorage.setItem('currentUser', JSON.stringify(updatedUserData));
+            } catch (e) {
+                console.error('Error al actualizar datos locales:', e);
+            }
+            
+            window.location.href = 'admin.html';
+        } else {
+            alert(data.message || 'Error al guardar los datos');
         }
-
-        const confirmacion = confirm(`¿Estás seguro de que querés borrar el sector "${nombre}"? Esta acción no se puede deshacer.`);
-
-        if (confirmacion) {
-            fetch(`http://localhost:5000/api/datos_SectorBorrar/${encodeURIComponent(nombre)}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message || 'Sector eliminado correctamente.');
-                    window.location.href = 'index.html';
-                } else {
-                    alert(data.message || 'Error al borrar el sector.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Hubo un error al procesar la solicitud.');
-            });
-        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
     });
 });

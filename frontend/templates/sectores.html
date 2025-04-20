@@ -23,37 +23,35 @@
     <div class="main-content">    
         <h1 style="color: rgb(0, 0, 0);">Sector - Editar</h1>
         <ul style="color: black; list-style-type: none; padding-left: 0;">
-            <form id="sectorForm" action="/api/datos_Sector" method="post">
+            <form id="sectorForm" action="datos_Sector" method="post">
                 <div class="input-group">
                     <div class="password-field-container">
                         <label for="registerName">Nombre </label>
                         <input type="text" id="registerName" name="name" class="form-control">
                     </div>
                     <div class="password-field-container">
-                        <label for="registerName">Horario Apertura</label>
+                        <label for="registerHorarioApertura">Horario Apertura</label>
                         <input type="text" id="registerHorarioApertura" name="HorarioApertura" class="form-control">
                     </div>
                     <div class="password-field-container">
-                        <label for="registerName">Horario Cierre</label>
-                        <input type="text" id="registerHorariocierre" name="Horariocierre" class="form-control">
+                        <label for="registerHorariocierre">Horario Cierre</label>
+                        <input type="text" id="registerHorariocierre" name="HorarioCierre" class="form-control">
                     </div>
                     <div class="password-field-container">
-                        <label for="registerName">Cocheras disponibles</label>
+                        <label for="registerCocherasDisponibles">Cocheras disponibles</label>
                         <input type="text" id="registerCocherasDisponibles" name="CocherasDisponibles" class="form-control">
                     </div>
                 </div>
                 <input type="hidden" id="nombreAnterior" name="nombre_anterior">
                 <!-- Otros campos... -->
-                <button type="button" class="btn btn-success mt-3" id="guardar" style="background-color: #45a049;">Guardar</button>
-                <button type="button" class="btn btn-success mt-3" id="guardar" style="background-color: #ff0000;">Borrar</button>
-                
+                <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
+                <button type="button" class="btn btn-danger mt-3" style="background-color: #ff0000;">Borrar</button>
             </form>
         </ul>
     </div>
 
-
         </ul>
     </div>
-<script src="../static/js/sectores.js"></script>
+<script src="../static/js/editarsectores.js"></script>
 </body>
 </html>
