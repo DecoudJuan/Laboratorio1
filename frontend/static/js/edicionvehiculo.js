@@ -226,7 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         brand: brandId, 
                         model: modelId 
                     }),
-                    credentials: 'include' // Incluir cookies si tu backend las usa
                 });
     
                 console.log('Respuesta status:', response.status);
