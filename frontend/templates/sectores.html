@@ -45,7 +45,9 @@
                 <input type="hidden" id="nombreAnterior" name="nombre_anterior">
                 <!-- Otros campos... -->
                 <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
-                <button type="button" class="btn btn-danger mt-3" style="background-color: #ff0000;">Borrar</button>
+                <button type="button" class="button" style="background-color: #ff0000" data-nameSec="{{ nameSec }}" onclick="confirmarBorradoSector(this) ">
+                    Borrar
+                </button>
             </form>
         </ul>
     </div>

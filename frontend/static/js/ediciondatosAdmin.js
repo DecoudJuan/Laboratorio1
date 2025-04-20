@@ -14,7 +14,7 @@ function checkToken() {
 
     // Si no hay token o usuario, redirigir al login
     if (!authToken || !currentUser) {
-        window.location.replace('index.html');
+        window.location.replace('admin.html');
         return;
     }
 }
