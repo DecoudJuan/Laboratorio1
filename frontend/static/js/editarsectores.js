@@ -38,7 +38,7 @@ document.addEventListener('visibilitychange', () => {
 
 const API_BASE_URL = 'http://localhost:5000';
 
-// Variables para almacenar los datos actuales del sector
+// Variables para almacenar los datos actuales del usuario
 let datosActuales = {
     name: '',
     HorarioApertura: '',
@@ -46,9 +46,9 @@ let datosActuales = {
     CocherasDisponibles: '',
 };
 
-// Cargar los datos actuales del sector al iniciar la página
+// Cargar los datos actuales del usuario al iniciar la página
 document.addEventListener('DOMContentLoaded', function() {
-    // Obtener datos actuales del sector
+    // Obtener datos actuales del usuario
     const currentUser = localStorage.getItem('currentUser');
     
     if (currentUser) {
@@ -64,19 +64,17 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('registerName').placeholder = datosActuales.name;
             document.getElementById('registerCocherasDisponibles').placeholder = datosActuales.CocherasDisponibles;
             
-            // Convertir enteros a formato de hora para los inputs (redondeando a 15 minutos)
+            // Convertir enteros a formato de hora para los inputs
             if (datosActuales.HorarioApertura) {
                 const horasApertura = Math.floor(datosActuales.HorarioApertura / 60);
-                let minutosApertura = datosActuales.HorarioApertura % 60;
-                minutosApertura = Math.round(minutosApertura / 15) * 15; // Redondear a 15 minutos
+                const minutosApertura = datosActuales.HorarioApertura % 60;
                 const timeStringApertura = `${horasApertura.toString().padStart(2, '0')}:${minutosApertura.toString().padStart(2, '0')}`;
                 document.getElementById('registerHorarioApertura').value = timeStringApertura;
             }
             
             if (datosActuales.HorarioCierre) {
                 const horasCierre = Math.floor(datosActuales.HorarioCierre / 60);
-                let minutosCierre = datosActuales.HorarioCierre % 60;
-                minutosCierre = Math.round(minutosCierre / 15) * 15; // Redondear a 15 minutos
+                const minutosCierre = datosActuales.HorarioCierre % 60;
                 const timeStringCierre = `${horasCierre.toString().padStart(2, '0')}:${minutosCierre.toString().padStart(2, '0')}`;
                 document.getElementById('registerHorariocierre').value = timeStringCierre;
             }
@@ -99,7 +97,7 @@ document.getElementById('sectorForm').addEventListener('submit', function(e) {
     
     document.getElementById('nombreAnterior').value = nombreAnterior;
     
-    // Convertir valores de tiempo a enteros (minutos desde medianoche) redondeando a 15 minutos
+    // Convertir valores de tiempo a enteros (minutos desde medianoche)
     const horarioAperturaUI = document.getElementById('registerHorarioApertura').value;
     const horarioCierreUI = document.getElementById('registerHorariocierre').value;
     
@@ -108,14 +106,12 @@ document.getElementById('sectorForm').addEventListener('submit', function(e) {
     
     if (horarioAperturaUI) {
         const [horasApertura, minutosApertura] = horarioAperturaUI.split(':');
-        const minutosRedondeadosApertura = Math.round(parseInt(minutosApertura) / 15) * 15;
-        horarioAperturaInt = (parseInt(horasApertura) * 60) + minutosRedondeadosApertura;
+        horarioAperturaInt = (parseInt(horasApertura) * 60) + parseInt(minutosApertura);
     }
     
     if (horarioCierreUI) {
         const [horasCierre, minutosCierre] = horarioCierreUI.split(':');
-        const minutosRedondeadosCierre = Math.round(parseInt(minutosCierre) / 15) * 15;
-        horarioCierreInt = (parseInt(horasCierre) * 60) + minutosRedondeadosCierre;
+        horarioCierreInt = (parseInt(horasCierre) * 60) + parseInt(minutosCierre);
     }
     
     // Crear un objeto con los datos actualizados, manteniendo los valores actuales si los campos están vacíos
@@ -159,21 +155,14 @@ document.getElementById('sectorForm').addEventListener('submit', function(e) {
     });
 });
 
-function confirmarBorradoSector(button) {
-    const nombreSector = button.getAttribute('data-nameSec');
-    const confirmInput = prompt(`Para confirmar el borrado, escribe el nombre exacto del sector "${nombreSector}":`);
-    
+function confirmarBorradoSector() {
+    const confirmInput = prompt(`Para confirmar el borrado, escribe el nombre exacto del sector:`);
     if (!confirmInput || confirmInput.trim() === '') {
         alert("Debes ingresar un nombre válido.");
         return;
     }
 
     const nombreConfirmado = confirmInput.trim();
-
-    if (nombreConfirmado !== nombreSector) {
-        alert("El nombre ingresado no coincide. Borrado cancelado.");
-        return;
-    }
 
     if (!confirm(`¿Estás seguro de que deseas borrar permanentemente el sector "${nombreConfirmado}"?`)) {
         alert("Borrado cancelado.");
