@@ -303,3 +303,25 @@ h2 {
     text-align: center;
 }
 
+.general-container {
+    width: 100%;
+    max-width: 800px; /* Tamaño máximo del "cuadro blanco" */
+    height: auto;
+    margin: 0 auto; /* Centra horizontalmente */
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.centered-image {
+    width: 75%;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+}

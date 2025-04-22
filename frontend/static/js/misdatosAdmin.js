@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mostrar los datos básicos del token
     document.getElementById('nombre-completo').textContent = username || 'No disponible';
     document.getElementById('email').textContent = email || 'No disponible';
-    document.getElementById('vehiculo-principal').textContent = 'No asignado';
+    document.getElementById('parkings').textContent = 'No asignado';
     
     // Configurar lista de vehículos secundarios inicialmente vacía
     const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
