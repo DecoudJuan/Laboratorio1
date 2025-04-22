@@ -467,20 +467,9 @@ def borrar_usuario(username):
         }), 500
     
 @app.route('/api/borrar_sector/<nameSec>', methods=['DELETE'])
-@jwt_required()
 def borrar_sector(nameSec):
     try:
-        # Obtener identidad del usuario desde el token
-        current_user = get_jwt_identity()
-        
-        # Verificar si el usuario es administrador
-        if current_user.get('userRole') != 'administrador':
-            return jsonify({
-                'success': False,
-                'message': 'No tienes permiso para borrar sectores'
-            }), 403
-
-        # Buscar el sector por nombre exacto (asumiendo que nameSec es único)
+        # No JWT check, just verify the sector exists
         sector = Sectors.query.filter_by(nameSec=nameSec).first()
 
         if not sector:
@@ -504,7 +493,6 @@ def borrar_sector(nameSec):
             'success': False,
             'message': f'Error al borrar sector: {str(e)}'
         }), 500
-
 
 @app.route('/api/usuario/<username>')
 def obtener_datos_usuario(username):

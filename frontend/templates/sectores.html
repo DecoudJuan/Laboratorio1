@@ -44,10 +44,18 @@
                 </div>
                 <input type="hidden" id="nombreAnterior" name="nombre_anterior">
                 <!-- Otros campos... -->
-                <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
-                <button type="button" class="button" style="background-color: #ff0000" data-nameSec="{{ nameSec }}" onclick="confirmarBorradoSector(this) ">
-                    Borrar
-                </button>
+                <div class="d-flex gap-3 mt-3">
+                    <button type="submit" class="btn btn-success" style="background-color: #45a049;">Guardar</button>
+                
+                    <button 
+                        type="button" 
+                        class="btn btn-danger"
+                        style="background-color: #ff0000;" 
+                        data-nameSec="{{ nameSec }}" 
+                        onclick="confirmarBorradoSector(this)">
+                        Borrar
+                    </button>
+                </div>
             </form>
         </ul>
     </div>

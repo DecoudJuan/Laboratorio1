@@ -133,55 +133,23 @@ document.getElementById('sectorForm').addEventListener('submit', function(e) {
 });
 
 function confirmarBorradoSector(button) {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        alert('Debes iniciar sesión para realizar esta acción');
-        return;
-    }
-
-    function parseJwt(token) {
-        try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            return JSON.parse(window.atob(base64));
-        } catch (e) {
-            console.error('Error al decodificar el token:', e);
-            return null;
-        }
-    }
-
-    const userData = parseJwt(token);
-    const username = userData?.username || userData?.sub?.username;
-
-    if (!username) {
-        alert('Error al obtener datos de sesión. Por favor inicia sesión nuevamente.');
-        return;
-    }
-
-    const sectorName = button.getAttribute('data-nameSec');
-
     const confirmInput = prompt(`Para confirmar el borrado, escribe el nombre exacto del sector:`);
     if (!confirmInput || confirmInput.trim() === '') {
         alert("Debes ingresar un nombre válido.");
         return;
     }
 
-    // Comparación exacta (opcionalmente sensible o insensible a mayúsculas)
-    if (confirmInput.trim() !== sectorName.trim()) {
-        alert("El nombre ingresado no coincide con el nombre del sector.");
-        return;
-    }
+    const nombreConfirmado = confirmInput.trim();
 
-    if (!confirm(`¿Estás seguro de que deseas borrar permanentemente el sector "${sectorName}"?`)) {
+    if (!confirm(`¿Estás seguro de que deseas borrar permanentemente el sector "${nombreConfirmado}"?`)) {
         alert("Borrado cancelado.");
         return;
     }
 
-    fetch(`http://localhost:5000/api/borrar_sector/${encodeURIComponent(sectorName)}`, {
+    fetch(`http://localhost:5000/api/borrar_sector/${encodeURIComponent(nombreConfirmado)}`, {
         method: 'DELETE',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
         }
     })
     .then(response => {
@@ -191,7 +159,7 @@ function confirmarBorradoSector(button) {
     .then(data => {
         if (data.success) {
             alert(data.message);
-            window.location.href = "admin.html"; // o donde quieras redirigir
+            window.location.href = "admin.html";
         } else {
             throw new Error(data.message);
         }
