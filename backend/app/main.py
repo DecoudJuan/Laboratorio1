@@ -313,6 +313,7 @@ def register_admin():
     # Obtener datos del request
     data = request.get_json()
     username = data.get('username')
+    phone = data.get('phone')
     email = data.get('email')
     password = data.get('password')
     admin_code = data.get('adminCode')
@@ -344,6 +345,7 @@ def register_admin():
         new_admin = User(
             username=username,
             email=email,
+            phone = phone,
             password=hashed_password,
             userRole='administrador'
         )
@@ -967,6 +969,79 @@ def register_vehicle():
             'message': f'Error al registrar el vehículo: {str(e)}'
         }), 500
 
+@app.route('/api/cocheras/<string:nombre_sector>', methods=['GET'])
+def obtener_cocheras(nombre_sector):
+    try:
+        print(f"Solicitando información para el sector: {nombre_sector}")
+        
+        # Buscar el sector en la base de datos
+        sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
+        
+        if sector:
+            print(f"Sector encontrado: {sector.nameSec}, Cocheras disponibles: {sector.availableParkingSpots}")
+            return jsonify({
+                "cocheras": sector.availableParkingSpots,
+                "nombre": sector.nameSec,
+                "success": True
+            })
+        else:
+            print(f"Sector no encontrado: {nombre_sector}")
+            # Fallback para desarrollo - datos de prueba si no se encuentra el sector
+            fallback_data = {
+                "Comedor": 12,
+                "IAE": 8,
+                "Medicina": 10,
+                "Olivo": 5,
+                "Profesores": 7
+            }
+            
+            if nombre_sector in fallback_data:
+                print(f"Usando datos de fallback para: {nombre_sector}")
+                return jsonify({
+                    "cocheras": fallback_data[nombre_sector],
+                    "nombre": nombre_sector,
+                    "success": True,
+                    "note": "Datos de respaldo (el sector no existe en la base de datos)"
+                })
+            
+            return jsonify({
+                "error": f"Sector '{nombre_sector}' no encontrado",
+                "success": False
+            }), 404
+    except Exception as e:
+        print(f"Error al obtener información del sector: {str(e)}")
+        return jsonify({
+            "error": f"Error interno del servidor: {str(e)}",
+            "success": False
+        }), 500
 
+# También podemos agregar un endpoint para listar todos los sectores disponibles
+@app.route('/api/sectores', methods=['GET'])
+def listar_sectores():
+    try:
+        sectores = Sectors.query.all()
+        resultado = []
+        
+        for sector in sectores:
+            resultado.append({
+                "id": sector.idSector,
+                "nombre": sector.nameSec,
+                "cocheras_disponibles": sector.availableParkingSpots,
+                "horario_apertura": sector.openingHour,
+                "horario_cierre": sector.closingHour
+            })
+        
+        return jsonify({
+            "sectores": resultado,
+            "total": len(resultado),
+            "success": True
+        })
+    except Exception as e:
+        print(f"Error al listar sectores: {str(e)}")
+        return jsonify({
+            "error": f"Error interno del servidor: {str(e)}",
+            "success": False
+        }), 500
+        
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
