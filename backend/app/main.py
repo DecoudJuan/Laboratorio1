@@ -3,10 +3,13 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, render
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from models import User, Owns
+from models import User, Owns, Vehicle
 # MODULOS PARA LOGIN
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from werkzeug.security import check_password_hash
+
+# MODULOS PARA BASE DE DATOS
+from sqlalchemy import text
 
 # MAILpip
 import string
@@ -27,8 +30,15 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
 def create_app(enviroment):
     app = Flask(__name__)
 
+    jwt = JWTManager(app)
+
     # CONFIGURAR CORS
-    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+    CORS(app, resources={r"/api/*": {
+        "origins": "http://localhost:3000",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }})
 
     app.config.from_object(enviroment)
     
@@ -48,9 +58,6 @@ def create_app(enviroment):
 
 enviroment = config['development']
 app = create_app(enviroment)
-
-
-jwt = JWTManager(app)
 
 # MAIL RECOVERY 
 
@@ -161,8 +168,6 @@ def login():
         print(f'Error en login: {str(e)}')
         return jsonify({'success': False, 'message': 'Error en el servidor'}), 500
 
-# RUTAS PREDEFINIDAS
-
 @app.route('/api/users', methods=['GET'])
 @jwt_required()
 def get_all_users():
@@ -200,8 +205,6 @@ def get_all_users():
             'success': False,
             'message': 'Error al obtener la lista de usuarios'
         }), 500
-
-
 
 # REGISTRO NORMAL
 @app.route('/api/register', methods=['POST'])
@@ -363,7 +366,6 @@ def mis_datos():
     except Exception as e:
         return jsonify({'message': str(e), 'success': False}), 500
 
-
 # BORRADO DE USUARIO
 @app.route('/api/borrar_usuario/<username>', methods=['DELETE'])
 @jwt_required()
@@ -493,8 +495,6 @@ def guardar_datos():
                 if not vehiculo:
                     vehiculo = Vehicle(idVehicle=VP, brand='Marca Ejemplo', model='Modelo Ejemplo')
                     db.session.add(vehiculo)
-                # Relacionamos el vehículo con el usuario
-                # Verificamos si la relación ya existe en 'Owns'
                 if not db.session.query(Owns).filter_by(idUser=user.idUser, idVehicle=vehiculo.idVehicle).first():
                     new_own = Owns(idUser=user.idUser, idVehicle=vehiculo.idVehicle)
                     db.session.add(new_own)
@@ -505,8 +505,6 @@ def guardar_datos():
                 if not vehiculo2:
                     vehiculo2 = Vehicle(idVehicle=VP2, brand='Marca Ejemplo', model='Modelo Ejemplo')
                     db.session.add(vehiculo2)
-                # Relacionamos el vehículo con el usuario
-                # Verificamos si la relación ya existe en 'Owns'
                 if not db.session.query(Owns).filter_by(idUser=user.idUser, idVehicle=vehiculo2.idVehicle).first():
                     new_own2 = Owns(idUser=user.idUser, idVehicle=vehiculo2.idVehicle)
                     db.session.add(new_own2)
@@ -518,7 +516,6 @@ def guardar_datos():
                 'success': True
             }), 200
         else:
-            # Si no existe el usuario
             return jsonify({
                 'message': 'Usuario no encontrado',
                 'success': False
@@ -530,6 +527,7 @@ def guardar_datos():
             'message': f'Error al guardar datos: {str(e)}',
             'success': False
         }), 500
+
 
 @app.route('/api/datos_Admin', methods=['POST'])
 def datos_Admin():
@@ -744,6 +742,8 @@ def register_vehicle():
     try:
         # Obtener el usuario actual desde el token JWT
         current_user = get_jwt_identity()
+
+
         user_id = current_user['id']
 
         # Obtener datos del vehículo del formulario
@@ -841,7 +841,114 @@ def register_vehicle():
             'success': False,
             'message': f'Error al registrar el vehículo: {str(e)}'
         }), 500
+    
 
+@app.route('/api/user-vehicles/<int:id_user>', methods=['GET', 'OPTIONS'])
+@jwt_required()
+def get_user_vehicles(id_user):
+
+    if request.method == 'OPTIONS':
+        response = app.make_default_options_response()
+        return response
+    
+    
+    try:
+        current_user = get_jwt_identity()
+        print(f"Usuario actual: {current_user}, solicitando vehículos para usuario ID: {id_user}")
+        
+        # Si el usuario no es administrador y está intentando ver los vehículos de otro usuario
+        if current_user['userRole'] != 'administrador' and current_user['id'] != id_user:
+            print(f"Permiso denegado: Usuario {current_user['id']} intentando acceder a vehículos de {id_user}")
+            return jsonify({
+                'success': False,
+                'message': 'No tienes permisos para ver estos vehículos'
+            }), 403
+        
+        # Asegúrate de que este nombre de función/método sea correcto para tu ORM
+        print(f"Ejecutando consulta para obtener vehículos del usuario: {id_user}")
+
+        vehicles = db.session.query(Vehicle).\
+        join(Owns, Owns.idVehicle == Vehicle.idVehicle).\
+        filter(Owns.idUser == id_user).\
+        all()
+
+        vehicles_list = []
+        for vehicle in vehicles:
+            vehicle_data = {
+                'idVehicle': vehicle.idVehicle,
+                'brand': vehicle.brand,
+                'model': vehicle.model,
+                'licensePlate': getattr(vehicle, 'licensePlate', vehicle.idVehicle)
+            }
+            vehicles_list.append(vehicle_data)
+            print(f"Encontrado vehículo: {vehicle_data}")
+        
+        print(f"Total de vehículos encontrados: {len(vehicles_list)}")
+        return jsonify({
+            'success': True,
+            'vehicles': vehicles_list
+        }), 200
+        
+    except Exception as e:
+        print(f'Error detallado al obtener vehículos del usuario: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Error al obtener la lista de vehículos: {str(e)}'
+        }), 500
+    
+    
+# Ruta para eliminar un vehículo específico
+@app.route('/api/vehicles/<int:id_vehicle>', methods=['DELETE'])
+@jwt_required()
+def delete_vehicle(id_vehicle):
+    try:
+        # Verificar que el usuario actual es el propietario o un administrador
+        current_user = get_jwt_identity()
+        
+        # Obtener datos del vehículo actual para verificar propiedad
+        vehicle_owner = db.session.query(Owns).filter(
+            Owns.idVehicle == id_vehicle
+        ).first()
+        
+        if not vehicle_owner:
+            return jsonify({
+                'success': False,
+                'message': 'Vehículo no encontrado'
+            }), 404
+        
+        # Si el usuario no es administrador y no es el propietario
+        if current_user['userRole'] != 'administrador' and current_user['idUser'] != vehicle_owner.idUser:
+            return jsonify({
+                'success': False,
+                'message': 'No tienes permisos para eliminar este vehículo'
+            }), 403
+        
+        # Eliminar la relación de propiedad primero
+        db.session.query(Owns).filter(
+            Owns.idVehicle == id_vehicle
+        ).delete()
+        
+        # Luego eliminar el vehículo
+        db.session.query(Vehicle).filter(
+            Vehicle.idVehicle == id_vehicle
+        ).delete()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Vehículo eliminado correctamente'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f'Error al eliminar vehículo: {str(e)}')
+        return jsonify({
+            'success': False,
+            'message': 'Error al eliminar el vehículo'
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
