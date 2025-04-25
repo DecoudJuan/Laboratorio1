@@ -10,21 +10,136 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../static/css/styles.css">
+    <style>
+        .general-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .centered-image {
+            width: 60%;
+            height: auto;
+            display: block;
+        }
+
+        .map-point {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: red;
+            cursor: pointer;
+        }
+
+        .map-point:hover::after {
+            content: attr(data-name);
+            position: absolute;
+            top: -25px;
+            left: 20px;
+            background: rgba(0,0,0,0.75);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
     <div class="top-bar">
-        <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Cocheras</h1>
+        <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Página principal</h1>
         <div class="dark-section"></div>
         <div class="green-section"></div>
         <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="general-container">
-            <img src="../static/images/mockparking.png" alt="Logo" class="centered-image img-fluid" style="max-width: 300%; width: 80%; margin-top: -10%; ">
+    <!-- Contenedor con imagen centrada y puntos -->
+    <div class="general-container">
+        <img src="../static/images/estacionamientoActualizado.png" alt="Mapa" class="centered-image">
+
+        <!-- Puntos sobre el mapa -->
+        <span class="map-point" data-name="Comedor" style="top: 36%; left: 61%;"></span>
+        <span class="map-point" data-name="IAE" style="top: 20%; left: 44%;"></span>
+        <span class="map-point" data-name="Medicina" style="top: 26.8%; left: 37.5%;"></span>
+        <span class="map-point" data-name="Olivo" style="top: 39%; left: 56.8%;"></span>
+        <span class="map-point" data-name="Profesores" style="top: 52.5%; left: 58.7%;"></span>
+    </div>
+
+    <!-- Botones laterales -->
+    <div class="container d-flex flex-column align-items-start">
+        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9;" data-name="Comedor">Comedor</button>
+        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9;" data-name="IAE">IAE</button>
+        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9;" data-name="Medicina">Medicina</button>
+        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9;" data-name="Olivo">Olivo</button>
+        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9;" data-name="Profesores">Profesores</button>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="cocheraModal" tabindex="-1" aria-labelledby="cocheraModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="cocheraModalLabel">Información del sector</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" id="modal-body-content">
+                    <!-- Aquí insertaremos el contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: #9b59b6";>Cerrar</button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Bootstrap JS (¡muy importante para que funcionen los modales!) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Script para debug -->
+    <script>
+        console.log("Cargando página de cocheras...");
+        
+        // Verificar si Bootstrap está disponible
+        window.addEventListener('load', function() {
+            console.log("Página completamente cargada");
+            console.log("¿Bootstrap disponible?", typeof bootstrap !== 'undefined');
+            console.log("¿Bootstrap Modal disponible?", typeof bootstrap !== 'undefined' && typeof bootstrap.Modal !== 'undefined');
+        });
+    </script>
+    
+    <!-- Incluir el archivo cocheras.js -->
+    <script src="../static/js/cocheras.js"></script>
+    
+    <!-- Script alternativo en caso de que falle la carga del archivo externo -->
+    <script>
+        // Este script se ejecutará si el archivo externo no se carga
+        setTimeout(function() {
+            if (!window.cocherasLoaded) {
+                console.log("cocheras.js no se cargó correctamente. Utilizando código alternativo...");
+                
+                // Código alternativo mínimo
+                document.querySelectorAll(".btn.btn-success, .map-point").forEach(element => {
+                    element.onclick = function() {
+                        const sector = this.getAttribute("data-name") || this.textContent.trim();
+                        console.log("Clic en:", sector);
+                        
+                        document.getElementById("modal-body-content").textContent = 
+                            `Información para el sector ${sector} (modo alternativo)`;
+                        
+                        const modalEl = document.getElementById('cocheraModal');
+                        if (bootstrap && bootstrap.Modal) {
+                            const modal = new bootstrap.Modal(modalEl);
+                            modal.show();
+                        } else {
+                            alert("Error: Bootstrap Modal no está disponible");
+                        }
+                    };
+                });
+            }
+        }, 1000);
+    </script>
 </body>
-</html></div></html>
+</html>

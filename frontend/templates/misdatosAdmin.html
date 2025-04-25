@@ -42,18 +42,21 @@
         <span id="email" class="form-control-plaintext"></span>
       </div>
       
-      <!-- Vehículo Principal -->
+     <!-- Parking y Sectores asociados al administrador -->
       <div>
-        <label class="form-label fw-bold">Parking:</label>
-        <span id="vehiculo-principal" class="form-control-plaintext"></span>
+        <label class="form-label fw-bold">Establecimiento:</label>
+        <ul id="parkings" class="list-group list-group-flush">
+          <!-- Los parkings se agregarán dinámicamente con JS -->
+        </ul>
       </div>
-      
-      <!-- Vehículos Secundarios -->
-      <div class="row">
-        <label class="form-label fw-bold">Sector:</label>
-        <ul id="vehiculos-secundarios" class="list-group list-group-flush">
-        <!-- Los items se agregarán dinámicamente con JS -->
+
+      <div>
+        <label class="form-label fw-bold">Sectores:</label>
+        <ul id="sectores" class="list-group list-group-flush">
+          <!-- Los sectores se agregarán dinámicamente con JS -->
+        </ul>
       </div>
+
 
       <div>
         <div style="display: flex; gap: 10%; margin-left: 10%; margin-top: 20%;">
@@ -67,7 +70,7 @@
             </button>
           </a>
         </div>
-        <a href="principal.html">
+        <a href="admin.html">
           <button type="button" class="button" style="width: 50%;">Página Principal</button>
         </a>
       </div>

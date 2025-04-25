@@ -10,11 +10,11 @@ preventCaching();
 // Verificación inmediata de autenticación (se ejecuta al cargar el script)
 function checkToken() {
     const authToken = localStorage.getItem('authToken');
-    const currentUser = localStorage.getItem('currentUser');
+    const currentParking = localStorage.getItem('currentParking');
 
     // Si no hay token o usuario, redirigir al login
-    if (!authToken || !currentUser) {
-        window.location.replace('index.html');
+    if (!authToken || !currentParking) {
+        window.location.replace('admin.html');
         return;
     }
 }
@@ -36,208 +36,113 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Obtener el token almacenado en localStorage
-    const token = localStorage.getItem('authToken');
+const API_BASE_URL = 'http://localhost:5000';
+
+let datosActuales = {
+    nombrecompleto: '',
+    numsectores: '',
+    numcoheras: '',
+    ubicacion: ''
+};
+
+// Cargar los datos actuales del usuario al iniciar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener datos actuales del usuario
+    const currentParking = localStorage.getItem('currentParking');
     
-    if (!token) {
-        // Si no hay token, redirigir a la página de login
-        window.location.href = 'index.html';
-        return;
-    }
-
-    // Configurar botones
-    const backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
-    backToPrincipalBtn.addEventListener('click', function() {
-        window.location.href = 'principal.html';
-    });
-
-    document.getElementById('logoutBtn').addEventListener('click', function() {
-        // Eliminar token y datos de usuario del localStorage
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
-        
-        // Redireccionar a la página de inicio de sesión
-        window.location.href = 'index.html';
-    });
-
-    // Decodificar token para obtener datos del usuario
-    function parseJwt(token) {
+    if (currentParking) {
+        // Cargar datos desde localStorage
         try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            return JSON.parse(window.atob(base64));
+            const parkingData = JSON.parse(currentParking);
+            datosActuales.nombrecompleto = parkingData.nameEst || '';
+            datosActuales.numcoheras = parkingData.totalParkingSpots || '';
+            datosActuales.numsectores = parkingData.totalSectors || '';
+            datosActuales.ubicacion = parkingData.geographicLocation || '';
+            
+            // Mostrar los datos actuales en el formulario como placeholders
+            document.getElementById('registerNombreCompleto').placeholder = datosActuales.nombrecompleto;
+            document.getElementById('registerSectores').placeholder = datosActuales.numsectores;
+            document.getElementById('registerCocheras').placeholder = datosActuales.numcoheras;
+            document.getElementById('registerUbicacion').placeholder = datosActuales.ubicacion;
         } catch (e) {
-            console.error('Error al decodificar el token:', e);
-            return null;
+            console.error('Error al parsear datos del establecimiento:', e);
         }
     }
-
-    const userData = parseJwt(token);
     
-    // Verificar la estructura del token y mostrar en consola para depuración
-    console.log('Datos del token decodificado:', userData);
+    const form = document.querySelector('form');
+    const editarBtn = document.getElementById('editar');
     
-    // Verificar si el token tiene la estructura esperada
-    if (!userData) {
-        alert('Error al obtener los datos del usuario. Por favor inicia sesión nuevamente.');
-        window.location.href = 'index.html';
-        return;
-    }
-
-    // Extraer información del usuario del token según su estructura
-    let username, email;
-    
-    // Maneja ambas estructuras posibles (con sub o directamente en el token)
-    if (userData.sub) {
-        // Si los datos están dentro de 'sub'
-        username = userData.sub.username;
-        email = userData.sub.email;
-    } else {
-        // Si los datos están directamente en el token
-        username = userData.username;
-        email = userData.email;
-    }
-
-    // Mostrar los datos básicos del token
-    document.getElementById('nombre-completo').textContent = username || 'No disponible';
-    document.getElementById('email').textContent = email || 'No disponible';
-    document.getElementById('vehiculo-principal').textContent = 'No asignado';
-    
-    // Configurar lista de vehículos secundarios inicialmente vacía
-    const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
-    vehiculosSecundariosElement.innerHTML = '';
-    
-    const li = document.createElement('li');
-    li.className = 'list-group-item';
-    li.textContent = 'No tiene vehículos secundarios';
-    vehiculosSecundariosElement.appendChild(li);
-    
-    // Intentar obtener datos adicionales del servidor
-    fetch(`http://localhost:5000/api/usuario/${username}`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            console.log('No se pudieron obtener datos adicionales del servidor');
-            return null;
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data && data.success) {
-            // Actualizar con datos más completos del servidor
-            document.getElementById('vehiculo-principal').textContent = data.vehiculo_principal || 'No asignado';
+    if (editarBtn) {
+        editarBtn.addEventListener('click', function() {
+            const nombreAnterior = prompt("Ingrese nombre actual del parking para confirmar el cambio:");
             
-            // Actualizar vehículos secundarios
-            vehiculosSecundariosElement.innerHTML = '';
-            
-            if (data.vehiculos_secundarios && data.vehiculos_secundarios.length > 0) {
-                data.vehiculos_secundarios.forEach(vehiculo => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item';
-                    li.textContent = vehiculo;
-                    vehiculosSecundariosElement.appendChild(li);
-                });
-            } else {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = 'No tiene vehículos secundarios';
-                vehiculosSecundariosElement.appendChild(li);
+            if (!nombreAnterior) {
+                alert("Debes ingresar el nombre actual del parking para continuar.");
+                return;
             }
-        }
-    })
-    .catch(error => {
-        console.error('Error al obtener datos adicionales:', error);
-    });
+            document.getElementById('nombreAnterior').value = nombreAnterior;
+            form.submit();
+        });
+    }
 });
 
-// Función para confirmar borrado
-function confirmarBorrado() {
-    // Obtener token y decodificarlo para obtener el username
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        alert('Debes iniciar sesión para realizar esta acción');
+// Manejar el envío del formulario de edición
+document.getElementById('editEstablishmentForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const nombreAnterior = prompt("Ingrese el nombre actual del parking para confirmar el cambio:");
+    
+    if (!nombreAnterior) {
+        alert("Debes ingresar tu nombre actual para continuar.");
         return;
     }
     
-    // Decodificar token para obtener username
-    function parseJwt(token) { 
-        try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            return JSON.parse(window.atob(base64));
-        } catch (e) {
-            console.error('Error al decodificar el token:', e);
-            return null;
-        }
-    }
+    document.getElementById('nombreAnterior').value = nombreAnterior;
     
-    const userData = parseJwt(token);
+    // Crear un objeto con los datos actualizados, manteniendo los valores actuales si los campos están vacíos
+    const datosActualizados = {
+        nombre_anterior: nombreAnterior,
+        nombreCompleto: document.getElementById('registerNombreCompleto').value || datosActuales.nombrecompleto,
+        numsectores: document.getElementById('registerSectores').value || datosActuales.numsectores,
+        numcocheras: document.getElementById('registerCocheras').value || datosActuales.numcoheras,
+        ubicacion: document.getElementById('registerUbicacion').value || datosActuales.ubicacion
+    };
     
-    // Extraer username según la estructura del token
-    let username;
-    if (userData.sub) {
-        username = userData.sub.username;
-    } else {
-        username = userData.username;
-    }
+    // Crear FormData para el envío
+    const formData = new FormData();
     
-    if (!username) {
-        alert('Error al obtener datos de sesión. Por favor inicia sesión nuevamente.');
-        return;
-    }
+    // Agregar todos los campos al FormData
+    Object.keys(datosActualizados).forEach(key => {
+        formData.append(key, datosActualizados[key]);
+    });
     
-    // Paso 1: Pedir nombre de usuario para confirmación
-    const confirmUsername = prompt("Para confirmar el borrado, ingresa tu nombre de usuario:");
-    
-    if (!confirmUsername || confirmUsername.trim() === "") {
-        alert("Debes ingresar un nombre de usuario válido.");
-        return;
-    }
-
-    // Verificar que el nombre coincida
-    if (confirmUsername !== username) {
-        alert("El nombre de usuario no coincide con tu cuenta actual.");
-        return;
-    }
-
-    // Paso 2: Confirmación explícita
-    if (!confirm(`¿ESTÁS ABSOLUTAMENTE SEGURO de que deseas borrar PERMANENTEMENTE la cuenta "${username}"?`)) {
-        alert("Borrado cancelado.");
-        return;
-    }
-
-    // Paso 3: Enviar solicitud a la API
-    fetch(`http://localhost:5000/api/borrar_usuario/${username}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
+    // Enviar los datos al servidor
+    fetch(`${API_BASE_URL}/api/guardar_datosEstablecimiento`, {
+        method: 'POST',
+        body: formData
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw err; });
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message);
-            localStorage.removeItem('authToken'); 
-            localStorage.removeItem('currentUser');
-            window.location.href = "index.html";
+            alert(data.message || 'Datos actualizados correctamente');
+            
+            // Actualizar los datos en localStorage
+            try {
+                const currentParkingData = JSON.parse(localStorage.getItem('currentParking')) || {};
+                const updatedParkingData = {...currentParkingData, ...datosActualizados};
+                delete updatedParkingData.nombre_anterior; // No guardar este campo
+                localStorage.setItem('currentParking', JSON.stringify(updatedParkingData));
+            } catch (e) {
+                console.error('Error al actualizar datos locales:', e);
+            }
+            
+            window.location.href = 'admin.html';
         } else {
-            throw new Error(data.message);
+            alert(data.message || 'Error al guardar los datos');
         }
     })
     .catch(error => {
-        console.error("Error:", error);
-        alert(`Error al borrar usuario: ${error.message || 'Error desconocido'}`);
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
     });
-}
+});
