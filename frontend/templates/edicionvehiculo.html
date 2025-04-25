@@ -23,17 +23,36 @@
     </div>
 
     <div class="main-content">  
-            <!-- Modal de Vehiculo -->
-            <div class="general-container" id="vehicleForm">
-                <button type="button" class="back-button" id="backTo">
-                    <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
-                </button>
-                <h2>     Vehículos     </h2>
-                <div class="d-grid gap-3 mt-4">
-                    <button id="showAddVehicleBtn" class="button">Añadir Vehiculo</button>
-                    <button id="showEditVehicleBtn" class="button">Editar Vehiculo</button>    
-                </div>
+        <!-- Lista de Vehiculos -->
+        <div class="general-container" id="VehicleForm">
+            <button type="button" class="back-button" id="backBtn">
+                <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
+            </button>
+            <h2>Mis Vehículos</h2>
+            <div class="alert alert-info mb-3" role="alert">
+                <i class="bi bi-info-circle"></i> Seleccione un vehículo para editarlo o eliminarlo.
             </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th>Patente</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vehiclesTableBody">
+                        <!-- Los vehículos se cargarán dinámicamente aquí -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="noVehiclesMessage" class="alert alert-warning" style="display: none;">
+                No tiene vehículos registrados. Puede añadir uno nuevo en la sección "Añadir Vehículo".
+            </div>
+            <button id="showAddVehicleBtn" class="button">Añadir Vehiculo</button>
+        </div>
+
 
             <!-- Añadir Vehiculo (inicialmente oculto) -->
             <div class="general-container" id="addVehicleForm">
@@ -53,7 +72,7 @@
                         <li><strong>Venezuela:</strong> AA000AA | AAA00A</li>
                         <li><strong>Colombia:</strong> AAA000 | AAA00A</li>
                     </ul>
-                                      
+
                     <div class="input-group">
                         <label for="username">Patente</label>
                         <input type="text" id="patent" name="patent" required>
@@ -73,20 +92,68 @@
                     <button type="submit" class="button">Añadir</button>
                     <div id="registerMessage" class="message"></div>
                 </form>
+            </div>      
+       
+        <!-- Modal de Edición de Vehículo -->
+        <div class="modal fade" id="editVehicleModal" tabindex="-1" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editVehicleModalLabel">Editar Vehículo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editVehicleFormModal">
+                            <input type="hidden" id="editVehicleId">
+                            <div class="input-group">
+                                <label for="editPatent">Patente</label>
+                                <input type="text" id="editPatent" name="editPatent" required>
+                                <div id="edit-detected-country" class="message"></div>
+                                <div id="edit-error-message" class="error-message" style="display: none; color: red;">Formato de patente inválido</div>
+                            </div>
+                            <div class="input-group">
+                                <label for="editBrand">Marca</label>
+                                <select id="editBrand" name="editBrand" required>
+                                    <option value="">Seleccione una marca</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="editModel">Modelo</label>
+                                <select id="editModel" name="editModel" required>
+                                    <option value="">Seleccione un modelo</option>
+                                </select>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-
-            <!-- Editar Vehiculo (inicialmente oculto) -->
-            <div class="general-container" id="editVehicleForm">
-                <button type="button" class="back-button" id="backTobackToVehicleOptionsFromEdit">
-                    <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
-                </button>
-                <h2>     Editar Vehiculo     </h2>
-                <form id="registerAdminForm">
-                    <button type="submit" class="button admin-button">Guardar</button>
-                    <div id="adminRegisterMessage" class="message"></div>
-                </form>
-             
+        </div>      
+        <!-- Modal de Confirmación de Eliminación -->
+        <div class="modal fade" id="deleteVehicleModal" tabindex="-1" aria-labelledby="deleteVehicleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteVehicleModalLabel">Confirmar Eliminación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>¿Estás seguro de que deseas eliminar este vehículo?</p>
+                        <p id="deleteVehicleDetails" class="fw-bold"></p>
+                        <input type="hidden" id="deleteVehicleId">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteVehicle">Eliminar</button>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
+
     <script src="../static/js/edicionvehiculo.js"></script>
 </body>
 </html>

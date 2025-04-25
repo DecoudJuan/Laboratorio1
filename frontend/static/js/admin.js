@@ -13,9 +13,6 @@ function checkToken() {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
     
-    console.log('Auth Token:', authToken);
-    console.log('Current User:', currentUser);
-
     // Si no hay token o usuario, redirigir al login
     if (!authToken || !currentUser) {
         window.location.replace('index.html');
@@ -49,7 +46,6 @@ window.addEventListener('pageshow', (event) => {
 // También verificar cuando la página vuelve a estar visible
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        console.log('Página visible - verificando autenticación');
         checkToken();
     }
 });

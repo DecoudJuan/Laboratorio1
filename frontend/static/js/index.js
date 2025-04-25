@@ -112,19 +112,82 @@ function checkAuth() {
     return true;
 }
 
-// Para verificar si el usuario tiene permisos de administrador
-function isAdmin() {
-    if (!checkAuth()) return false;
-    
-    const user = JSON.parse(localStorage.getItem('currentUser'));
-    return user.userRole === 'administrador';
+
+
+
+// CACHING 
+
+function preventCaching() {
+    // NO ALMACENA CACHÉ
+    if (window.location.protocol != 'file:') {
+        window.history.replaceState(null, document.title, window.location.href);
+    }
 }
 
-// Función para proteger rutas de administrador
-function protectAdminRoute() {
-    if (!isAdmin()) {
-        window.location.href = 'principal.html';
-        return false;
+// LLAMA A LA FUNCION
+preventCaching();
+
+// Verificación inmediata de autenticación (se ejecuta al cargar el script)
+function checkToken() {
+    const authToken = localStorage.getItem('authToken');
+    const currentUser = localStorage.getItem('currentUser');
+    
+    // Si no hay token o usuario, redirigir al login
+    if (!authToken || !currentUser) {
+        window.location.replace('index.html');
+        return;
     }
-    return true;
+    
+    // Verificar si el usuario es administrador
+    try {
+        const userData = JSON.parse(currentUser);
+        if (userData.userRole !== 'administrador') {
+            alert('No tienes permisos de administrador');
+            window.location.replace('index.html');
+        }
+    } catch (e) {
+        console.error('Error al procesar datos de usuario:', e);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        window.location.replace('index.html');
+    }
 }
+
+// Verificar autenticación cuando la página vuelve a estar activa
+window.addEventListener('pageshow', (event) => {
+    // Si la página se restaura desde el caché (botón atrás)
+    if (event.persisted) {
+        console.log('Página restaurada desde caché - verificando autenticación');
+        checkToken();
+    }
+});
+
+// También verificar cuando la página vuelve a estar visible
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        checkToken();
+    }
+});
+
+// Verificar autenticación al cargar la página completamente
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Verificar si el usuario está logueado y es administrador
+    if (!isAdmin()) {
+        window.location.replace('index.html');
+        return;
+    }
+    
+    // Cargar lista de usuarios
+    loadUsers();
+    
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        // Eliminar token y datos de usuario del localStorage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        console.log(localStorage.getItem('authToken'));
+        
+        // Redireccionar a la página de inicio de sesión
+        window.location.replace('index.html'); // replace elimina la entrada actual del historial
+    });
+});

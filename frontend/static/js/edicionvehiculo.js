@@ -1,72 +1,119 @@
-// Evita caché en navegadores modernos
+// Configuración global
+const API_BASE_URL = 'http://localhost:5000';
+let loadedModels = {};
+
+// Patrones de validación de patentes por país
+const patterns = {
+    argentina: { old: /^[A-Z]{3}\d{3}$/, new: /^[A-Z]{2}\d{3}[A-Z]{2}$/, name: "Argentina" },
+    brasil:    { old: /^[A-Z]{3}\d{4}$/, new: /^[A-Z]{3}\d[A-Z]\d{2}$/, name: "Brasil" },
+    paraguay:  { old: /^[A-Z]{4}\d{3}$/, new: /^[A-Z]{4}\d{3}$/, name: "Paraguay" },
+    uruguay:   { old: /^[A-Z]{3}\d{4}$/, new: /^[A-Z]{3}\d{4}$/, name: "Uruguay" },
+    chile:     { old: /^[A-Z]{2}\d{4}$/, new: /^[A-Z]{4}\d{2}$/, name: "Chile" },
+    bolivia:   { old: /^[A-Z]{3}\d{3}$/, new: /^[A-Z]{2}\d{2}\d{3}$/, name: "Bolivia" },
+    venezuela: { old: /^[A-Z]{2}\d{3}[A-Z]{2}$/, new: /^[A-Z]{3}\d{2}[A-Z]$/, name: "Venezuela" },
+    colombia:  { old: /^[A-Z]{3}\d{3}$/, new: /^[A-Z]{3}\d{2}[A-Z]$/, name: "Colombia" }
+};
+
+// Funciones de utilidad
 function preventCaching() {
     if (window.location.protocol !== 'file:') {
         window.history.replaceState(null, document.title, window.location.href);
     }
 }
 
-preventCaching();
-
-// Verifica autenticación
 function checkToken() {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
     if (!authToken || !currentUser) {
         window.location.replace('index.html');
+        return false;
+    }
+    return true;
+}
+
+function handleAuthError(response) {
+    if (response.status === 401) {
+        alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        window.location.replace('index.html');
+        return true;
+    }
+    return false;
+}
+
+function validatePatent(patent, isEdit = false) {
+    patent = patent.toUpperCase().replace(/\s|-/g, '');
+    const prefix = isEdit ? 'edit-' : '';
+    const errorMsg = document.getElementById(`${prefix}error-message`);
+    const countryMsg = document.getElementById(`${prefix}detected-country`);
+
+    for (const key in patterns) {
+        const { old, new: nuevo, name } = patterns[key];
+        if (old.test(patent)) {
+            if (countryMsg) countryMsg.textContent = `Patente válida de ${name} (formato antiguo)`;
+            if (errorMsg) errorMsg.style.display = 'none';
+            return true;
+        }
+        if (nuevo.test(patent)) {
+            if (countryMsg) countryMsg.textContent = `Patente válida de ${name} (formato nuevo)`;
+            if (errorMsg) errorMsg.style.display = 'none';
+            return true;
+        }
+    }
+
+    if (countryMsg) countryMsg.textContent = '';
+    if (errorMsg) errorMsg.style.display = 'block';
+    return false;
+}
+
+// En tu función fetchWithAuth en edicionvehiculo.js
+async function fetchWithAuth(url, options = {}) {
+    const token = localStorage.getItem('authToken'); // O donde almacenes el token
+    
+    if (!token) {
+        console.error('No se encontró el token de autenticación');
+        // Redirigir al login si no hay token
+        window.location.href = '/index.html';
+        return;
+    }
+    
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include' // Para enviar cookies si las usas
+    };
+    
+    const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+            ...defaultOptions.headers,
+            ...(options.headers || {})
+        }
+    };
+    
+    try {
+        const response = await fetch(url, mergedOptions);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Error en la solicitud');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error de conexión:', error);
+        throw error;
     }
 }
 
-window.addEventListener('pageshow', (event) => {
-    if (event.persisted) checkToken();
-});
-
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') checkToken();
-});
-
-const API_BASE_URL = 'http://localhost:5000';
-
-// Mostrar y ocultar formularios
-const addVehicleForm = document.getElementById('addVehicleForm');
-const editVehicleForm = document.getElementById('editVehicleForm');
-const vehicleForm = document.getElementById('vehicleForm');
-
-document.getElementById('showAddVehicleBtn').addEventListener('click', () => {
-    addVehicleForm.style.display = 'block';
-    editVehicleForm.style.display = 'none';
-    vehicleForm.style.display = 'none';
-});
-
-document.getElementById('showEditVehicleBtn').addEventListener('click', () => {
-    addVehicleForm.style.display = 'none';
-    editVehicleForm.style.display = 'block';
-    vehicleForm.style.display = 'none';
-});
-
-document.getElementById('backTobackToVehicleOptionsFromAdd').addEventListener('click', () => {
-    addVehicleForm.style.display = 'none';
-    vehicleForm.style.display = 'block';
-    $('#vehicleForm').modal('show');
-});
-
-document.getElementById('backTobackToVehicleOptionsFromEdit').addEventListener('click', () => {
-    editVehicleForm.style.display = 'none';
-    vehicleForm.style.display = 'block';
-    $('#vehicleForm').modal('show');
-});
-
-document.getElementById('backTo').addEventListener('click', () => {
-    window.location.href = 'principal.html';
-});
-
-// Marcas y modelos
-let loadedModels = {};
-
-async function loadBrands() {
+async function loadBrands(isEdit = false) {
     try {
         const response = await fetch(`${API_BASE_URL}/api/brands`);
         const brands = await response.json();
-        const brandSelect = document.getElementById('brand');
+        const selector = isEdit ? 'editBrand' : 'brand';
+        const brandSelect = document.getElementById(selector);
 
         if (brandSelect) {
             brandSelect.innerHTML = '<option value="">Seleccione una marca</option>';
@@ -82,8 +129,9 @@ async function loadBrands() {
     }
 }
 
-async function loadModels(brandId) {
-    const modelSelect = document.getElementById('model');
+async function loadModels(brandId, isEdit = false) {
+    const selector = isEdit ? 'editModel' : 'model';
+    const modelSelect = document.getElementById(selector);
     if (!modelSelect) return;
 
     modelSelect.innerHTML = '<option value="">Seleccione un modelo</option>';
@@ -111,67 +159,246 @@ async function loadModels(brandId) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('addVehicle');
-    const patentInput = document.getElementById('patent');
-    let detectedCountry = document.getElementById('detected-country');
-    let errorMessage = document.getElementById('error-message');
+async function loadUserVehicles() {
+    if (!checkToken()) return;
+    
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    if (!currentUser || !currentUser.id) {
+        console.error("No se encontró el usuario actual en localStorage o falta 'idUser'");
+        alert("Error: no se pudo identificar al usuario. Por favor iniciá sesión nuevamente.");
+        return;
+    }
+    
+    console.log('URL de la API:', `${API_BASE_URL}/api/user-vehicles/${currentUser.id}`);
+    console.log('currentUser:', currentUser);
+    
+    try {
+        // Asumiendo que fetchWithAuth ya devuelve los datos JSON parseados
+        const data = await fetchWithAuth(`${API_BASE_URL}/api/user-vehicles/${currentUser.id}`);
+        
+        if (!data) return;
+        
+        if (data.success) {
+            displayVehicles(data.vehicles);
+        } else {
+            console.error('Error en respuesta:', data.message);
+            alert('Error al cargar tus vehículos: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error al procesar respuesta:', error);
+        alert('Error al procesar datos de vehículos.');
+    }
+}
 
-    if (!detectedCountry && patentInput) {
-        detectedCountry = document.createElement('div');
-        detectedCountry.id = 'detected-country';
-        detectedCountry.className = 'message';
-        patentInput.parentNode.insertAdjacentElement('afterend', detectedCountry);
+// Funciones de UI
+function displayVehicles(vehicles) {
+    const vehiclesTableBody = document.getElementById('vehiclesTableBody');
+    const noVehiclesMessage = document.getElementById('noVehiclesMessage');
+    
+    if (!vehiclesTableBody) return;
+    vehiclesTableBody.innerHTML = '';
+    
+    if (!vehicles || vehicles.length === 0) {
+        if (noVehiclesMessage) noVehiclesMessage.style.display = 'block';
+        return;
+    }
+    
+    if (noVehiclesMessage) noVehiclesMessage.style.display = 'none';
+    
+    vehicles.forEach(vehicle => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${vehicle.brand || 'N/A'}</td>
+            <td>${vehicle.model || 'N/A'}</td>
+            <td>${vehicle.idVehicle || 'N/A'}</td>
+            <td>
+                <button class="btn btn-sm btn-primary edit-vehicle" data-id="${vehicle.idVehicle}"
+                    data-brand="${vehicle.brand || ''}" data-model="${vehicle.model || ''}" 
+                    data-license="${vehicle.idVehicle || ''}">
+                    <i class="bi bi-pencil"></i> Editar
+                </button>
+                <button class="btn btn-sm btn-danger delete-vehicle" data-id="${vehicle.idVehicle}"
+                    data-brand="${vehicle.brand || ''}" data-model="${vehicle.model || ''}" 
+                    data-license="${vehicle.idVehicle || ''}">
+                    <i class="bi bi-trash"></i> Eliminar
+                </button>
+            </td>
+        `;
+        
+        vehiclesTableBody.appendChild(row);
+    });
+    
+    attachVehicleButtonListeners();
+}
+
+function attachVehicleButtonListeners() {
+    document.querySelectorAll('.edit-vehicle').forEach(button => {
+        button.addEventListener('click', function() {
+            const vehicleId = this.getAttribute('data-id');
+            const idVehicle = this.getAttribute('data-license');
+            const brand = this.getAttribute('data-brand');
+            const model = this.getAttribute('data-model');
+            openEditModal(vehicleId, idVehicle, brand, model);
+        });
+    });
+
+    document.querySelectorAll('.delete-vehicle').forEach(button => {
+        button.addEventListener('click', function() {
+            const vehicleId = this.getAttribute('data-id');
+            const idVehicle = this.getAttribute('data-license');
+            const brand = this.getAttribute('data-brand');
+            const model = this.getAttribute('data-model');
+            openDeleteModal(vehicleId, idVehicle, brand, model);
+        });
+    });
+}
+
+async function openEditModal(idVehicle, brand, model) {
+    document.getElementById('editVehicleId').value = vehicleId;
+    document.getElementById('editPatent').value = idVehicle;
+
+    await loadBrands(true);
+
+    const brandSelect = document.getElementById('editBrand');
+    let brandId = null;
+
+    for (let i = 0; i < brandSelect.options.length; i++) {
+        if (brandSelect.options[i].textContent === brand) {
+            brandSelect.selectedIndex = i;
+            brandId = brandSelect.options[i].value;
+            break;
+        }
     }
 
-    if (!errorMessage && patentInput) {
-        errorMessage = document.createElement('div');
-        errorMessage.id = 'error-message';
-        errorMessage.className = 'error-message';
-        errorMessage.textContent = 'Formato de patente inválido';
-        errorMessage.style.display = 'none';
-        errorMessage.style.color = 'red';
-        patentInput.parentNode.insertAdjacentElement('afterend', errorMessage);
-    }
+    if (brandId) {
+        await loadModels(brandId, true);
 
-    const patterns = {
-        argentina: { old: /^[A-Z]{3}\d{3}$/, new: /^[A-Z]{2}\d{3}[A-Z]{2}$/, name: "Argentina" },
-        brasil:    { old: /^[A-Z]{3}\d{4}$/, new: /^[A-Z]{3}\d[A-Z]\d{2}$/, name: "Brasil" },
-        paraguay:  { old: /^[A-Z]{4}\d{3}$/, new: /^[A-Z]{4}\d{3}$/, name: "Paraguay" },
-        uruguay:   { old: /^[A-Z]{3}\d{4}$/, new: /^[A-Z]{3}\d{4}$/, name: "Uruguay" },
-        chile:     { old: /^[A-Z]{2}\d{4}$/, new: /^[A-Z]{4}\d{2}$/, name: "Chile" },
-        bolivia:   { old: /^[A-Z]{3}\d{3}$/, new: /^[A-Z]{2}\d{2}\d{3}$/, name: "Bolivia" },
-        venezuela: { old: /^[A-Z]{2}\d{3}[A-Z]{2}$/, new: /^[A-Z]{3}\d{2}[A-Z]$/, name: "Venezuela" },
-        colombia:  { old: /^[A-Z]{3}\d{3}$/, new: /^[A-Z]{3}\d{2}[A-Z]$/, name: "Colombia" }
-    };
-
-    function validatePatent(patent) {
-        patent = patent.toUpperCase().replace(/\s|-/g, '');
-        for (const key in patterns) {
-            const { old, new: nuevo, name } = patterns[key];
-            if (old.test(patent) || nuevo.test(patent)) {
-                if (detectedCountry) detectedCountry.textContent = `Patente válida de ${name}`;
-                if (errorMessage) errorMessage.style.display = 'none';
-                return true;
+        const modelSelect = document.getElementById('editModel');
+        for (let i = 0; i < modelSelect.options.length; i++) {
+            if (modelSelect.options[i].textContent === model) {
+                modelSelect.selectedIndex = i;
+                break;
             }
         }
-        if (detectedCountry) detectedCountry.textContent = '';
-        if (errorMessage) errorMessage.style.display = 'block';
-        return false;
     }
 
-    loadBrands();
+    const editVehicleModal = new bootstrap.Modal(document.getElementById('editVehicleModal'));
+    editVehicleModal.show();
+}
 
+function openDeleteModal(idVehicle, brand, model) {
+    document.getElementById('deleteVehicleId').value = vehicleId;
+    document.getElementById('deleteVehicleDetails').innerHTML = `${brand} ${model} (${idVehicle})`;
+
+    const deleteVehicleModal = new bootstrap.Modal(document.getElementById('deleteVehicleModal'));
+    deleteVehicleModal.show();
+}
+
+// Inicialización y configuración de event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    preventCaching();
+    checkToken();
+
+    // Configurar listeners para cambios de visibilidad
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) checkToken();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkToken();
+    });
+
+    // Configurar elementos de UI y listeners
+    setupUIElements();
+    setupFormListeners();
+    setupModalListeners();
+    
+    // Cargar datos iniciales
+    if (document.getElementById('VehicleForm')) {
+        loadUserVehicles();
+    }
+    
+    loadBrands();
+});
+
+function setupUIElements() {
+    const addVehicleBtn = document.getElementById('showAddVehicleBtn');
+    const editVehicleBtn = document.getElementById('showEditVehicleBtn');
+    const backToVehicleOptionsFromEdit = document.getElementById('backTobackToVehicleOptionsFromEdit');
+    const backToVehicleOptionsFromAdd = document.getElementById('backTobackToVehicleOptionsFromAdd');
+    const backBtn = document.getElementById('backTo');
+    
+    if (addVehicleBtn) {
+        addVehicleBtn.addEventListener('click', () => {
+            document.getElementById('addVehicleForm').style.display = 'block';
+            document.getElementById('VehicleForm').style.display = 'none';
+            document.getElementById('vehicleForm').style.display = 'none';
+        });
+    }
+    
+    if (editVehicleBtn) {
+        editVehicleBtn.addEventListener('click', () => {
+            document.getElementById('addVehicleForm').style.display = 'none';
+            document.getElementById('VehicleForm').style.display = 'block';
+            document.getElementById('vehicleForm').style.display = 'none';
+        });
+    }
+    
+    if (backToVehicleOptionsFromAdd) {
+        backToVehicleOptionsFromAdd.addEventListener('click', () => {
+            document.getElementById('addVehicleForm').style.display = 'none';
+            document.getElementById('VehicleForm').style.display = 'block';
+        });
+    }
+    
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            window.location.href = 'principal.html';
+        });
+    }
+}
+
+function setupFormListeners() {
+    // Configurar validación para input de patente
+    const patentInput = document.getElementById('patent');
+    if (patentInput) {
+        if (!document.getElementById('detected-country')) {
+            const detectedCountry = document.createElement('div');
+            detectedCountry.id = 'detected-country';
+            detectedCountry.className = 'message';
+            patentInput.parentNode.insertAdjacentElement('afterend', detectedCountry);
+        }
+        
+        if (!document.getElementById('error-message')) {
+            const errorMessage = document.createElement('div');
+            errorMessage.id = 'error-message';
+            errorMessage.className = 'error-message';
+            errorMessage.textContent = 'Formato de patente inválido';
+            errorMessage.style.display = 'none';
+            errorMessage.style.color = 'red';
+            patentInput.parentNode.insertAdjacentElement('afterend', errorMessage);
+        }
+        
+        patentInput.addEventListener('input', () => validatePatent(patentInput.value.trim()));
+        patentInput.addEventListener('blur', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    
+    // Configurar event listeners para cambios de marca
     const brandSelect = document.getElementById('brand');
     if (brandSelect) {
-        brandSelect.addEventListener('change', function () {
+        brandSelect.addEventListener('change', function() {
             loadModels(this.value);
         });
     }
-
+    
+    // Configurar event listeners para cambios de modelo
     const modelSelect = document.getElementById('model');
     if (modelSelect) {
-        modelSelect.addEventListener('change', function () {
+        modelSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             if (selectedOption && selectedOption.dataset.brandId) {
                 const brandId = selectedOption.dataset.brandId;
@@ -181,79 +408,138 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    if (patentInput) {
-        patentInput.addEventListener('input', () => {
-            const patent = patentInput.value.trim();
-            validatePatent(patent);
-        });
-
-        patentInput.addEventListener('blur', function () {
-            this.value = this.value.toUpperCase();
-        });
-    }
-
-    if (form) {
-        form.addEventListener('submit', async function (e) {
+    
+    // Configurar formulario de añadir vehículo
+    const addVehicleForm = document.getElementById('addVehicle');
+    if (addVehicleForm) {
+        addVehicleForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
             const patent = patentInput.value.trim().toUpperCase();
             const brandId = document.getElementById('brand').value;
             const modelId = document.getElementById('model').value;
-    
+            
             if (!validatePatent(patent)) {
                 alert('Formato de patente inválido. No se reconoce el país.');
                 return;
             }
-    
-            const authToken = localStorage.getItem('authToken');
-            if (!authToken) {
-                alert('Debes iniciar sesión para registrar un vehículo.');
-                window.location.replace('index.html');
-                return;
-            }
-    
-            console.log('Token usado:', authToken); // Para debugging
-    
+            
+            const response = await fetchWithAuth(`${API_BASE_URL}/api/register_vehicle`, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    patent, 
+                    brand: brandId, 
+                    model: modelId 
+                })
+            });
+            
+            if (!response) return;
+            
             try {
-                const response = await fetch(`${API_BASE_URL}/api/register_vehicle`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({ 
-                        patent, 
-                        brand: brandId, 
-                        model: modelId 
-                    }),
-                });
-    
-                console.log('Respuesta status:', response.status);
-                
-                if (response.status === 401) {
-                    console.error('Error de autenticación. Detalles:', await response.text());
-                    alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('currentUser');
-                    window.location.replace('index.html');
-                    return;
-                }
-    
                 const data = await response.json();
                 if (response.ok) {
                     alert(data.message || 'Vehículo registrado exitosamente.');
-                    form.reset();
-                    // Opcional: redirigir a alguna página de confirmación
-                    // window.location.href = 'misvehiculos.html';
+                    addVehicleForm.reset();
+                    loadUserVehicles();
+
                 } else {
-                    console.error('Error del servidor:', data);
                     alert(data.message || 'Error al registrar el vehículo.');
                 }
             } catch (error) {
-                console.error('Error de conexión:', error);
-                alert('Error de conexión al registrar el vehículo. Verifica tu conexión a Internet.');
+                console.error('Error al procesar respuesta:', error);
+                alert('Error al procesar la respuesta del servidor.');
             }
         });
     }
+}
 
-});
+function setupModalListeners() {
+    // Configurar event listeners para el modal de edición
+    const editBrandSelect = document.getElementById('editBrand');
+    if (editBrandSelect) {
+        editBrandSelect.addEventListener('change', function() {
+            loadModels(this.value, true);
+        });
+    }
+    
+    const editPatentInput = document.getElementById('editPatent');
+    if (editPatentInput) {
+        editPatentInput.addEventListener('input', function() {
+            validatePatent(this.value.trim(), true);
+        });
+        
+        editPatentInput.addEventListener('blur', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    
+    const editVehicleForm = document.getElementById('editVehicleFormModal');
+    if (editVehicleForm) {
+        editVehicleForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const vehicleId = document.getElementById('editVehicleId').value;
+            const patent = document.getElementById('editPatent').value.trim().toUpperCase();
+            const brandId = document.getElementById('editBrand').value;
+            const modelId = document.getElementById('editModel').value;
+            
+            if (!validatePatent(patent, true)) {
+                alert('Formato de patente inválido. No se reconoce el país.');
+                return;
+            }
+            
+            const response = await fetchWithAuth(`${API_BASE_URL}/api/vehicles/${vehicleId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    idVehicle: patent,
+                    brand: brandId,
+                    model: modelId
+                })
+            });
+            
+            if (!response) return;
+            
+            try {
+                const data = await response.json();
+                if (data.success) {
+                    alert('Vehículo actualizado correctamente.');
+                     loadUserVehicles();
+                } else {
+                    alert(data.message || 'Error al actualizar el vehículo.');
+                }
+            } catch (error) {
+                console.error('Error al procesar respuesta:', error);
+                alert('Error al procesar la respuesta del servidor.');
+            }
+        });
+    }
+    
+    // Configurar event listener para eliminación de vehículo
+    const confirmDeleteBtn = document.getElementById('confirmDeleteVehicle');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', async function() {
+            const vehicleId = document.getElementById('deleteVehicleId').value;
+
+            
+            const response = await fetchWithAuth(`${API_BASE_URL}/api/vehicles/${vehicleId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response) return;
+            
+            try {
+                const data = await response.json();
+                if (data.success) {
+                    alert('Vehículo eliminado correctamente.');
+                    bootstrap.Modal.getInstance(document.getElementById('deleteVehicleModal')).hide();
+                    loadUserVehicles();
+                } else {
+                    alert(data.message || 'Error al eliminar el vehículo.');
+                }
+            } catch (error) {
+                console.error('Error al procesar respuesta:', error);
+                alert('Error al procesar la respuesta del servidor.');
+            }
+        });
+    }
+}
