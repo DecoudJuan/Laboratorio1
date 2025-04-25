@@ -60,6 +60,7 @@ class ParkingSpot(db.Model):
     __tablename__ = 'parking_spot'
 
     idParkingSpot = db.Column(db.Integer, primary_key=True)
+    estado = db.Column(db.Boolean, nullable=False)
 
 
 class Owns(db.Model):
@@ -85,6 +86,7 @@ class Sectors(db.Model):
     openingHour = db.Column(db.Integer)
     closingHour = db.Column(db.Integer)
     availableParkingSpots = db.Column(db.Integer)
+    freeParkingSpots = availableParkingSpots
 
 
 class ParkingSpotSector(db.Model):
