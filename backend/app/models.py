@@ -85,8 +85,10 @@ class Sectors(db.Model):
     nameSec = db.Column(db.Text, nullable=False)
     openingHour = db.Column(db.Integer)
     closingHour = db.Column(db.Integer)
-    availableParkingSpots = db.Column(db.Integer)
-    freeParkingSpots = availableParkingSpots
+    availableParkingSpots = db.Column(db.Integer, nullable=False)
+    freeParkingSpots = db.Column(db.Integer, nullable=False, default=0)
+
+
 
 
 class ParkingSpotSector(db.Model):
