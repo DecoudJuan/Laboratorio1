@@ -6,7 +6,7 @@ from psycopg2.extras import RealDictCursor
 from models import User, Owns, Vehicle
 # MODULOS PARA LOGIN
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash 
 
 # MODULOS PARA BASE DE DATOS
 from sqlalchemy import text
@@ -208,58 +208,36 @@ def get_all_users():
 
 @app.route('/api/editarSector', methods=['POST'])
 @jwt_required()
-def editar_establecimiento():
+def editar_sector():
     try:
-        # Obtener valores desde el formulario
-        nombre_completo = request.form.get('nombrecompleto')
-        num_sectores = request.form.get('numsectores')
-        num_cocheras = request.form.get('numcocheras')
-        ubicacion = request.form.get('ubicacion')
-        nombre_anterior = request.form.get('nombre_anterior')
+        id_sector = request.form.get('idSector')
+        nuevo_nombre = request.form.get('nombreSec')
+        nueva_disponibilidad = request.form.get('availableParkingSpots')
+        nueva_desocupados = request.form.get('freeParkingSpots')
+        nueva_apertura = request.form.get('openingHour')
+        nuevo_cierre = request.form.get('closingHour')
 
-        if not nombre_completo or not nombre_anterior:
-            return jsonify({'message': 'El nombre completo es requerido', 'success': False}), 400
+        sector = Sectors.query.get(id_sector)
 
-        # Obtener usuario actual desde el token JWT
-        current_user = get_jwt_identity()
-        user_id = current_user['id']
+        if not sector:
+            return jsonify({'message': 'Sector no encontrado', 'success': False}), 404
 
-        # Buscar el administrador del establecimiento
-        admin = User.query.filter_by(username=nombre_anterior).first()
+        # Actualizamos los datos
+        sector.nameSec = nuevo_nombre
+        sector.openingHour = nueva_apertura
+        sector.closingHour = nuevo_cierre
+        sector.availableParkingSpots = nueva_disponibilidad
+        sector.freeParkingSpots = nueva_desocupados  # Actualiza también los espacios libres
 
-        if not admin:
-            return jsonify({'message': 'Administrador no encontrado', 'success': False}), 404
 
-        # Buscar el establecimiento asociado a este administrador
-        establecimiento_admin = EstablishmentAdmin.query.filter_by(idAdmin=admin.idUser).first()
+        db.session.commit()
 
-        if establecimiento_admin:
-            # Actualizar datos del establecimiento
-            establecimiento = Establishment.query.get(establecimiento_admin.idEstablishment)
-            
-            if establecimiento:
-                establecimiento.nameEst = nombre_completo
-                establecimiento.totalSectors = num_sectores
-                establecimiento.totalParkingSpots = num_cocheras
-                establecimiento.geographicLocation = ubicacion
-                
-                db.session.commit()
-
-                return jsonify({
-                    'message': 'Datos del establecimiento actualizados correctamente',
-                    'success': True
-                }), 200
-            else:
-                return jsonify({'message': 'Establecimiento no encontrado', 'success': False}), 404
-        else:
-            return jsonify({'message': 'No se encontró relación de administración', 'success': False}), 404
+        return jsonify({'message': 'Sector actualizado correctamente', 'success': True}), 200
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({
-            'message': f'Error al actualizar datos del establecimiento: {str(e)}',
-            'success': False
-        }), 500
+        return jsonify({'message': f'Error al editar sector: {str(e)}', 'success': False}), 500
+
 
 # REGISTRO NORMAL
 @app.route('/api/register', methods=['POST'])
@@ -770,7 +748,8 @@ def datos_Admin():
                         idEstablishment=establecimiento_obj.idEstablishment,
                         openingHour=1,
                         closingHour=0,
-                        availableParkingSpots=0
+                        availableParkingSpots=0,
+                        freeParkingSpots=0
                     )
                     db.session.add(sector_obj)
                     db.session.flush()
@@ -811,6 +790,7 @@ def datos_Sector():
         horario_apertura = request.form.get('HorarioApertura')
         horario_cierre = request.form.get('Horariocierre')
         cocheras_disponibles = request.form.get('CocherasDisponibles')
+        cocheras_libres = request.form.get('CocherasLibres')
         nombre_anterior = request.form.get('nombre_anterior')
 
         if not nombre or not nombre_anterior:
@@ -825,6 +805,7 @@ def datos_Sector():
             sector.openingHour = horario_apertura
             sector.closingHour = horario_cierre
             sector.availableParkingSpots = cocheras_disponibles
+            sector.freeParkingSpots = cocheras_libres
 
             db.session.commit()
 
@@ -1195,6 +1176,76 @@ def listar_sectores():
             "error": f"Error interno del servidor: {str(e)}",
             "success": False
         }), 500
+@app.route('/api/actualizar_freeParkingSpots', methods=['POST'])
+def actualizar_freeParkingSpots():
+    try:
+        nombre_sector = request.form.get('name')
+        cocheras_libres = request.form.get('CocherasLibres')
+
+        if not nombre_sector or cocheras_libres is None:
+            return jsonify({'success': False, 'message': 'Faltan datos.'}), 400
+
+        sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
+
+        if sector:
+            sector.freeParkingSpots = cocheras_libres
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Cocheras libres actualizadas correctamente'})
+        else:
+            return jsonify({'success': False, 'message': 'Sector no encontrado'}), 404
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/api/registrar_actualizar_cochera', methods=['POST'])
+def registrar_actualizar_cochera():
+    try:
+        numero = request.form.get('numero')  # Número de cochera
+        nombre_sector = request.form.get('sector')  # Nombre del sector
+        ocupado = request.form.get('ocupado') == 'true'  # Estado: ocupado o no
+
+        if not numero or not nombre_sector:
+            return jsonify({'success': False, 'message': 'Datos incompletos.'}), 400
+
+        # Buscar sector
+        sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
+        if not sector:
+            return jsonify({'success': False, 'message': 'Sector no encontrado.'}), 404
+
+        # Buscar cochera
+        cochera = ParkingSpot.query.filter_by(idParkingSpot=numero).first()
+
+        if not cochera:
+            # Crear nueva cochera si no existe
+            cochera = ParkingSpot(idParkingSpot=numero, estado=True)
+            db.session.add(cochera)
+            db.session.flush()  # Para obtener idParkingSpot
+        else:
+            # Actualizar estado si ya existe
+            cochera.estado = ocupado
+
+        # Buscar relación en ParkingSpotSector
+        relacion = ParkingSpotSector.query.filter_by(
+            idParkingSpot=cochera.idParkingSpot
+        ).first()
+
+        if not relacion:
+            # Crear la relación sector - cochera
+            nueva_relacion = ParkingSpotSector(
+                idParkingSpot=cochera.idParkingSpot,
+                idVehicle=None  # Inicialmente ninguna relación a vehículo
+            )
+            db.session.add(nueva_relacion)
+
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Cochera actualizada correctamente'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
         
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Como alternativa, para asegurar que funcione al menos algo
     console.log("Configurando manejador alternativo en caso de que falle el principal");
     document.querySelectorAll("[data-name]").forEach(element => {
+    
         element.onclick = function() {
             const sector = this.getAttribute("data-name");
             console.log("Elemento con data-name presionado:", sector);
@@ -117,3 +118,4 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
     // Redireccionar a la página de inicio de sesión
     window.location.href = 'index.html';
 });
+

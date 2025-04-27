@@ -44,6 +44,7 @@ let datosActuales = {
     HorarioApertura: '',
     HorarioCierre: '',
     CocherasDisponibles: '',
+    CocherasLibres: '',
 };
 
 // Cargar los datos actuales del usuario al iniciar la página
@@ -59,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             datosActuales.HorarioApertura = userData.HorarioApertura || '';
             datosActuales.HorarioCierre = userData.HorarioCierre || '';
             datosActuales.CocherasDisponibles = userData.CocherasDisponibles || '';
+            datosActuales.CocherasLibres = userData.CocherasLibres || '';
             
             // Mostrar los datos actuales en el formulario como placeholders
             document.getElementById('registerName').placeholder = datosActuales.name;
@@ -120,7 +122,9 @@ document.getElementById('sectorForm').addEventListener('submit', function(e) {
         name: document.getElementById('registerName').value || datosActuales.name,
         HorarioApertura: horarioAperturaInt,
         HorarioCierre: horarioCierreInt,
-        CocherasDisponibles: document.getElementById('registerCocherasDisponibles').value || datosActuales.CocherasDisponibles
+        CocherasDisponibles: document.getElementById('registerCocherasDisponibles').value || datosActuales.CocherasDisponibles,
+        CocherasLibres: document.getElementById('registerCocherasLibres').value || datosActuales.CocherasLibres
+
     };
     
     // Crear FormData para el envío

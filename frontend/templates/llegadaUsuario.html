@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cocheras</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <style>
+        .general-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .centered-image {
+            width: 60%;
+            height: auto;
+            display: block;
+        }
+
+        .map-point {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: red;
+            cursor: pointer;
+        }
+
+        .map-point:hover::after {
+            content: attr(data-name);
+            position: absolute;
+            top: -25px;
+            left: 20px;
+            background: rgba(0,0,0,0.75);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Mi Actividad</h1>
+        <div class="dark-section"></div>
+        <div class="green-section"></div>
+        <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
+    </div>
+
+    
+    <br>
+    
+    <div class="container mt-4">
+
+        <!-- Pregunta 1 -->
+        <div class="mb-3">
+            <h2>¿Llegaste o te vas?</h2>
+            <select class="form-select" style="max-width: 300px;">
+                <option value="">Seleccioná una opción</option>
+                <option value="llegada">Llegué</option>
+                <option value="salida">Me voy</option>
+            </select>
+        </div>
+    
+        <!-- Pregunta 2 -->
+        <div class="mb-3">
+            <h2>¿Qué sector usaste?</h2>
+            <select class="form-select" style="max-width: 300px;">
+                <option value="">Seleccioná un sector</option>
+                <option value="comedor">Comedor</option>
+                <option value="iae">IAE</option>
+                <option value="medicina">Medicina</option>
+                <option value="olivo">Olivo</option>
+                <option value="profesores">Profesores</option>
+            </select>
+        </div>
+    
+        <!-- Pregunta 3 -->
+        <div class="mb-3">
+            <h2>¿Qué cochera usaste?</h2>
+            <select class="form-select" style="max-width: 300px;">
+                <option value="">Seleccioná una cochera</option>
+                <!-- Generar números del 1 al 100 -->
+                <!-- Podés generarlos con JS si preferís -->
+                <!-- Pero acá te dejo el HTML directo con algunos para el ejemplo -->
+                <!-- Si querés los 100 en JS, decime y te paso el script -->
+                <!-- Aquí sólo muestro los primeros 10 por brevedad -->
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <!-- ...hasta el 100 -->
+            </select>
+        </div>
+        <!-- Botón alineado -->
+        <!-- Botón alineado con ancho 100px -->
+        <div class="mb-3">
+            <button type="submit" class="btn btn-success" style="width: 100px; background-color: #45a049;">Guardar</button>
+        </div>
+
+
+    </div>
+    <script src="../static/js/llegadaUsuario.js"></script>
+
+    
+    
+</body>
+</html>
