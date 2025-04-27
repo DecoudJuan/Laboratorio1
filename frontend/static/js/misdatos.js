@@ -7,16 +7,14 @@ function preventCaching() {
 
 preventCaching();
 
-// Verificación inmediata de autenticación (se ejecuta al cargar el script)
 function checkToken() {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
-
-    // Si no hay token o usuario, redirigir al login
     if (!authToken || !currentUser) {
         window.location.replace('index.html');
-        return;
+        return false;
     }
+    return true;
 }
 
 // Verificar autenticación cuando la página vuelve a estar activa
@@ -81,7 +79,7 @@ function loadUserData() {
         }
     }
 
-    // Decodificar token para obtener username
+    // Decodificar token para obtener el ID del usuario
     function parseJwt(token) {
         try {
             const base64Url = token.split('.')[1];
@@ -92,93 +90,55 @@ function loadUserData() {
             return null;
         }
     }
-
-    const tokenData = parseJwt(token);
     
-    // Verificar la estructura del token y mostrar en consola para depuración
-    console.log('Datos del token decodificado:', tokenData);
-    
-    // Verificar si el token tiene la estructura esperada
-    if (!tokenData) {
-        alert('Error al obtener los datos del usuario. Por favor inicia sesión nuevamente.');
-        window.location.href = 'index.html';
-        return;
-    }
-
-    // Extraer información del usuario del token según su estructura
-    let username;
-    
-    // Maneja ambas estructuras posibles (con sub o directamente en el token)
-    if (tokenData.sub) {
-        username = tokenData.sub.username;
-    } else {
-        username = tokenData.username;
-    }
-
-    if (!username) {
-        console.error('No se pudo obtener el nombre de usuario del token');
-        return;
-    }
-    
-    // Obtener datos más recientes del servidor
-    fetch(`http://localhost:5000/api/usuario/${username}`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            // Añadir cabecera para evitar caché
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            console.log('No se pudieron obtener datos adicionales del servidor');
-            return null;
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data && data.success) {
-            // Actualizar con datos más completos del servidor
-            document.getElementById('nombre-completo').textContent = data.nombre || username;
-            document.getElementById('email').textContent = data.email || 'No disponible';
-            document.getElementById('vehiculo-principal').textContent = data.vehiculo_principal || 'No asignado';
+    // Usar el token para obtener datos frescos del servidor
+    const decodedToken = parseJwt(token);
+    if (decodedToken && decodedToken.userId) {
+        // Realizar petición al servidor para obtener datos actualizados
+        fetch('/api/usuarios/' + decodedToken.userId, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Actualizar localStorage con los datos más recientes
+            localStorage.setItem('currentUser', JSON.stringify(data));
             
-            // Actualizar vehículos secundarios
+            // Actualizar la interfaz con los datos nuevos
+            document.getElementById('nombre-completo').textContent = data.username || 'No disponible';
+            document.getElementById('email').textContent = data.email || 'No disponible';
+            document.getElementById('vehiculo-principal').textContent = data.VP || 'No asignado';
+            
+            // Actualizar lista de vehículos secundarios
             const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
             vehiculosSecundariosElement.innerHTML = '';
             
-            if (data.vehiculos_secundarios && data.vehiculos_secundarios.length > 0) {
-                data.vehiculos_secundarios.forEach(vehiculo => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item';
-                    li.textContent = vehiculo;
-                    vehiculosSecundariosElement.appendChild(li);
-                });
+            if (data.VP2 && data.VP2.trim() !== '') {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = data.VP2;
+                vehiculosSecundariosElement.appendChild(li);
             } else {
                 const li = document.createElement('li');
                 li.className = 'list-group-item';
                 li.textContent = 'No tiene vehículos secundarios';
                 vehiculosSecundariosElement.appendChild(li);
             }
-            
-            // Actualizar localStorage con los datos más recientes
-            const currentUserObj = {
-                username: data.nombre || username,
-                email: data.email || '',
-                VP: data.vehiculo_principal || '',
-                VP2: data.vehiculos_secundarios && data.vehiculos_secundarios.length > 0 
-                    ? data.vehiculos_secundarios[0] : ''
-            };
-            
-            localStorage.setItem('currentUser', JSON.stringify(currentUserObj));
-        }
-    })
-    .catch(error => {
-        console.error('Error al obtener datos adicionales:', error);
-    });
+        })
+        .catch(error => {
+            console.error('Error al obtener datos del usuario:', error);
+            // Mostrar mensaje de error al usuario
+            alert('No se pudieron cargar los datos del usuario. Por favor, intenta más tarde.');
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
