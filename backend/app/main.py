@@ -238,6 +238,35 @@ def editar_sector():
         db.session.rollback()
         return jsonify({'message': f'Error al editar sector: {str(e)}', 'success': False}), 500
 
+@app.route('/api/editarParking', methods=['POST'])
+@jwt_required()
+def editar_parking():
+    try:
+        nombre_completo = request.form.get('nombrecompleto')
+        num_sectores = request.form.get('numsectores')
+        num_cocheras = request.form.get('numcocheras')
+        ubicacion = request.form.get('ubicacion')
+        nombre_anterior = request.form.get('nombre_anterior')
+
+        establecimiento = Establishment.query.filter_by(name=nombre_anterior).first()
+
+        if not establecimiento:
+            return jsonify({'message': 'Establecimiento no encontrado', 'success': False}), 404
+
+        establecimiento.name = nombre_completo
+        establecimiento.num_sectores = num_sectores
+        establecimiento.num_cocheras = num_cocheras
+        establecimiento.ubicacion = ubicacion
+
+        db.session.commit()
+
+        return jsonify({'message': 'Establecimiento actualizado correctamente', 'success': True}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error al editar establecimiento: {str(e)}', 'success': False}), 500
+
+
 
 # REGISTRO NORMAL
 @app.route('/api/register', methods=['POST'])
@@ -1070,9 +1099,9 @@ def obtener_cocheras(nombre_sector):
         sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
         
         if sector:
-            print(f"Sector encontrado: {sector.nameSec}, Cocheras disponibles: {sector.availableParkingSpots}")
+            print(f"Sector encontrado: {sector.nameSec}, Cocheras disponibles: {sector.freeParkingSpots}")
             return jsonify({
-                "cocheras": sector.availableParkingSpots,
+                "cocheras": sector.freeParkingSpots,
                 "nombre": sector.nameSec,
                 "success": True
             })

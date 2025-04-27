@@ -22,7 +22,7 @@
     <div class="main-content">    
         <h1 style="color: rgb(0, 0, 0);">Establecimiento - Editar</h1>
         <ul style="color: black; list-style-type: none; padding-left: 0;">
-            <form id="editEstablishmentForm" action="editarSector" method="post">
+            <form id="editEstablishmentForm" method="post">
                 <div class="input-group">
                     <div class="password-field-container">
                         <label for="registerNombreCompleto">Nombre Completo</label>
@@ -48,5 +48,6 @@
     </div>
 
     <script src="../static/js/establecimiento.js"></script>
+    <form id="editEstablishmentForm" onsubmit="editarParking(event)"></form>
 </body>
 </html>
