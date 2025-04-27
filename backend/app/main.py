@@ -740,7 +740,7 @@ def datos_Admin():
             if establecimientoName:
                 # Buscar establecimiento por nombre
                 establecimiento_obj = Establishment.query.filter_by(nameEst=establecimientoName).first()
-
+    
                 if not establecimiento_obj:
                     # Crear nuevo establecimiento si no existe
                     establecimiento_obj = Establishment(
@@ -763,36 +763,36 @@ def datos_Admin():
                     )
                     db.session.add(new_EstAdmin)
 
-            if sectorName and establecimiento_obj:
-                # Buscar sector por nombre dentro del establecimiento
-                sector_obj = Sectors.query.filter_by(
+        if sectorName and establecimiento_obj:
+            # Buscar sector por nombre dentro del establecimiento
+            sector_obj = Sectors.query.filter_by(
+                nameSec=sectorName,
+                idEstablishment=establecimiento_obj.idEstablishment
+            ).first()
+
+            if not sector_obj:
+                # Crear nuevo sector si no existe
+                sector_obj = Sectors(
                     nameSec=sectorName,
-                    idEstablishment=establecimiento_obj.idEstablishment
-                ).first()
+                    idEstablishment=establecimiento_obj.idEstablishment,
+                    openingHour=1,
+                    closingHour=0,
+                    availableParkingSpots=0,
+                    freeParkingSpots=0
+                )
+                db.session.add(sector_obj)
+                db.session.flush()
 
-                if not sector_obj:
-                    # Crear nuevo sector si no existe
-                    sector_obj = Sectors(
-                        nameSec=sectorName,
-                        idEstablishment=establecimiento_obj.idEstablishment,
-                        openingHour=1,
-                        closingHour=0,
-                        availableParkingSpots=0,
-                        freeParkingSpots=0
-                    )
-                    db.session.add(sector_obj)
-                    db.session.flush()
-
-                # Crear relación con SectorEstablishment si no existe
-                if not db.session.query(SectorEstablishment).filter_by(
+            # Crear relación con SectorEstablishment si no existe
+            if not db.session.query(SectorEstablishment).filter_by(
+                idSector=sector_obj.idSector,
+                idEstablishment=establecimiento_obj.idEstablishment
+            ).first():
+                new_secEst = SectorEstablishment(
                     idSector=sector_obj.idSector,
                     idEstablishment=establecimiento_obj.idEstablishment
-                ).first():
-                    new_secEst = SectorEstablishment(
-                        idSector=sector_obj.idSector,
-                        idEstablishment=establecimiento_obj.idEstablishment
-                    )
-                    db.session.add(new_secEst)
+                )
+                db.session.add(new_secEst)
 
             db.session.commit()
 
@@ -1274,6 +1274,115 @@ def registrar_actualizar_cochera():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+    
+
+@app.route('/api/crear_sector', methods=['POST'])
+def crear_sector():
+    try:
+        # Obtener valores desde el formulario
+        sectorName = request.form.get('sector')
+        establecimientoName = request.form.get('establecimiento')
+
+        if establecimientoName:
+            # Buscar establecimiento por nombre
+            establecimiento_obj = Establishment.query.filter_by(nameEst=establecimientoName).first()
+
+            if not establecimiento_obj:
+                # Crear nuevo establecimiento si no existe
+                establecimiento_obj = Establishment(
+                    nameEst=establecimientoName,
+                    totalParkingSpots=3,
+                    totalSectors=3,
+                    geographicLocation='unknown'
+                )
+            db.session.add(establecimiento_obj)
+            db.session.flush()  # Para obtener el ID asignado
+
+        if sectorName and establecimiento_obj:
+            # Buscar sector por nombre dentro del establecimiento
+            sector_obj = Sectors.query.filter_by(
+                nameSec=sectorName,
+                idEstablishment=establecimiento_obj.idEstablishment
+            ).first()
+
+            if not sector_obj:
+                # Crear nuevo sector si no existe
+                sector_obj = Sectors(
+                    nameSec=sectorName,
+                    idEstablishment=establecimiento_obj.idEstablishment,
+                    openingHour=1,
+                    closingHour=0,
+                    availableParkingSpots=0,
+                    freeParkingSpots=0
+                )
+                db.session.add(sector_obj)
+                db.session.flush()
+
+            # Crear relación con SectorEstablishment si no existe
+            if not db.session.query(SectorEstablishment).filter_by(
+                idSector=sector_obj.idSector,
+                idEstablishment=establecimiento_obj.idEstablishment
+            ).first():
+                new_secEst = SectorEstablishment(
+                    idSector=sector_obj.idSector,
+                    idEstablishment=establecimiento_obj.idEstablishment
+                )
+                db.session.add(new_secEst)
+
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Datos actualizados correctamente',
+                'success': True
+            }), 200
+
+        else:
+            return jsonify({'message': 'Usuario no encontrado', 'success': False}), 404
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'message': f'Error al guardar datos: {str(e)}',
+            'success': False
+        }), 500
+    
+
+@app.route('/api/crear_establecimiento', methods=['POST'])
+def crear_establecimiento():
+    try:
+        # Obtener el nombre del establecimiento
+        establecimientoName = request.form.get('establecimiento')
+
+        if establecimientoName:
+            # Buscar si el establecimiento ya existe
+            establecimiento_obj = Establishment.query.filter_by(nameEst=establecimientoName).first()
+
+            if not establecimiento_obj:
+                # Si no existe, crear uno nuevo
+                establecimiento_obj = Establishment(
+                    nameEst=establecimientoName,
+                    totalParkingSpots=3,
+                    totalSectors=3,
+                    geographicLocation='unknown'
+                )
+                db.session.add(establecimiento_obj)
+                db.session.flush()  # Para obtener el ID asignado
+
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Establecimiento creado correctamente',
+                'success': True
+            }), 200
+        else:
+            return jsonify({'message': 'Establecimiento no encontrado', 'success': False}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'message': f'Error al guardar datos: {str(e)}',
+            'success': False
+        }), 500
+
 
         
 if __name__ == '__main__':

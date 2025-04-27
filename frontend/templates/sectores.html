@@ -18,9 +18,15 @@
         <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Sector - Editar</h1>
         <div class="dark-section"></div>
         <div class="green-section"></div>
+        <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
     </div>
 
-    <div class="main-content">    
+    <div class="main-content">
+        <a href="admin.html">
+            <button type="button" class="back-button">
+            <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
+            </button>
+        </a>
         <h1 style="color: rgb(0, 0, 0);">Sector - Editar</h1>
         <ul style="color: black; list-style-type: none; padding-left: 0;">
             <form id="sectorForm" action="datos_Sector" method="post">
@@ -50,6 +56,11 @@
                 <!-- Otros campos... -->
                 <div class="d-flex gap-3 mt-3">
                     <button type="submit" class="btn btn-success" style="background-color: #45a049;">Guardar</button>
+                    <div class="flex-grow-1">
+                        <a href="crearSector.html" style="text-decoration: none; display: block;">
+                            <button type="button" class="btn btn-success" style="background-color: #45a049;">Crear Sector</button>
+                        </a>
+                    </div>
                 
                     <button 
                         type="button" 

@@ -26,10 +26,11 @@
 
   <div class="main-content" style="display: flex; justify-content: center; align-items: center;">
     <div class="general-container">
-      <button type="button" class="back-button" id="backToPrincipalBtn">
-        <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
-      </button>
-
+      <a href="admin.html">
+  <button type="button" class="back-button">
+    <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
+  </button>
+      </a>
       <!-- Nombre Completo -->
       <div>
         <label class="form-label fw-bold">Nombre Completo:</label>
@@ -65,13 +66,13 @@
           </a>
           <a>
             <input type="hidden" id="username" value="{{ username }}">
-            <button type="button" class="button" data-username="{{ username }}" onclick="confirmarBorrado(this)">
-                Borrar
-            </button>
+            <button type="button" class="button" style="background-color: red; color: white;" data-username="{{ username }}" onclick="confirmarBorrado(this)">
+              Borrar
+          </button>
           </a>
         </div>
         <a href="admin.html">
-          <button type="button" class="button" style="width: 50%;">Página Principal</button>
+          <button type="button" class="button" style="width: 80%; margin-left: 15%;background-color: #2980b9; color: white" >Página Principal</button>
         </a>
       </div>
     </div>

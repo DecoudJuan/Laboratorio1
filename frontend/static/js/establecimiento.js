@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
         editarBtn.addEventListener('click', function() {
             const nombreAnterior = prompt("Ingrese nombre actual del parking para confirmar el cambio:");
             
+            
             if (!nombreAnterior) {
                 alert("Debes ingresar el nombre actual del parking para continuar.");
                 return;
@@ -145,4 +146,13 @@ document.getElementById('editEstablishmentForm')?.addEventListener('submit', fun
         console.error('Error:', error);
         alert('Error al procesar la solicitud');
     });
+});
+
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    // Eliminar token y datos de usuario del localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    
+    // Redireccionar a la página de inicio de sesión
+    window.location.href = 'index.html';
 });

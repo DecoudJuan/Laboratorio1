@@ -200,3 +200,8 @@ function confirmarBorradoSector() {
         alert(`Error al borrar el sector: ${error.message || 'Error desconocido'}`);
     });
 }
+document.getElementById('logoutBtn')?.addEventListener('click', function() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    window.location.href = 'index.html';
+});

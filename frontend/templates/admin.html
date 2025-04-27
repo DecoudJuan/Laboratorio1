@@ -16,6 +16,7 @@
 
 <body>
     <div class="top-bar">
+        
         <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Administración</h1>
         <div class="dark-section"></div>
         <div class="green-section"></div>
@@ -50,15 +51,12 @@
             </table>
 
             <div class="flex-grow-1">
-                <a href="edicionestablecimiento.html" style="text-decoration: none; display: block;">
-                    <button type="button" class="button" style="background-color: #45a049;">Administrar Parking</button>
-                </a>
+                    <button type="button" class="button" style="background-color: #45a049;" onclick="pedirContrasenaParking()">Administrar Parking</button>
             </div>
             <div class="flex-grow-1">
-                <a href="sectores.html" style="text-decoration: none; display: block;">
-                    <button type="button" class="button" style="background-color: #9b59b6;">Administrar Sectores</button>
-                </a>
+                <button type="button" class="button" style="background-color: #9b59b6;" onclick="pedirContrasenaSector()">Administrar Sectores</button>
             </div>
+            
             <div class="flex-grow-1">
                 <a href="misdatosAdmin.html" style="text-decoration: none; display: block;">
                     <button type="button" class="button" style="background-color: #2980b9;">Mis Datos</button>
@@ -68,7 +66,30 @@
         </div>
     </div>
 
-    <script src="../static/js/admin.js"> </script>
+    <script>
+        function pedirContrasenaSector() {
+            const contrasenaCorrecta = "superadmin123"; 
+            const input = prompt("Ingrese la contraseña para acceder a Administración de Sectores:");
+            if (input === contrasenaCorrecta) {
+                window.location.href = "sectores.html";
+            } else if (input !== null) {
+                alert("Contraseña incorrecta.");
+            }
+        }
+        </script>
+
+    <script>
+        function pedirContrasenaParking() {
+            const contrasenaCorrecta = "superadmin123"; 
+            const input = prompt("Ingrese la contraseña para acceder a Administración de Sectores:");
+            if (input === contrasenaCorrecta) {
+                window.location.href = "edicionestablecimiento.html";
+            } else if (input !== null) {
+                alert("Contraseña incorrecta.");
+            }
+        }
+        </script>
+        
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>

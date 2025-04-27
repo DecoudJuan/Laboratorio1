@@ -17,9 +17,15 @@
         <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Establecimiento - Editar</h1>
         <div class="dark-section"></div>
         <div class="green-section"></div>
+        <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
     </div>
 
-    <div class="main-content">    
+    <div class="main-content">  
+        <a href="admin.html">
+            <button type="button" class="back-button">
+                <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
+              </button>              
+                </a>  
         <h1 style="color: rgb(0, 0, 0);">Establecimiento - Editar</h1>
         <ul style="color: black; list-style-type: none; padding-left: 0;">
             <form id="editEstablishmentForm" method="post">
@@ -42,7 +48,10 @@
                     </div>
                 </div>
                 <input type="hidden" id="nombreAnterior" name="nombre_anterior">
-                <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
+                <button type="submit" class="btn btn-success mt-3 me-2" style="background-color: #45a049;">Guardar</button>
+                <a href="crearEstablecimiento.html" style="text-decoration: none;">
+                    <button type="button" class="btn btn-success mt-3" style="background-color: #45a049;">Crear Establecimiento</button>
+                </a>
             </form>
         </ul>
     </div>

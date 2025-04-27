@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Datos - Editar</title>
+    <title>Crear Establecimiento</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
     <!-- Bootstrap CSS -->
@@ -17,50 +17,37 @@
 <body>
 
     <div class="top-bar">
-        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Mis Datos - Editar</h1>
+        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Crear Establecimiento</h1>
         <div class="dark-section"></div>
         <div class="green-section"></div>
         <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
     </div>
 
     <div class="main-content">    
-        <a href="admin.html">
+        <a href="edicionestablecimiento.html">
             <button type="button" class="back-button">
                 <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
               </button>              
                 </a>
-        <h1 style="color: rgb(0, 0, 0);">Mis Datos - Editar</h1>
+        <h1 style="color: rgb(0, 0, 0);">Crear Establecimiento</h1>
         <ul style="color: black; list-style-type: none; padding-left: 0;">
-            <form id="editUserForm" action="guardar_datos_Admin" method="post">
+            <form id="editUserForm" action="crear_establecimiento" method="post">
                 <div class="input-group">
                     <div class="password-field-container">
-                        <label for="registerName">Nombre Completo</label>
-                        <input type="text" id="registerName" name="username" class="form-control" required>
-                    </div>
-                    <div class="password-field-container">
-                        <label for="registerName">Email</label>
-                        <input type="text" id="registerEmail" name="email" class="form-control" required>
-                    </div>
-                    <div class="password-field-container">
-                        <label for="registerName">Establecimiento</label>
+                        <label for="registerEstablecimiento">Establecimiento</label>
                         <input type="text" id="registerEstablecimiento" name="establecimiento" class="form-control" required>
-                    </div>
-                    <div class="password-field-container">
-                        <label for="registerName">Sector</label>
-                        <input type="text" id="registerSector" name="sector" class="form-control" required>
                     </div>
                 </div>
                 <input type="hidden" id="nombreAnterior" name="nombre_anterior">
-                <!-- Otros campos... -->
-                <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049;">Guardar</button>
-                
+                <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049; margin-left: 25%;">Guardar</button>
             </form>
+            
         </ul>
     </div>
 
 
         </ul>
     </div>
-<script src="../static/js/ediciondatosAdmin.js"></script>
+<script src="../static/js/crearEstablecimiento.js"></script>
 </body>
 </html>
