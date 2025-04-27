@@ -88,9 +88,6 @@ class Sectors(db.Model):
     availableParkingSpots = db.Column(db.Integer, nullable=False)
     freeParkingSpots = db.Column(db.Integer, nullable=False)
 
-
-
-
 class ParkingSpotSector(db.Model):
     __tablename__ = 'parking_spot_sector'
 

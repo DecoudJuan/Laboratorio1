@@ -2,6 +2,21 @@
 const API_BASE_URL = 'http://localhost:5000';
 let loadedModels = {};
 
+function checkToken() {
+    const authToken = localStorage.getItem('authToken');
+    const currentUser = localStorage.getItem('currentUser');
+
+    console.log('Token de autenticación:', authToken); // Verifica el token
+    console.log('Usuario actual:', currentUser); // Verifica el usuario
+
+    if (!authToken || !currentUser) {
+        console.error('No se encontró el token o el usuario actual');
+        window.location.replace('index.html');
+        return false;
+    }
+    return true;
+}
+
 // Patrones de validación de patentes por país
 const patterns = {
     argentina: { old: /^[A-Z]{3}\d{3}$/, new: /^[A-Z]{2}\d{3}[A-Z]{2}$/, name: "Argentina" },
@@ -13,34 +28,6 @@ const patterns = {
     venezuela: { old: /^[A-Z]{2}\d{3}[A-Z]{2}$/, new: /^[A-Z]{3}\d{2}[A-Z]$/, name: "Venezuela" },
     colombia:  { old: /^[A-Z]{3}\d{3}$/, new: /^[A-Z]{3}\d{2}[A-Z]$/, name: "Colombia" }
 };
-
-// Funciones de utilidad
-function preventCaching() {
-    if (window.location.protocol !== 'file:') {
-        window.history.replaceState(null, document.title, window.location.href);
-    }
-}
-
-function checkToken() {
-    const authToken = localStorage.getItem('authToken');
-    const currentUser = localStorage.getItem('currentUser');
-    if (!authToken || !currentUser) {
-        window.location.replace('index.html');
-        return false;
-    }
-    return true;
-}
-
-function handleAuthError(response) {
-    if (response.status === 401) {
-        alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
-        window.location.replace('index.html');
-        return true;
-    }
-    return false;
-}
 
 function validatePatent(patent, isEdit = false) {
     patent = patent.toUpperCase().replace(/\s|-/g, '');
@@ -174,10 +161,8 @@ async function loadUserVehicles() {
     console.log('currentUser:', currentUser);
     
     try {
-        // Asumiendo que fetchWithAuth ya devuelve los datos JSON parseados
         const data = await fetchWithAuth(`${API_BASE_URL}/api/user-vehicles/${currentUser.id}`);
-        
-        if (!data) return;
+        console.log('Datos recibidos de la API:', data);
         
         if (data.success) {
             displayVehicles(data.vehicles);
@@ -191,22 +176,32 @@ async function loadUserVehicles() {
     }
 }
 
-// Funciones de UI
+// Función para mostrar los vehículos en la tabla
 function displayVehicles(vehicles) {
     const vehiclesTableBody = document.getElementById('vehiclesTableBody');
     const noVehiclesMessage = document.getElementById('noVehiclesMessage');
     
-    if (!vehiclesTableBody) return;
+    console.log('Vehículos recibidos para mostrar:', vehicles); // Verificar los datos recibidos
+
+    if (!vehiclesTableBody) {
+        console.error('No se encontró el elemento con id "vehiclesTableBody"');
+        return;
+    }
+
+    // Limpiar la tabla antes de agregar nuevos datos
     vehiclesTableBody.innerHTML = '';
     
     if (!vehicles || vehicles.length === 0) {
+        console.log('No hay vehículos para mostrar.');
         if (noVehiclesMessage) noVehiclesMessage.style.display = 'block';
         return;
     }
-    
+
     if (noVehiclesMessage) noVehiclesMessage.style.display = 'none';
-    
+
     vehicles.forEach(vehicle => {
+        console.log('Procesando vehículo:', vehicle); // Verificar cada vehículo
+
         const row = document.createElement('tr');
         
         row.innerHTML = `
@@ -226,10 +221,11 @@ function displayVehicles(vehicles) {
                 </button>
             </td>
         `;
-        
+
         vehiclesTableBody.appendChild(row);
     });
-    
+
+    console.log('Vehículos mostrados en la tabla.'); // Confirmar que se completó el proceso
     attachVehicleButtonListeners();
 }
 
@@ -298,8 +294,6 @@ function openDeleteModal(idVehicle, brand, model) {
 
 // Inicialización y configuración de event listeners
 document.addEventListener('DOMContentLoaded', () => {
-    preventCaching();
-    checkToken();
 
     // Configurar listeners para cambios de visibilidad
     window.addEventListener('pageshow', (event) => {
@@ -321,20 +315,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     loadBrands();
+
 });
 
 function setupUIElements() {
     const addVehicleBtn = document.getElementById('showAddVehicleBtn');
     const editVehicleBtn = document.getElementById('showEditVehicleBtn');
-    const backToVehicleOptionsFromEdit = document.getElementById('backTobackToVehicleOptionsFromEdit');
     const backToVehicleOptionsFromAdd = document.getElementById('backTobackToVehicleOptionsFromAdd');
-    const backBtn = document.getElementById('backTo');
     
     if (addVehicleBtn) {
         addVehicleBtn.addEventListener('click', () => {
             document.getElementById('addVehicleForm').style.display = 'block';
             document.getElementById('VehicleForm').style.display = 'none';
-            document.getElementById('vehicleForm').style.display = 'none';
         });
     }
     
@@ -342,7 +334,6 @@ function setupUIElements() {
         editVehicleBtn.addEventListener('click', () => {
             document.getElementById('addVehicleForm').style.display = 'none';
             document.getElementById('VehicleForm').style.display = 'block';
-            document.getElementById('vehicleForm').style.display = 'none';
         });
     }
     
@@ -424,30 +415,23 @@ function setupFormListeners() {
                 return;
             }
             
-            const response = await fetchWithAuth(`${API_BASE_URL}/api/register_vehicle`, {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    patent, 
-                    brand: brandId, 
-                    model: modelId 
-                })
-            });
-            
-            if (!response) return;
-            
             try {
-                const data = await response.json();
-                if (response.ok) {
-                    alert(data.message || 'Vehículo registrado exitosamente.');
-                    addVehicleForm.reset();
-                    loadUserVehicles();
-
-                } else {
-                    alert(data.message || 'Error al registrar el vehículo.');
-                }
+                const data = await fetchWithAuth(`${API_BASE_URL}/api/register_vehicle`, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        patent, 
+                        brand: brandId, 
+                        model: modelId 
+                    })
+                });
+                
+                // data ya es el objeto JSON procesado
+                alert(data.message || 'Vehículo registrado exitosamente.');
+                addVehicleForm.reset();
+                loadUserVehicles();
             } catch (error) {
-                console.error('Error al procesar respuesta:', error);
-                alert('Error al procesar la respuesta del servidor.');
+                alert(error.message || 'Error al registrar el vehículo.');
+                console.error('Error:', error);
             }
         });
     }

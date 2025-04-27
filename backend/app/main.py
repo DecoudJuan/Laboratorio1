@@ -36,7 +36,7 @@ def create_app(enviroment):
     CORS(app, resources={r"/api/*": {
         "origins": "http://localhost:3000",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
+        "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "Pragma", "Expires"],
         "supports_credentials": True
     }})
 
@@ -551,6 +551,55 @@ def obtener_datos_usuario(username):
             'message': 'Error al obtener datos del usuario'
         }), 500
 
+@app.route('/api/usuario/id/<int:user_id>')
+def obtener_datos_usuario_por_id(user_id):
+    try:
+        # Debug: Imprimir el ID de usuario recibido
+        print(f"Buscando usuario con ID: '{user_id}'")
+        
+        # Buscar al usuario por su ID
+        user = User.query.filter_by(idUser=user_id).first()
+        
+        # Debug: Imprimir el resultado de la búsqueda
+        print(f"Usuario encontrado: {user}")
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
+        
+        # Obtener los vehículos del usuario
+        owns = Owns.query.filter_by(idUser=user.idUser).all()
+        
+        # Obtener los datos de los vehículos
+        vehiculos = []
+        for o in owns:
+            vehicle = Vehicle.query.filter_by(idVehicle=o.idVehicle).first()
+            if vehicle:
+                vehiculos.append({
+                    'idVehicle': vehicle.idVehicle,
+                    'brand': vehicle.brand,
+                    'model': vehicle.model
+                })
+        
+        # Construir y devolver la respuesta
+        return jsonify({
+            'success': True,
+            'nombre_completo': user.username,  # O algún otro campo que represente el nombre completo
+            'username': user.username,
+            'email': user.email,
+            'vehiculos': vehiculos
+        }), 200
+    
+    except Exception as e:
+        print(f"Error al obtener datos del usuario por ID: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al obtener datos del usuario: {str(e)}'
+        }), 500
+    
+
 conn = psycopg2.connect(
     host="localhost",
     database="postgres",
@@ -985,17 +1034,14 @@ def register_vehicle():
 @app.route('/api/user-vehicles/<int:id_user>', methods=['GET', 'OPTIONS'])
 @jwt_required()
 def get_user_vehicles(id_user):
-
     if request.method == 'OPTIONS':
         response = app.make_default_options_response()
         return response
-    
     
     try:
         current_user = get_jwt_identity()
         print(f"Usuario actual: {current_user}, solicitando vehículos para usuario ID: {id_user}")
         
-        # Si el usuario no es administrador y está intentando ver los vehículos de otro usuario
         if current_user['userRole'] != 'administrador' and current_user['id'] != id_user:
             print(f"Permiso denegado: Usuario {current_user['id']} intentando acceder a vehículos de {id_user}")
             return jsonify({
@@ -1003,13 +1049,10 @@ def get_user_vehicles(id_user):
                 'message': 'No tienes permisos para ver estos vehículos'
             }), 403
         
-        # Asegúrate de que este nombre de función/método sea correcto para tu ORM
-        print(f"Ejecutando consulta para obtener vehículos del usuario: {id_user}")
-
         vehicles = db.session.query(Vehicle).\
-        join(Owns, Owns.idVehicle == Vehicle.idVehicle).\
-        filter(Owns.idUser == id_user).\
-        all()
+            join(Owns, Owns.idVehicle == Vehicle.idVehicle).\
+            filter(Owns.idUser == id_user).\
+            all()
 
         vehicles_list = []
         for vehicle in vehicles:
@@ -1036,8 +1079,7 @@ def get_user_vehicles(id_user):
             'success': False,
             'message': f'Error al obtener la lista de vehículos: {str(e)}'
         }), 500
-    
-    
+   
 # Ruta para eliminar un vehículo específico
 @app.route('/api/vehicles/<int:id_vehicle>', methods=['DELETE'])
 @jwt_required()
