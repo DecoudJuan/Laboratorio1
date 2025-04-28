@@ -8,8 +8,6 @@
     <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link href="../static/css/styles.css" rel="stylesheet">
 
@@ -25,13 +23,7 @@
 
     <div class="main-content">    
         <div class="general-container">
-        
-        <button type="button" class="back-button" id="backToPrincipalBtn">
-            <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
-        </button>
-        
         <h1 style="color: rgb(0, 0, 0);">Mis Datos - Editar</h1>
-        
         <ul style="color: black; list-style-type: none; padding-left: 0;">
             <form id="editUserForm" action="guardar_datos" method="post">
                 <div class="input-group">
@@ -44,12 +36,14 @@
                         <input type="text" id="registerEmail" name="email" class="form-control">
                     </div>
                     <div class="password-field-container">
-                        <label for="vehiculoPrincipal">Vehículo Principal</label>
-                        <select id="vehiculoPrincipal" name="vehiculoPrincipal" class="form-control">
-                            <option value="">Seleccione un vehículo principal</option>
-                            <!-- Las opciones se cargarán dinámicamente -->
-                        </select>
+                        <label for="registerName">Vehiculo Principal</label>
+                        <input type="text" id="registerVP" name="VP" class="form-control">
                     </div>
+                    <div class="password-field-container">
+                        <label for="registerName">Vehiculo Secundario</label>
+                        <input type="text" id="registerVP2" name="VP2" class="form-control">
+                    </div>
+                </div>
                 <input type="hidden" id="nombreAnterior" name="nombre_anterior">
                 <!-- Otros campos... -->
                 <div class="d-flex justify-content-center" style="gap: 10%;">
@@ -61,9 +55,12 @@
                 
             </form>
         </ul>
-        </div>
+    </div>
     </div>
 
+
+        </ul>
+    </div>
 <script src="../static/js/ediciondatos.js"></script>
 </body>
 </html>

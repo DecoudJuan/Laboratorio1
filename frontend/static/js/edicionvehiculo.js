@@ -54,6 +54,7 @@ function validatePatent(patent, isEdit = false) {
     return false;
 }
 
+// En tu función fetchWithAuth en edicionvehiculo.js
 async function fetchWithAuth(url, options = {}) {
     const token = localStorage.getItem('authToken'); // O donde almacenes el token
     
@@ -208,6 +209,11 @@ function displayVehicles(vehicles) {
             <td>${vehicle.model || 'N/A'}</td>
             <td>${vehicle.idVehicle || 'N/A'}</td>
             <td>
+                <button class="btn btn-sm btn-primary edit-vehicle" data-id="${vehicle.idVehicle}"
+                    data-brand="${vehicle.brand || ''}" data-model="${vehicle.model || ''}" 
+                    data-license="${vehicle.idVehicle || ''}">
+                    <i class="bi bi-pencil"></i> Editar
+                </button>
                 <button class="btn btn-sm btn-danger delete-vehicle" data-id="${vehicle.idVehicle}"
                     data-brand="${vehicle.brand || ''}" data-model="${vehicle.model || ''}" 
                     data-license="${vehicle.idVehicle || ''}">
@@ -226,32 +232,69 @@ function displayVehicles(vehicles) {
 function attachVehicleButtonListeners() {
     document.querySelectorAll('.edit-vehicle').forEach(button => {
         button.addEventListener('click', function() {
-            const idVehicle = this.getAttribute('data-id');
+            const vehicleId = this.getAttribute('data-id');
+            const idVehicle = this.getAttribute('data-license');
             const brand = this.getAttribute('data-brand');
             const model = this.getAttribute('data-model');
-            openEditModal(idVehicle, brand, model);
+            openEditModal(vehicleId, idVehicle, brand, model);
         });
     });
 
     document.querySelectorAll('.delete-vehicle').forEach(button => {
         button.addEventListener('click', function() {
-            const idVehicle = this.getAttribute('data-id');
+            const vehicleId = this.getAttribute('data-id');
+            const idVehicle = this.getAttribute('data-license');
             const brand = this.getAttribute('data-brand');
             const model = this.getAttribute('data-model');
-            openDeleteModal(idVehicle, brand, model);
+            openDeleteModal(vehicleId, idVehicle, brand, model);
         });
     });
+}
+
+async function openEditModal(idVehicle, brand, model) {
+    document.getElementById('editVehicleId').value = vehicleId;
+    document.getElementById('editPatent').value = idVehicle;
+
+    await loadBrands(true);
+
+    const brandSelect = document.getElementById('editBrand');
+    let brandId = null;
+
+    for (let i = 0; i < brandSelect.options.length; i++) {
+        if (brandSelect.options[i].textContent === brand) {
+            brandSelect.selectedIndex = i;
+            brandId = brandSelect.options[i].value;
+            break;
+        }
+    }
+
+    if (brandId) {
+        await loadModels(brandId, true);
+
+        const modelSelect = document.getElementById('editModel');
+        for (let i = 0; i < modelSelect.options.length; i++) {
+            if (modelSelect.options[i].textContent === model) {
+                modelSelect.selectedIndex = i;
+                break;
+            }
+        }
+    }
+
+    const editVehicleModal = new bootstrap.Modal(document.getElementById('editVehicleModal'));
+    editVehicleModal.show();
+}
+
+function openDeleteModal(idVehicle, brand, model) {
+    document.getElementById('deleteVehicleId').value = vehicleId;
+    document.getElementById('deleteVehicleDetails').innerHTML = `${brand} ${model} (${idVehicle})`;
+
+    const deleteVehicleModal = new bootstrap.Modal(document.getElementById('deleteVehicleModal'));
+    deleteVehicleModal.show();
 }
 
 // Inicialización y configuración de event listeners
 document.addEventListener('DOMContentLoaded', () => {
 
-    const authToken = localStorage.getItem('authToken');
-    if (!authToken) {
-        // Redirigir a index.html si no hay token
-        window.location.href = 'index.html';
-    }
-    
     // Configurar listeners para cambios de visibilidad
     window.addEventListener('pageshow', (event) => {
         if (event.persisted) checkToken();
@@ -414,92 +457,75 @@ function setupModalListeners() {
         });
     }
     
+    const editVehicleForm = document.getElementById('editVehicleFormModal');
+    if (editVehicleForm) {
+        editVehicleForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const vehicleId = document.getElementById('editVehicleId').value;
+            const patent = document.getElementById('editPatent').value.trim().toUpperCase();
+            const brandId = document.getElementById('editBrand').value;
+            const modelId = document.getElementById('editModel').value;
+            
+            if (!validatePatent(patent, true)) {
+                alert('Formato de patente inválido. No se reconoce el país.');
+                return;
+            }
+            
+            const response = await fetchWithAuth(`${API_BASE_URL}/api/vehicles/${vehicleId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    idVehicle: patent,
+                    brand: brandId,
+                    model: modelId
+                })
+            });
+            
+            if (!response) return;
+            
+            try {
+                const data = await response.json();
+                if (data.success) {
+                    alert('Vehículo actualizado correctamente.');
+                     loadUserVehicles();
+                } else {
+                    alert(data.message || 'Error al actualizar el vehículo.');
+                }
+            } catch (error) {
+                console.error('Error al procesar respuesta:', error);
+                alert('Error al procesar la respuesta del servidor.');
+            }
+        });
+    }
+    
     // Configurar event listener para eliminación de vehículo
     const confirmDeleteBtn = document.getElementById('confirmDeleteVehicle');
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener('click', async function() {
-            const idVehicle = document.getElementById('deleteVehicleId').value;
+            const vehicleId = document.getElementById('deleteVehicleId').value;
 
+            
+            const response = await fetchWithAuth(`${API_BASE_URL}/api/vehicles/${vehicleId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response) return;
+            
             try {
-                // fetchWithAuth ya devuelve los datos en JSON o lanza un error
-                const data = await fetchWithAuth(`${API_BASE_URL}/api/vehicles/${idVehicle}`, {
-                    method: 'DELETE'
-                });
-
-                // Si llegamos aquí, la operación fue exitosa
-                alert('Vehículo eliminado correctamente.');
-                bootstrap.Modal.getInstance(document.getElementById('deleteVehicleModal')).hide();
-                loadUserVehicles();
+                const data = await response.json();
+                if (data.success) {
+                    alert('Vehículo eliminado correctamente.');
+                    bootstrap.Modal.getInstance(document.getElementById('deleteVehicleModal')).hide();
+                    loadUserVehicles();
+                } else {
+                    alert(data.message || 'Error al eliminar el vehículo.');
+                }
             } catch (error) {
-                console.error('Error al eliminar vehículo:', error);
-                alert('Error al eliminar el vehículo: ' + error.message);
+                console.error('Error al procesar respuesta:', error);
+                alert('Error al procesar la respuesta del servidor.');
             }
         });
     }
-}
-
-
-function openEditModal(idVehicle, brand, model) {
-    // Guardar el ID del vehículo en el campo oculto
-    document.getElementById('editVehicleId').value = idVehicle;
-    
-    // Obtener los datos completos del vehículo (incluida la patente)
-    fetchWithAuth(`${API_BASE_URL}/api/vehicles/${idVehicle}`)
-        .then(data => {
-            // Rellenar el campo de patente
-            document.getElementById('editPatent').value = data.idVehicle || idVehicle;
-            
-            // Cargar las marcas en el dropdown y luego seleccionar la actual
-            loadBrands(true).then(() => {
-                const brandSelect = document.getElementById('editBrand');
-                
-                // Buscar y seleccionar la marca actual
-                for (let i = 0; i < brandSelect.options.length; i++) {
-                    if (brandSelect.options[i].textContent === brand) {
-                        brandSelect.selectedIndex = i;
-                        
-                        // Una vez seleccionada la marca, cargar sus modelos
-                        const selectedBrandId = brandSelect.value;
-                        if (selectedBrandId) {
-                            loadModels(selectedBrandId, true).then(() => {
-                                // Buscar y seleccionar el modelo actual
-                                const modelSelect = document.getElementById('editModel');
-                                for (let j = 0; j < modelSelect.options.length; j++) {
-                                    if (modelSelect.options[j].textContent === model) {
-                                        modelSelect.selectedIndex = j;
-                                        break;
-                                    }
-                                }
-                            });
-                        }
-                        break;
-                    }
-                }
-            });
-        })
-        .catch(error => {
-            console.error('Error al obtener datos del vehículo:', error);
-        });
-    
-    // Mostrar el modal usando Bootstrap
-    const editModal = new bootstrap.Modal(document.getElementById('editVehicleModal'));
-    editModal.show();
-}
-
-// Función openDeleteModal para eliminar vehículos (también mencionada en tu código)
-function openDeleteModal(idVehicle, brand, model) {
-    // Guardar el ID del vehículo en el campo oculto
-    document.getElementById('deleteVehicleId').value = idVehicle;
-    
-    // Actualizar el mensaje de confirmación
-    const confirmationMessage = document.getElementById('deleteConfirmationMessage');
-    if (confirmationMessage) {
-        confirmationMessage.textContent = `¿Estás seguro que deseas eliminar el vehículo ${brand} ${model} (${idVehicle})?`;
-    }
-    
-    // Mostrar el modal usando Bootstrap
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteVehicleModal'));
-    deleteModal.show();
 }
 
 document.getElementById('logoutBtn').addEventListener('click', function() {
