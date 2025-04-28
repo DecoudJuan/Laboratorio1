@@ -54,7 +54,6 @@ function validatePatent(patent, isEdit = false) {
     return false;
 }
 
-// En tu función fetchWithAuth en edicionvehiculo.js
 async function fetchWithAuth(url, options = {}) {
     const token = localStorage.getItem('authToken'); // O donde almacenes el token
     
@@ -209,11 +208,6 @@ function displayVehicles(vehicles) {
             <td>${vehicle.model || 'N/A'}</td>
             <td>${vehicle.idVehicle || 'N/A'}</td>
             <td>
-                <button class="btn btn-sm btn-primary edit-vehicle" data-id="${vehicle.idVehicle}"
-                    data-brand="${vehicle.brand || ''}" data-model="${vehicle.model || ''}" 
-                    data-license="${vehicle.idVehicle || ''}">
-                    <i class="bi bi-pencil"></i> Editar
-                </button>
                 <button class="btn btn-sm btn-danger delete-vehicle" data-id="${vehicle.idVehicle}"
                     data-brand="${vehicle.brand || ''}" data-model="${vehicle.model || ''}" 
                     data-license="${vehicle.idVehicle || ''}">
@@ -417,47 +411,6 @@ function setupModalListeners() {
         
         editPatentInput.addEventListener('blur', function() {
             this.value = this.value.toUpperCase();
-        });
-    }
-    
-    const editVehicleForm = document.getElementById('editVehicleFormModal');
-    if (editVehicleForm) {
-        editVehicleForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const idVehicle = document.getElementById('editVehicleId').value;
-            const patent = document.getElementById('editPatent').value.trim().toUpperCase();
-            const brandId = document.getElementById('editBrand').value;
-            const modelId = document.getElementById('editModel').value;
-            
-            if (!validatePatent(patent, true)) {
-                alert('Formato de patente inválido. No se reconoce el país.');
-                return;
-            }
-            
-            const response = await fetchWithAuth(`${API_BASE_URL}/api/vehicles/${idVehicle}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    idVehicle: patent,
-                    brand: brandId,
-                    model: modelId
-                })
-            });
-            
-            if (!response) return;
-            
-            try {
-                const data = await response.json();
-                if (data.success) {
-                    alert('Vehículo actualizado correctamente.');
-                     loadUserVehicles();
-                } else {
-                    alert(data.message || 'Error al actualizar el vehículo.');
-                }
-            } catch (error) {
-                console.error('Error al procesar respuesta:', error);
-                alert('Error al procesar la respuesta del servidor.');
-            }
         });
     }
     
