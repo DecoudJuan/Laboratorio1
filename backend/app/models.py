@@ -37,6 +37,22 @@ class Reported(db.Model):
     reason = db.Column(db.Text, nullable=False)
     content = db.Column(db.Text)
 
+class car_brands(db.Model):
+    __tablename__ = 'car_brands'
+
+    brand_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    brand_name = db.Column(db.String, nullable=False)
+
+    models = db.relationship('car_models', backref='brand', cascade='all, delete-orphan')
+
+
+class car_models(db.Model):
+    __tablename__ = 'car_models'
+
+    model_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    brand_id = db.Column(db.Integer, db.ForeignKey('car_brands.brand_id', ondelete='CASCADE'), nullable=False)
+    model_name = db.Column(db.String, nullable=False)
+    is_currently_sold = db.Column(db.Boolean, nullable=False)
 
 class Vehicle(db.Model):
     __tablename__ = 'vehicle'

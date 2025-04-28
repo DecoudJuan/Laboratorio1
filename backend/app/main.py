@@ -3,7 +3,8 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, render
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from models import User, Owns, Vehicle
+from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdmin, SectorEstablishment
+
 # MODULOS PARA LOGIN
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from werkzeug.security import check_password_hash 
@@ -266,8 +267,6 @@ def editar_parking():
         db.session.rollback()
         return jsonify({'message': f'Error al editar establecimiento: {str(e)}', 'success': False}), 500
 
-
-
 # REGISTRO NORMAL
 @app.route('/api/register', methods=['POST'])
 def register_user():
@@ -405,6 +404,7 @@ def send_static(path):
 def password_recovery_page():
     return send_from_directory('../../frontend/templates', 'passwordrecup.html')
 
+# Ruta para servir la página de registro
 @app.route('/api/mis_datos', methods=['GET'])
 def mis_datos():
     try:
@@ -599,7 +599,6 @@ def obtener_datos_usuario_por_id(user_id):
             'message': f'Error al obtener datos del usuario: {str(e)}'
         }), 500
     
-
 conn = psycopg2.connect(
     host="localhost",
     database="postgres",
@@ -711,8 +710,6 @@ def guardar_datosEstablecimiento():
             'message': f'Error al guardar datos: {str(e)}',
             'success': False
         }), 500
-
-
 
 @app.route('/api/datos_Admin', methods=['POST'])
 def datos_Admin():
@@ -877,7 +874,6 @@ def eliminar_sector(nombre):
             'success': False
         }), 500
 
-
 def get_db_connection():
     conn = psycopg2.connect(
     host="localhost",
@@ -923,7 +919,6 @@ def get_models(brand_id):
         print(f"Error al obtener modelos: {e}")
         return jsonify([]), 500
     
-
 @app.route('/api/register_vehicle', methods=['POST'])
 @jwt_required()
 def register_vehicle():
@@ -1030,7 +1025,6 @@ def register_vehicle():
             'message': f'Error al registrar el vehículo: {str(e)}'
         }), 500
     
-
 @app.route('/api/user-vehicles/<int:id_user>', methods=['GET', 'OPTIONS'])
 @jwt_required()
 def get_user_vehicles(id_user):
@@ -1078,13 +1072,86 @@ def get_user_vehicles(id_user):
         return jsonify({
             'success': False,
             'message': f'Error al obtener la lista de vehículos: {str(e)}'
+            
         }), 500
    
 # Ruta para eliminar un vehículo específico
-@app.route('/api/vehicles/<int:id_vehicle>', methods=['DELETE'])
+@app.route('/api/vehicles/<string:id_vehicle>', methods=['GET'])
 @jwt_required()
-def delete_vehicle(id_vehicle):
+def get_vehicle(id_vehicle):
     try:
+        # Obtener detalles del vehículo
+        vehicle = db.session.query(
+            Vehicle.idVehicle,
+            car_brands.brand_id,
+            car_brands.brand_name.label('brand'),
+            car_brands.model_id,
+            car_models.model_name.label('model')
+        ).join(
+            car_models, Vehicle.model == car_models.model_id
+        ).join(
+            car_brands, car_models.brand_id == car_brands.brand_id
+        ).filter(
+            Vehicle.idVehicle == id_vehicle
+        ).first()
+        
+        if not vehicle:
+            return jsonify({
+                'success': False,
+                'message': 'Vehículo no encontrado'
+            }), 404
+        
+        # Verificar permisos (opcional - elimina esto si cualquier usuario puede ver los detalles)
+        current_user = get_jwt_identity()
+        vehicle_owner = db.session.query(Owns).filter(
+            Owns.idVehicle == id_vehicle
+        ).first()
+        
+        if (current_user['userRole'] != 'administrador' and 
+            vehicle_owner and current_user['id'] != vehicle_owner.idUser):
+            return jsonify({
+                'success': False,
+                'message': 'No tienes permisos para ver este vehículo'
+            }), 403
+        
+        # Convertir a diccionario para poder serializar a JSON
+        vehicle_data = {
+            'idVehicle': vehicle.idVehicle,
+            'brand_id': vehicle.brand_id,
+            'brand': vehicle.brand,
+            'model_id': vehicle.model_id,
+            'model': vehicle.model
+        }
+        
+        return jsonify({
+            'success': True,
+            'vehicle': vehicle_data
+        }), 200
+        
+    except Exception as e:
+        print(f'Error al obtener vehículo: {str(e)}')
+        return jsonify({
+            'success': False,
+            'message': 'Error al obtener el vehículo'
+        }), 500
+
+@app.route('/api/vehicles/<string:id_vehicle>', methods=['PUT'])
+@jwt_required()
+def update_vehicle(id_vehicle):
+    try:
+        # Obtener datos del JSON enviado
+        data = request.get_json()
+        new_patent = data.get('idVehicle')
+        brand_id = data.get('brand')
+        model_id = data.get('model')
+        
+        # Validar que los datos necesarios estén presentes
+        if not all([new_patent, brand_id, model_id]):
+            return jsonify({
+                'success': False,
+                'message': 'Faltan datos obligatorios'
+            }), 400
+        
         # Verificar que el usuario actual es el propietario o un administrador
         current_user = get_jwt_identity()
         
@@ -1100,22 +1167,128 @@ def delete_vehicle(id_vehicle):
             }), 404
         
         # Si el usuario no es administrador y no es el propietario
-        if current_user['userRole'] != 'administrador' and current_user['idUser'] != vehicle_owner.idUser:
+        # Corregido: current_user['id'] a current_user['idUser']
+        if current_user['idUser'] != vehicle_owner.idUser:
+            return jsonify({
+                'success': False,
+                'message': 'No tienes permisos para editar este vehículo'
+            }), 403
+        
+        # Verificar si el modelo pertenece a la marca seleccionada
+        model_check = db.session.query(car_models).filter(
+            car_models.model_id == model_id,
+            car_models.brand_id == brand_id
+        ).first()
+        
+        if not model_check:
+            return jsonify({
+                'success': False,
+                'message': 'El modelo seleccionado no pertenece a la marca indicada'
+            }), 400
+        
+        # Si el usuario cambia la patente, verificar que la nueva no exista (excepto si es la misma)
+        if new_patent != id_vehicle:
+            existing_vehicle = db.session.query(Vehicle).filter(
+                Vehicle.idVehicle == new_patent
+            ).first()
+            
+            if existing_vehicle:
+                return jsonify({
+                    'success': False,
+                    'message': 'Ya existe un vehículo con esa patente'
+                }), 400
+        
+        try:
+            # Iniciar operaciones de actualización
+            # Si cambia la patente, hay que actualizar ambas tablas
+            if new_patent != id_vehicle:
+                # Actualizar la relación de propiedad primero
+                owns_updated = db.session.query(Owns).filter(
+                    Owns.idVehicle == id_vehicle
+                ).update({
+                    'idVehicle': new_patent
+                })
+                print(f"Registros actualizados en Owns: {owns_updated}")
+                
+                # Actualizar el vehículo
+                vehicle_updated = db.session.query(Vehicle).filter(
+                    Vehicle.idVehicle == id_vehicle
+                ).update({
+                    'idVehicle': new_patent,
+                    'model': model_id
+                })
+                print(f"Registros actualizados en Vehicle: {vehicle_updated}")
+            else:
+                # Si no cambia la patente, simplemente actualizar el modelo
+                vehicle_updated = db.session.query(Vehicle).filter(
+                    Vehicle.idVehicle == id_vehicle
+                ).update({
+                    'model': model_id
+                })
+                print(f"Registros actualizados en Vehicle (solo modelo): {vehicle_updated}")
+            
+            # Commit de la transacción
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Vehículo actualizado correctamente'
+            }), 200
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error en operaciones de actualización: {str(e)}")
+            raise e
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f'Error detallado al actualizar vehículo: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Error al actualizar el vehículo: {str(e)}'
+        }), 500
+    
+    
+@app.route('/api/vehicles/<string:id_vehicle>', methods=['DELETE'])
+@jwt_required()
+def delete_vehicle(id_vehicle):
+    try:
+        # Verificar que el usuario actual es el propietario o un administrador
+        current_user = get_jwt_identity()
+
+        # Obtener datos del vehículo actual para verificar propiedad
+        vehicle_owner = db.session.query(Owns).filter(
+            Owns.idVehicle == id_vehicle
+        ).first()
+
+        if not vehicle_owner:
+            return jsonify({
+                'success': False,
+                'message': 'Vehículo no encontrado'
+            }), 404
+
+        # Si el usuario no es administrador y no es el propietario
+        if current_user['id'] != vehicle_owner.idUser:
             return jsonify({
                 'success': False,
                 'message': 'No tienes permisos para eliminar este vehículo'
             }), 403
         
         # Eliminar la relación de propiedad primero
-        db.session.query(Owns).filter(
+        owns_deleted = db.session.query(Owns).filter(
             Owns.idVehicle == id_vehicle
         ).delete()
+        print(f"Registros eliminados de Owns: {owns_deleted}")
         
         # Luego eliminar el vehículo
-        db.session.query(Vehicle).filter(
+        vehicle_deleted = db.session.query(Vehicle).filter(
             Vehicle.idVehicle == id_vehicle
         ).delete()
+        print(f"Registros eliminados de Vehicle: {vehicle_deleted}")
         
+        # Commit de la transacción
         db.session.commit()
         
         return jsonify({
@@ -1125,13 +1298,14 @@ def delete_vehicle(id_vehicle):
         
     except Exception as e:
         db.session.rollback()
-        print(f'Error al eliminar vehículo: {str(e)}')
+        print(f'Error detallado al eliminar vehículo: {str(e)}')
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
-            'message': 'Error al eliminar el vehículo'
+            'message': f'Error al eliminar el vehículo: {str(e)}'
         }), 500
-    
-    
+
 @app.route('/api/cocheras/<string:nombre_sector>', methods=['GET'])
 def obtener_cocheras(nombre_sector):
     try:
@@ -1205,6 +1379,7 @@ def listar_sectores():
             "error": f"Error interno del servidor: {str(e)}",
             "success": False
         }), 500
+
 @app.route('/api/actualizar_freeParkingSpots', methods=['POST'])
 def actualizar_freeParkingSpots():
     try:
@@ -1273,8 +1448,7 @@ def registrar_actualizar_cochera():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
-    
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500   
 
 @app.route('/api/crear_sector', methods=['POST'])
 def crear_sector():
@@ -1346,7 +1520,6 @@ def crear_sector():
             'success': False
         }), 500
     
-
 @app.route('/api/crear_establecimiento', methods=['POST'])
 def crear_establecimiento():
     try:
@@ -1382,8 +1555,6 @@ def crear_establecimiento():
             'message': f'Error al guardar datos: {str(e)}',
             'success': False
         }), 500
-
-
         
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

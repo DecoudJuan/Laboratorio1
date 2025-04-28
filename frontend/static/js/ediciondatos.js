@@ -5,6 +5,17 @@ function preventCaching() {
     }
 }
 
+
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    // Eliminar token y datos de usuario del localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    
+    // Redireccionar a la página de inicio de sesión
+    window.location.href = 'index.html';
+});
+
+
 preventCaching();
 
 // Verificación inmediata de autenticación (se ejecuta al cargar el script)
@@ -146,4 +157,5 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
         console.error('Error:', error);
         alert('Error al procesar la solicitud');
     });
+
 });

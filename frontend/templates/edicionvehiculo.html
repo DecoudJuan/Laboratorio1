@@ -54,49 +54,47 @@
             <button id="showAddVehicleBtn" class="button">Añadir Vehiculo</button>
         </div>
 
-
-            <!-- Añadir Vehiculo (inicialmente oculto) -->
-            <div class="general-container" id="addVehicleForm">
-                <button type="button" class="back-button" id="backTobackToVehicleOptionsFromAdd">
-                    <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
-                </button>
-                <h2>     Añadir Vehiculo     </h2>
-                <form id="addVehicle">
-                    Formatos válidos por país:
-                    <ul>
-                        <li><strong>Argentina:</strong> AAA000 | AA000AA</li>
-                        <li><strong>Brasil:</strong> AAA0000 | AAA0A00</li>
-                        <li><strong>Paraguay:</strong> AAAA000 | AAAA000</li>
-                        <li><strong>Uruguay:</strong> AAA0000 | AAA0000</li>
-                        <li><strong>Chile:</strong> AA0000 | AAAA00</li>
-                        <li><strong>Bolivia:</strong> AAA000 | AA00000</li>
-                        <li><strong>Venezuela:</strong> AA000AA | AAA00A</li>
-                        <li><strong>Colombia:</strong> AAA000 | AAA00A</li>
-                    </ul>
-
-                    <div class="input-group">
-                        <label for="username">Patente</label>
-                        <input type="text" id="patent" name="patent" required>
-                    </div>                    
-                    <div class="input-group">
-                        <label for="brand">Marca</label>
-                        <select id="brand" name="brand" required>
-                            <option value="">Seleccione una marca</option>
-                            <option value="Peugeot">Peugeot</option>
-                            <option value="Volkswagen">Volkswagen</option>
-                            <option value="Toyota">Toyota</option>
-                        </select>                        
-                    </div>
-                    <div class="input-group">
-                        <label for="model">Modelo</label>
-                        <select id="model" name="model" required disabled>
-                            <option value="">Seleccione un modelo</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="button">Añadir</button>
-                    <div id="registerMessage" class="message"></div>
-                </form>
-            </div>      
+        <!-- Añadir Vehiculo (inicialmente oculto) -->
+        <div class="general-container" id="addVehicleForm">
+            <button type="button" class="back-button" id="backTobackToVehicleOptionsFromAdd">
+                <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
+            </button>
+            <h2>     Añadir Vehiculo     </h2>
+            <form id="addVehicle">
+                Formatos válidos por país:
+                <ul>
+                    <li><strong>Argentina:</strong> AAA000 | AA000AA</li>
+                    <li><strong>Brasil:</strong> AAA0000 | AAA0A00</li>
+                    <li><strong>Paraguay:</strong> AAAA000 | AAAA000</li>
+                    <li><strong>Uruguay:</strong> AAA0000 | AAA0000</li>
+                    <li><strong>Chile:</strong> AA0000 | AAAA00</li>
+                    <li><strong>Bolivia:</strong> AAA000 | AA00000</li>
+                    <li><strong>Venezuela:</strong> AA000AA | AAA00A</li>
+                    <li><strong>Colombia:</strong> AAA000 | AAA00A</li>
+                </ul>
+                <div class="input-group">
+                    <label for="username">Patente</label>
+                    <input type="text" id="patent" name="patent" required>
+                </div>                    
+                <div class="input-group">
+                    <label for="brand">Marca</label>
+                    <select id="brand" name="brand" required>
+                        <option value="">Seleccione una marca</option>
+                        <option value="Peugeot">Peugeot</option>
+                        <option value="Volkswagen">Volkswagen</option>
+                        <option value="Toyota">Toyota</option>
+                    </select>                        
+                </div>
+                <div class="input-group">
+                    <label for="model">Modelo</label>
+                    <select id="model" name="model" required disabled>
+                        <option value="">Seleccione un modelo</option>
+                    </select>
+                </div>
+                <button type="submit" class="button">Añadir</button>
+                <div id="registerMessage" class="message"></div>
+            </form>
+        </div>      
        
         <!-- Modal de Edición de Vehículo -->
         <div class="modal fade" id="editVehicleModal" tabindex="-1" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
@@ -159,5 +157,7 @@
     </div>
 
     <script src="../static/js/edicionvehiculo.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
