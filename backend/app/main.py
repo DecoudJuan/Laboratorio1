@@ -435,11 +435,9 @@ def mis_datos():
 @jwt_required()
 def borrar_usuario(username):
     try:
-     
         print(username)
         # Obtener usuario actual desde el token JWT
         current_user = get_jwt_identity()
-    
         
         # Buscar usuario a borrar (case sensitive)
         usuario = User.query.filter_by(username=username).first()
@@ -457,15 +455,19 @@ def borrar_usuario(username):
                 'message': 'No tienes permiso para borrar este usuario'
             }), 403
 
-        # Proceder con el borrado
-        db.session.delete(usuario)
-        db.session.commit()
-
+        # Primero, obtener los vehículos del usuario
         vehiculos = db.session.query(Vehicle).join(Owns).filter(Owns.idUser == usuario.idUser).all()
-
-        # Eliminar vehículos
+        
+        # Eliminar relaciones en la tabla Owns
+        Owns.query.filter_by(idUser=usuario.idUser).delete()
+        
+        # Eliminar vehículos de la tabla vehicles
         for v in vehiculos:
             db.session.delete(v)
+        
+        # Finalmente, eliminar al usuario
+        db.session.delete(usuario)
+        db.session.commit()
         
         return jsonify({
             'success': True,
@@ -478,7 +480,7 @@ def borrar_usuario(username):
             'success': False,
             'message': f'Error al borrar usuario: {str(e)}'
         }), 500
-    
+       
 @app.route('/api/borrar_sector/<nameSec>', methods=['DELETE'])
 def borrar_sector(nameSec):
     try:
