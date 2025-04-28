@@ -105,7 +105,7 @@ function loadUserData() {
         }
         
         // Realizar petición al servidor para obtener datos actualizados del usuario
-        fetch(`${API_BASE_URL}/api/usuarios/` + userId, {
+        fetch(`${API_BASE_URL}/api/usuario/id/` + userId, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + token,

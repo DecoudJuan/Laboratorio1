@@ -127,10 +127,10 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
     
     // Crear un objeto con los datos actualizados, manteniendo los valores actuales si los campos están vacíos
     const datosActualizados = {
+        id: datosActuales.id || JSON.parse(localStorage.getItem('currentUser'))?.id, // más seguro todavía
         nombre_anterior: nombreAnterior,
         username: document.getElementById('registerName').value || datosActuales.username,
         email: document.getElementById('registerEmail').value || datosActuales.email,
-        VP2: document.getElementById('registerVP2').value || datosActuales.VP2
     };
     
     // Crear FormData para el envío
@@ -150,21 +150,27 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
     .then(data => {
         if (data.success) {
             alert(data.message || 'Datos actualizados correctamente');
-            
-            // Actualizar los datos en localStorage
             try {
                 const currentUserData = JSON.parse(localStorage.getItem('currentUser')) || {};
-                const updatedUserData = {...currentUserData, ...datosActualizados};
-                delete updatedUserData.nombre_anterior; // No guardar este campo
+        
+                // Crear uno nuevo actualizando solo campos específicos
+                const updatedUserData = {
+                    ...currentUserData, // dejamos todo lo que había
+                    username: datosActualizados.username || currentUserData.username,
+                    email: datosActualizados.email || currentUserData.email,
+                    VP2: datosActualizados.VP2 || currentUserData.VP2
+                    // id, vehiculos, etc., se mantienen
+                };
+        
                 localStorage.setItem('currentUser', JSON.stringify(updatedUserData));
             } catch (e) {
                 console.error('Error al actualizar datos locales:', e);
             }
-            
+        
             window.location.href = 'principal.html';
         } else {
             alert(data.message || 'Error al guardar los datos');
-        }
+        }        
     })
     .catch(error => {
         console.error('Error:', error);
