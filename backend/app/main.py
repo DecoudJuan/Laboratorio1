@@ -1135,6 +1135,8 @@ def delete_vehicle(id_vehicle):
 @app.route('/api/cocheras/<string:nombre_sector>', methods=['GET'])
 def obtener_cocheras(nombre_sector):
     try:
+        nombre_sector = nombre_sector.capitalize()
+
         print(f"Solicitando información para el sector: {nombre_sector}")
         
         # Buscar el sector en la base de datos
