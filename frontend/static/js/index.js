@@ -168,26 +168,3 @@ document.addEventListener('visibilitychange', () => {
         checkToken();
     }
 });
-
-// Verificar autenticación al cargar la página completamente
-document.addEventListener('DOMContentLoaded', () => {
-
-    // Verificar si el usuario está logueado y es administrador
-    if (!isAdmin()) {
-        window.location.replace('index.html');
-        return;
-    }
-    
-    // Cargar lista de usuarios
-    loadUsers();
-    
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        // Eliminar token y datos de usuario del localStorage
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
-        console.log(localStorage.getItem('authToken'));
-        
-        // Redireccionar a la página de inicio de sesión
-        window.location.replace('index.html'); // replace elimina la entrada actual del historial
-    });
-});

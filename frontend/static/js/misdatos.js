@@ -93,9 +93,25 @@ function loadUserData() {
     
     // Usar el token para obtener datos frescos del servidor
     const decodedToken = parseJwt(token);
-    if (decodedToken && decodedToken.userId) {
-        // Realizar petición al servidor para obtener datos actualizados
-        fetch('/api/usuarios/' + decodedToken.userId, {
+    if (decodedToken) {
+        let userId;
+        
+        // Manejar diferentes estructuras de token
+        if (decodedToken.userId) {
+            userId = decodedToken.userId;
+        } else if (decodedToken.sub && decodedToken.sub.id) {
+            userId = decodedToken.sub.id;
+        } else if (decodedToken.id) {
+            userId = decodedToken.id;
+        }
+        
+        if (!userId) {
+            console.error('No se pudo obtener el ID del usuario del token');
+            return;
+        }
+        
+        // Realizar petición al servidor para obtener datos actualizados del usuario
+        fetch(`${API_BASE_URL}/api/usuario/id/` + userId, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + token,

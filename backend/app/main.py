@@ -295,6 +295,7 @@ def register_user():
         
         # CREA OBJETO USUARIO
         new_user = User(
+
             username=username,
             email=email,
             phone=phone,
@@ -507,14 +508,14 @@ def borrar_sector(nameSec):
             'message': f'Error al borrar sector: {str(e)}'
         }), 500
 
-@app.route('/api/usuario/<username>')
-def obtener_datos_usuario(username):
+@app.route('/api/usuario/<int:user_id>')
+def obtener_datos_usuario(user_id):
     try:
-        # Debug: Imprimir el nombre de usuario recibido
-        print(f"Buscando usuario: '{username}'")
+        # Debug: Imprimir el ID de usuario recibido
+        print(f"Buscando usuario con ID: '{user_id}'")
         
-        # Buscar al usuario por su nombre de usuario
-        user = User.query.filter_by(username=username).first()
+        # Buscar al usuario por su ID
+        user = User.query.get(user_id)
         
         # Debug: Imprimir el resultado de la búsqueda
         print(f"Usuario encontrado: {user}")
@@ -524,9 +525,9 @@ def obtener_datos_usuario(username):
                 'success': False,
                 'message': 'Usuario no encontrado'
             }), 404
-            
-        # Obtener los vehículos del usuario
-        owns = Owns.query.filter_by(username=username).all()
+        
+        # Obtener los vehículos del usuario usando el username del usuario encontrado
+        owns = Owns.query.filter_by(username=user.username).all()
         
         # Preparar la lista de vehículos secundarios
         vehiculos_secundarios = []
@@ -537,13 +538,13 @@ def obtener_datos_usuario(username):
         
         # Construir y devolver la respuesta
         return jsonify({
+            'id': user.idUser,
             'success': True,
-            'nombre_completo': user.full_name if hasattr(user, 'full_name') else user.username,
             'email': user.email,
             'vehiculo_principal': user.main_vehicle if hasattr(user, 'main_vehicle') else '',
             'vehiculos_secundarios': vehiculos_secundarios
         }), 200
-        
+    
     except Exception as e:
         print(f"Error al obtener datos del usuario: {str(e)}")
         return jsonify({
@@ -585,8 +586,8 @@ def obtener_datos_usuario_por_id(user_id):
         
         # Construir y devolver la respuesta
         return jsonify({
+            'id': user.idUser,
             'success': True,
-            'nombre_completo': user.username,  # O algún otro campo que represente el nombre completo
             'username': user.username,
             'email': user.email,
             'vehiculos': vehiculos
@@ -654,7 +655,13 @@ def guardar_datos():
 
             return jsonify({
                 'message': 'Datos actualizados correctamente',
-                'success': True
+                'success': True,
+                'user': {
+                    'idUser': user.idUser,
+                    'username': user.username,
+                    'email': user.email,
+                    'VP2': VP2
+                }
             }), 200
         else:
             return jsonify({
