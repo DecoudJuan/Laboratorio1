@@ -1,0 +1,170 @@
+* [33mea4348d[m[33m ([m[1;32mbackup-ea4348d[m[33m)[m DEBERIA funcionar todo
+[31m|[m *   [33m78914d5[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[31m|[m [32m|[m[33m\[m  
+[31m|[m [32m|[m *   [33m64094ce[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[31m|[m [32m|[m [34m|[m[35m\[m  
+[31m|[m [32m|[m * [35m|[m [33m958b73c[m meu deus
+[31m|[m [32m|[m * [35m|[m [33mb5ec97b[m meu deus
+[31m|[m [32m|[m[31m/[m [35m/[m  
+[31m|[m[31m/[m[32m|[m [35m|[m   
+[31m|[m * [35m|[m [33m001093d[m importar js
+[31m|[m [35m|[m[35m/[m  
+[31m|[m *   [33m67a88fe[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[31m|[m [36m|[m[31m\[m  
+[31m|[m [36m|[m[31m/[m  
+[31m|[m[31m/[m[36m|[m   
+* [36m|[m [33mb98f863[m funcional la edicion de usuarios
+[1;31m|[m * [33m6d42f5b[m pull
+[1;31m|[m * [33mf43c34f[m cambios antes de checkout
+[1;31m|[m[1;31m/[m  
+* [33mef0dac3[m fixeo la base de datos de vehicle al borrar usuario je
+* [33mfcbd969[m funciona crear vehiculos, borre editar vehiculos, funciona elegir vehiculo principal y secundario predeterminadamente, y algo q mas q se yo no tengo ni idea ah tambien hay que agregar el script de cerrar sesion en todas las ppaginas pero no creo q estes leyendo esto asi q nada buenas noches me voy a dormir xq toy re cansado y ni empece a estudiar estadistica chao
+* [33m524858f[m borrado de vehiculos todo fachero
+* [33mc9986fe[m editar y crear sectores bajo clave
+*   [33m7d9a797[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;32m|[m[1;33m\[m  
+[1;32m|[m *   [33m29c353b[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;32m|[m [1;34m|[m[1;35m\[m  
+[1;32m|[m * [1;35m|[m [33ma3bb47c[m Muestra vehiculos, añade vehiculos, y algo mas
+* [1;35m|[m [1;35m|[m [33m38af940[m suma y resta bien lo de las cocheras :P
+[1;35m|[m [1;35m|[m[1;35m/[m  
+[1;35m|[m[1;35m/[m[1;35m|[m   
+* [1;35m|[m   [33m02b72eb[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;36m|[m[31m\[m [1;35m\[m  
+[1;36m|[m * [1;35m|[m [33m701a187[m Delete backend/app/__pycache__ directory
+* [31m|[m [1;35m|[m [33m5375c43[m freeParkingSpot tiene su porpia cantidad, pero no se pq resta cuando le pinta y suma 2
+[31m|[m[31m/[m [1;35m/[m  
+* [1;35m|[m [33m350bc2b[m .
+* [1;35m|[m [33m7e05ab0[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[32m|[m[1;35m\[m[1;35m|[m 
+[32m|[m *   [33m76b03af[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[32m|[m [34m|[m[35m\[m  
+[32m|[m * [35m|[m [33m90b1ee4[m ayuuuda
+[32m|[m * [35m|[m [33m5299829[m god
+[32m|[m * [35m|[m [33m6a9cf0f[m caching y funcionamiento de mostrar vehiculos
+* [35m|[m [35m|[m [33m9f4ff0d[m medio cuatri y todavaía no le agarro la mano a la SUPER HERRAMIENTA DE MERGE DEL MEJOR IDE DEL MUNDO
+* [35m|[m [35m|[m [33mc1c5605[m cocheras que se ocupan y liberan
+[35m|[m [35m|[m[35m/[m  
+[35m|[m[35m/[m[35m|[m   
+* [35m|[m [33m4759ee3[m el teléfono de administrador ahora si se guarda en la db y se muestra en los datos. Admás, en los sectores que puede ver el usario en el mapita ya son datos reales de la db. NO están mockeados. HAY QUE CORREGIR EL HORARIO DEL SECTOR QUE SE GUARDA MAL EN DB Y PODER EDITAR CELU TANTO DE USUARIO COMO DE ADMIN
+* [35m|[m [33m0abd708[m etan funcionando borrado y edición de sectores. También está el hover en el mapa y ventana que muestra cuantas cocheras hay en el secotr, pero esto último está mockeado. NO busca en la db
+* [35m|[m [33mbe2d795[m cocheras con hover
+* [35m|[m [33mbc8f6fb[m ABM sectores funcionando
+* [35m|[m [33m584a021[m .
+* [35m|[m [33m16d5644[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[36m|[m[35m\[m[35m|[m 
+[36m|[m * [33mcdb984b[m faltaba un boton
+* [1;31m|[m [33m9b24b06[m no funcionaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+[1;31m|[m[1;31m/[m  
+* [33m4a232e6[m añadido de vehiculos funcional
+* [33m588a7f4[m añadir vehiculo etapa prematura
+*   [33m2472877[m If this is not correct, please run
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m8922d9c[m borrado de sectores no funcional
+[1;32m|[m * [33m0d9c8e9[m edicion de sector
+* [1;33m|[m [33m173acf2[m modal de edicion de vehiculos funcional
+[1;33m|[m[1;33m/[m  
+* [33me254026[m botones administrador
+*   [33m55c7d1d[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m3828533[m error de chequeo
+* [1;35m|[m [33m483e4ca[m ergistro y edicion de administrador
+[1;35m|[m[1;35m/[m  
+*   [33mee0ea05[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33m3431249[m chequeo de tokens
+* [31m|[m [33mb1bf264[m no se
+* [31m|[m [33m5079a54[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[32m|[m[31m\[m[31m|[m 
+[32m|[m * [33m9aba9c8[m buenas noches mañana veo que este lindo
+[32m|[m *   [33mb26cdca[m merging
+[32m|[m [34m|[m[35m\[m  
+[32m|[m * [35m|[m [33m89df1b1[m meu deus
+[32m|[m * [35m|[m [33mf361d11[m quiero jugar repo
+[32m|[m * [35m|[m [33m131c011[m datos
+* [35m|[m [35m|[m [33md708a46[m algún cambio?
+[35m|[m [35m|[m[35m/[m  
+[35m|[m[35m/[m[35m|[m   
+* [35m|[m [33m914f5e7[m  edicion auto
+* [35m|[m [33mc81c7a0[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[36m|[m[35m\[m[35m|[m 
+[36m|[m * [33me0220ce[m arreglos varios
+[36m|[m * [33mc6e45a3[m libreria icon y demas
+[36m|[m * [33m558c5e5[m favicon
+* [1;31m|[m [33mf6302c6[m edición usuarios y autos funcional
+* [1;31m|[m [33m5eaf6dd[m no se pq se rompio
+[1;31m|[m[1;31m/[m  
+* [33m393c032[m funciona el cambio de username
+* [33md3e4248[m cambios
+*   [33m15a6e7e[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33me274375[m añado la pagina administrador con el borrado de usuariis
+[1;32m|[m * [33md57b34d[m commit changes
+[1;32m|[m *   [33m267e6f6[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;32m|[m [1;34m|[m[1;35m\[m  
+[1;32m|[m * [1;35m|[m [33m94d6451[m main
+[1;32m|[m * [1;35m|[m [33mada0a8e[m correcciones, fixeos de registro y comienzo de apis de admin mode
+* [1;35m|[m [1;35m|[m [33m21eb21c[m borrado ok, edicion mas o menos
+* [1;35m|[m [1;35m|[m [33m9ebee84[m borrado usuario funcionando y edicion por teminar
+[1;35m|[m [1;35m|[m[1;35m/[m  
+[1;35m|[m[1;35m/[m[1;35m|[m   
+* [1;35m|[m [33md9b75e0[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;36m|[m[1;35m\[m[1;35m|[m 
+[1;36m|[m * [33m54d913f[m cambios menores
+[1;36m|[m *   [33mb4fd6f7[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;36m|[m [32m|[m[33m\[m  
+[1;36m|[m * [33m|[m [33m049bdb8[m agrego que con npm run dev corre todo de una y un error de merge
+* [33m|[m [33m|[m [33mc9dc20a[m falta contacto con db
+[33m|[m [33m|[m[33m/[m  
+[33m|[m[33m/[m[33m|[m   
+* [33m|[m [33mda949c6[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[34m|[m[33m\[m[33m|[m 
+[34m|[m *   [33m493a2a0[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[34m|[m [36m|[m[1;31m\[m  
+[34m|[m * [1;31m|[m [33m47979ff[m añado librerias
+* [1;31m|[m [1;31m|[m [33m2193707[m cambios página principal
+[1;31m|[m [1;31m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;31m|[m   
+* [1;31m|[m [33mef03528[m posiciones corregidas
+* [1;31m|[m [33mca187ca[m pop up borrdo usuario no funcional
+* [1;31m|[m [33m231cdb6[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;32m|[m[1;31m\[m[1;31m|[m 
+[1;32m|[m * [33m6208e85[m añadida la casilla de celular y el registro del mismo por lo menos en etapa temprana
+* [1;33m|[m [33m39c618b[m mis cambios
+* [1;33m|[m [33m4a9c685[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;34m|[m[1;33m\[m[1;33m|[m 
+[1;34m|[m * [33mbb3c43f[m boton de cerrar sesion
+[1;34m|[m *   [33mfae0059[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[1;34m|[m [1;36m|[m[31m\[m  
+[1;34m|[m * [31m|[m [33m073c812[m corrigo el push
+[1;34m|[m * [31m|[m [33m6f1bc6f[m funciona el automatizar enviar un mail cuando se corre el main,py
+* [31m|[m [31m|[m [33mb6b5d72[m .
+* [31m|[m [31m|[m [33mdb21c8b[m .
+[31m|[m [31m|[m[31m/[m  
+[31m|[m[31m/[m[31m|[m   
+* [31m|[m [33mf12c0fa[m pagina principal con formato
+* [31m|[m [33m0f3d15f[m staged
+[32m|[m[31m\[m[31m|[m 
+[32m|[m *   [33mb3ab8ac[m Merge branch 'main' of https://github.com/DecoudJuan/Laboratorio1
+[32m|[m [34m|[m[35m\[m  
+[32m|[m * [35m|[m [33meb84ee0[m lo mismo que el anterior commit
+[32m|[m * [35m|[m [33m516ddb1[m registro funcional | borra todas las tablas y volve a crearlas bajo el mismo model ejecutando el init, luego ejecutas abris datagrip, chequeas que estén, ejecutas main.py, abris el server y chequeas :D
+* [35m|[m [35m|[m [33m2d4cdd2[m cambios html y js
+[35m|[m [35m|[m[35m/[m  
+[35m|[m[35m/[m[35m|[m   
+* [35m|[m [33mf3b5895[m correcciones html y js
+* [35m|[m [33m7832d60[m cambios
+[36m|[m[35m\[m[35m|[m 
+[36m|[m * [33mb6aa119[m creo la API
+* [1;31m|[m [33m929cd36[m mis cambios
+* [1;31m|[m [33m5352403[m cambios post merge
+[1;32m|[m[1;31m\[m[1;31m|[m 
+[1;32m|[m * [33md6e7b5c[m añado postgresql con orm con todo
+* [1;33m|[m [33m086bdfa[m mis cambios
+[1;33m|[m[1;33m/[m  
+* [33mfc95b2a[m ORM
+[1;33m|[m * [33m777dcb7[m[33m ([m[1;35mrefs/stash[m[33m)[m WIP on main: cc8133c boton eliminar y index con líneas alineadas
+[1;33m|[m[1;33m/[m[1;35m|[m 
+[1;33m|[m * [33m6a432ec[m index on main: cc8133c boton eliminar y index con líneas alineadas
+[1;33m|[m[1;33m/[m  
+* [33mcc8133c[m boton eliminar y index con líneas alineadas
