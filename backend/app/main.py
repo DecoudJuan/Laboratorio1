@@ -3,8 +3,7 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, render
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdmin, SectorEstablishment
-
+from models import User, Owns, Vehicle
 # MODULOS PARA LOGIN
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from werkzeug.security import check_password_hash 
@@ -181,8 +180,8 @@ def get_all_users():
                 'message': 'No tienes permisos de administrador'
             }), 403
         
-        # Obtener todos los usuarios de la base de datos
-        users = User.query.all()
+        # Obtener usuarios con rol "usuario" de la base de datos
+        users = User.query.filter_by(userRole='usuario').all()
         
         # Convertir la lista de usuarios a formato JSON
         users_list = []
@@ -206,7 +205,7 @@ def get_all_users():
             'success': False,
             'message': 'Error al obtener la lista de usuarios'
         }), 500
-
+    
 @app.route('/api/editarSector', methods=['POST'])
 @jwt_required()
 def editar_sector():
@@ -266,6 +265,8 @@ def editar_parking():
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': f'Error al editar establecimiento: {str(e)}', 'success': False}), 500
+
+
 
 # REGISTRO NORMAL
 @app.route('/api/register', methods=['POST'])
@@ -405,7 +406,6 @@ def send_static(path):
 def password_recovery_page():
     return send_from_directory('../../frontend/templates', 'passwordrecup.html')
 
-# Ruta para servir la página de registro
 @app.route('/api/mis_datos', methods=['GET'])
 def mis_datos():
     try:
@@ -436,9 +436,11 @@ def mis_datos():
 @jwt_required()
 def borrar_usuario(username):
     try:
+     
         print(username)
         # Obtener usuario actual desde el token JWT
         current_user = get_jwt_identity()
+    
         
         # Buscar usuario a borrar (case sensitive)
         usuario = User.query.filter_by(username=username).first()
@@ -456,19 +458,15 @@ def borrar_usuario(username):
                 'message': 'No tienes permiso para borrar este usuario'
             }), 403
 
-        # Primero, obtener los vehículos del usuario
-        vehiculos = db.session.query(Vehicle).join(Owns).filter(Owns.idUser == usuario.idUser).all()
-        
-        # Eliminar relaciones en la tabla Owns
-        Owns.query.filter_by(idUser=usuario.idUser).delete()
-        
-        # Eliminar vehículos de la tabla vehicles
-        for v in vehiculos:
-            db.session.delete(v)
-        
-        # Finalmente, eliminar al usuario
+        # Proceder con el borrado
         db.session.delete(usuario)
         db.session.commit()
+
+        vehiculos = db.session.query(Vehicle).join(Owns).filter(Owns.idUser == usuario.idUser).all()
+
+        # Eliminar vehículos
+        for v in vehiculos:
+            db.session.delete(v)
         
         return jsonify({
             'success': True,
@@ -481,7 +479,7 @@ def borrar_usuario(username):
             'success': False,
             'message': f'Error al borrar usuario: {str(e)}'
         }), 500
-       
+    
 @app.route('/api/borrar_sector/<nameSec>', methods=['DELETE'])
 def borrar_sector(nameSec):
     try:
@@ -602,6 +600,7 @@ def obtener_datos_usuario_por_id(user_id):
             'message': f'Error al obtener datos del usuario: {str(e)}'
         }), 500
     
+
 conn = psycopg2.connect(
     host="localhost",
     database="postgres",
@@ -719,6 +718,8 @@ def guardar_datosEstablecimiento():
             'message': f'Error al guardar datos: {str(e)}',
             'success': False
         }), 500
+
+
 
 @app.route('/api/datos_Admin', methods=['POST'])
 def datos_Admin():
@@ -883,6 +884,7 @@ def eliminar_sector(nombre):
             'success': False
         }), 500
 
+
 def get_db_connection():
     conn = psycopg2.connect(
     host="localhost",
@@ -894,258 +896,6 @@ def get_db_connection():
     return conn
 
 # Endpoints para marcas y modelos
-
-@app.route('/api/cocheras/<string:nombre_sector>', methods=['GET'])
-def obtener_cocheras(nombre_sector):
-    try:
-        print(f"Solicitando información para el sector: {nombre_sector}")
-        
-        # Buscar el sector en la base de datos
-        sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
-        
-        if sector:
-            print(f"Sector encontrado: {sector.nameSec}, Cocheras disponibles: {sector.freeParkingSpots}")
-            return jsonify({
-                "cocheras": sector.freeParkingSpots,
-                "nombre": sector.nameSec,
-                "success": True
-            })
-        else:
-            print(f"Sector no encontrado: {nombre_sector}")
-            # Fallback para desarrollo - datos de prueba si no se encuentra el sector
-            fallback_data = {
-                "Comedor": 12,
-                "IAE": 8,
-                "Medicina": 10,
-                "Olivo": 5,
-                "Profesores": 7
-            }
-            
-            if nombre_sector in fallback_data:
-                print(f"Usando datos de fallback para: {nombre_sector}")
-                return jsonify({
-                    "cocheras": fallback_data[nombre_sector],
-                    "nombre": nombre_sector,
-                    "success": True,
-                    "note": "Datos de respaldo (el sector no existe en la base de datos)"
-                })
-            
-            return jsonify({
-                "error": f"Sector '{nombre_sector}' no encontrado",
-                "success": False
-            }), 404
-    except Exception as e:
-        print(f"Error al obtener información del sector: {str(e)}")
-        return jsonify({
-            "error": f"Error interno del servidor: {str(e)}",
-            "success": False
-        }), 500
-
-# También podemos agregar un endpoint para listar todos los sectores disponibles
-@app.route('/api/sectores', methods=['GET'])
-def listar_sectores():
-    try:
-        sectores = Sectors.query.all()
-        resultado = []
-        
-        for sector in sectores:
-            resultado.append({
-                "id": sector.idSector,
-                "nombre": sector.nameSec,
-                "cocheras_disponibles": sector.availableParkingSpots,
-                "horario_apertura": sector.openingHour,
-                "horario_cierre": sector.closingHour
-            })
-        
-        return jsonify({
-            "sectores": resultado,
-            "total": len(resultado),
-            "success": True
-        })
-    except Exception as e:
-        print(f"Error al listar sectores: {str(e)}")
-        return jsonify({
-            "error": f"Error interno del servidor: {str(e)}",
-            "success": False
-        }), 500
-
-@app.route('/api/actualizar_freeParkingSpots', methods=['POST'])
-def actualizar_freeParkingSpots():
-    try:
-        nombre_sector = request.form.get('name')
-        cocheras_libres = request.form.get('CocherasLibres')
-
-        if not nombre_sector or cocheras_libres is None:
-            return jsonify({'success': False, 'message': 'Faltan datos.'}), 400
-
-        sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
-
-        if sector:
-            sector.freeParkingSpots = cocheras_libres
-            db.session.commit()
-            return jsonify({'success': True, 'message': 'Cocheras libres actualizadas correctamente'})
-        else:
-            return jsonify({'success': False, 'message': 'Sector no encontrado'}), 404
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
-
-@app.route('/api/registrar_actualizar_cochera', methods=['POST'])
-def registrar_actualizar_cochera():
-    try:
-        numero = request.form.get('numero')  # Número de cochera
-        nombre_sector = request.form.get('sector')  # Nombre del sector
-        ocupado = request.form.get('ocupado') == 'true'  # Estado: ocupado o no
-
-        if not numero or not nombre_sector:
-            return jsonify({'success': False, 'message': 'Datos incompletos.'}), 400
-
-        # Buscar sector
-        sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
-        if not sector:
-            return jsonify({'success': False, 'message': 'Sector no encontrado.'}), 404
-
-        # Buscar cochera
-        cochera = ParkingSpot.query.filter_by(idParkingSpot=numero).first()
-
-        if not cochera:
-            # Crear nueva cochera si no existe
-            cochera = ParkingSpot(idParkingSpot=numero, estado=True)
-            db.session.add(cochera)
-            db.session.flush()  # Para obtener idParkingSpot
-        else:
-            # Actualizar estado si ya existe
-            cochera.estado = ocupado
-
-        # Buscar relación en ParkingSpotSector
-        relacion = ParkingSpotSector.query.filter_by(
-            idParkingSpot=cochera.idParkingSpot
-        ).first()
-
-        if not relacion:
-            # Crear la relación sector - cochera
-            nueva_relacion = ParkingSpotSector(
-                idParkingSpot=cochera.idParkingSpot,
-                idVehicle=None  # Inicialmente ninguna relación a vehículo
-            )
-            db.session.add(nueva_relacion)
-
-        db.session.commit()
-
-        return jsonify({'success': True, 'message': 'Cochera actualizada correctamente'})
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500   
-
-@app.route('/api/crear_sector', methods=['POST'])
-def crear_sector():
-    try:
-        # Obtener valores desde el formulario
-        sectorName = request.form.get('sector')
-        establecimientoName = request.form.get('establecimiento')
-
-        if establecimientoName:
-            # Buscar establecimiento por nombre
-            establecimiento_obj = Establishment.query.filter_by(nameEst=establecimientoName).first()
-
-            if not establecimiento_obj:
-                # Crear nuevo establecimiento si no existe
-                establecimiento_obj = Establishment(
-                    nameEst=establecimientoName,
-                    totalParkingSpots=3,
-                    totalSectors=3,
-                    geographicLocation='unknown'
-                )
-            db.session.add(establecimiento_obj)
-            db.session.flush()  # Para obtener el ID asignado
-
-        if sectorName and establecimiento_obj:
-            # Buscar sector por nombre dentro del establecimiento
-            sector_obj = Sectors.query.filter_by(
-                nameSec=sectorName,
-                idEstablishment=establecimiento_obj.idEstablishment
-            ).first()
-
-            if not sector_obj:
-                # Crear nuevo sector si no existe
-                sector_obj = Sectors(
-                    nameSec=sectorName,
-                    idEstablishment=establecimiento_obj.idEstablishment,
-                    openingHour=1,
-                    closingHour=0,
-                    availableParkingSpots=0,
-                    freeParkingSpots=0
-                )
-                db.session.add(sector_obj)
-                db.session.flush()
-
-            # Crear relación con SectorEstablishment si no existe
-            if not db.session.query(SectorEstablishment).filter_by(
-                idSector=sector_obj.idSector,
-                idEstablishment=establecimiento_obj.idEstablishment
-            ).first():
-                new_secEst = SectorEstablishment(
-                    idSector=sector_obj.idSector,
-                    idEstablishment=establecimiento_obj.idEstablishment
-                )
-                db.session.add(new_secEst)
-
-            db.session.commit()
-
-            return jsonify({
-                'message': 'Datos actualizados correctamente',
-                'success': True
-            }), 200
-
-        else:
-            return jsonify({'message': 'Usuario no encontrado', 'success': False}), 404
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'message': f'Error al guardar datos: {str(e)}',
-            'success': False
-        }), 500
-    
-@app.route('/api/crear_establecimiento', methods=['POST'])
-def crear_establecimiento():
-    try:
-        # Obtener el nombre del establecimiento
-        establecimientoName = request.form.get('establecimiento')
-
-        if establecimientoName:
-            # Buscar si el establecimiento ya existe
-            establecimiento_obj = Establishment.query.filter_by(nameEst=establecimientoName).first()
-
-            if not establecimiento_obj:
-                # Si no existe, crear uno nuevo
-                establecimiento_obj = Establishment(
-                    nameEst=establecimientoName,
-                    totalParkingSpots=3,
-                    totalSectors=3,
-                    geographicLocation='unknown'
-                )
-                db.session.add(establecimiento_obj)
-                db.session.flush()  # Para obtener el ID asignado
-
-            db.session.commit()
-
-            return jsonify({
-                'message': 'Establecimiento creado correctamente',
-                'success': True
-            }), 200
-        else:
-            return jsonify({'message': 'Establecimiento no encontrado', 'success': False}), 404
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'message': f'Error al guardar datos: {str(e)}',
-            'success': False
-        }), 500
-        
-# VEHICULOS 
 
 @app.route('/api/brands')
 def get_brands():
@@ -1180,6 +930,7 @@ def get_models(brand_id):
         print(f"Error al obtener modelos: {e}")
         return jsonify([]), 500
     
+
 @app.route('/api/register_vehicle', methods=['POST'])
 @jwt_required()
 def register_vehicle():
@@ -1286,6 +1037,7 @@ def register_vehicle():
             'message': f'Error al registrar el vehículo: {str(e)}'
         }), 500
     
+
 @app.route('/api/user-vehicles/<int:id_user>', methods=['GET', 'OPTIONS'])
 @jwt_required()
 def get_user_vehicles(id_user):
@@ -1333,107 +1085,44 @@ def get_user_vehicles(id_user):
         return jsonify({
             'success': False,
             'message': f'Error al obtener la lista de vehículos: {str(e)}'
-            
         }), 500
    
 # Ruta para eliminar un vehículo específico
-@app.route('/api/vehicles/<string:id_vehicle>', methods=['GET'])
-@jwt_required()
-def get_vehicle(id_vehicle):
-    try:
-        # Obtener detalles del vehículo
-        vehicle = db.session.query(
-            Vehicle.idVehicle,
-            car_brands.brand_id,
-            car_brands.brand_name.label('brand'),
-            car_brands.model_id,
-            car_models.model_name.label('model')
-        ).join(
-            car_models, Vehicle.model == car_models.model_id
-        ).join(
-            car_brands, car_models.brand_id == car_brands.brand_id
-        ).filter(
-            Vehicle.idVehicle == id_vehicle
-        ).first()
-        
-        if not vehicle:
-            return jsonify({
-                'success': False,
-                'message': 'Vehículo no encontrado'
-            }), 404
-        
-        # Verificar permisos (opcional - elimina esto si cualquier usuario puede ver los detalles)
-        current_user = get_jwt_identity()
-        vehicle_owner = db.session.query(Owns).filter(
-            Owns.idVehicle == id_vehicle
-        ).first()
-        
-        if (current_user['userRole'] != 'administrador' and 
-            vehicle_owner and current_user['id'] != vehicle_owner.idUser):
-            return jsonify({
-                'success': False,
-                'message': 'No tienes permisos para ver este vehículo'
-            }), 403
-        
-        # Convertir a diccionario para poder serializar a JSON
-        vehicle_data = {
-            'idVehicle': vehicle.idVehicle,
-            'brand_id': vehicle.brand_id,
-            'brand': vehicle.brand,
-            'model_id': vehicle.model_id,
-            'model': vehicle.model
-        }
-        
-        return jsonify({
-            'success': True,
-            'vehicle': vehicle_data
-        }), 200
-        
-    except Exception as e:
-        print(f'Error al obtener vehículo: {str(e)}')
-        return jsonify({
-            'success': False,
-            'message': 'Error al obtener el vehículo'
-        }), 500  
-    
-@app.route('/api/vehicles/<string:id_vehicle>', methods=['DELETE'])
+@app.route('/api/vehicles/<int:id_vehicle>', methods=['DELETE'])
 @jwt_required()
 def delete_vehicle(id_vehicle):
     try:
         # Verificar que el usuario actual es el propietario o un administrador
         current_user = get_jwt_identity()
-
+        
         # Obtener datos del vehículo actual para verificar propiedad
         vehicle_owner = db.session.query(Owns).filter(
             Owns.idVehicle == id_vehicle
         ).first()
-
+        
         if not vehicle_owner:
             return jsonify({
                 'success': False,
                 'message': 'Vehículo no encontrado'
             }), 404
-
+        
         # Si el usuario no es administrador y no es el propietario
-        if current_user['id'] != vehicle_owner.idUser:
+        if current_user['userRole'] != 'administrador' and current_user['idUser'] != vehicle_owner.idUser:
             return jsonify({
                 'success': False,
                 'message': 'No tienes permisos para eliminar este vehículo'
             }), 403
         
         # Eliminar la relación de propiedad primero
-        owns_deleted = db.session.query(Owns).filter(
+        db.session.query(Owns).filter(
             Owns.idVehicle == id_vehicle
         ).delete()
-        print(f"Registros eliminados de Owns: {owns_deleted}")
         
         # Luego eliminar el vehículo
-        vehicle_deleted = db.session.query(Vehicle).filter(
+        db.session.query(Vehicle).filter(
             Vehicle.idVehicle == id_vehicle
         ).delete()
-        print(f"Registros eliminados de Vehicle: {vehicle_deleted}")
         
-        # Commit de la transacción
         db.session.commit()
         
         return jsonify({
@@ -1443,122 +1132,267 @@ def delete_vehicle(id_vehicle):
         
     except Exception as e:
         db.session.rollback()
-        print(f'Error detallado al eliminar vehículo: {str(e)}')
-        import traceback
-        traceback.print_exc()
+        print(f'Error al eliminar vehículo: {str(e)}')
         return jsonify({
             'success': False,
-            'message': f'Error al eliminar el vehículo: {str(e)}'
+            'message': 'Error al eliminar el vehículo'
+        }), 500
+    
+    
+@app.route('/api/cocheras/<string:nombre_sector>', methods=['GET'])
+def obtener_cocheras(nombre_sector):
+    try:
+        nombre_sector = nombre_sector.capitalize()
+
+        print(f"Solicitando información para el sector: {nombre_sector}")
+        
+        # Buscar el sector en la base de datos
+        sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
+        
+        if sector:
+            print(f"Sector encontrado: {sector.nameSec}, Cocheras disponibles: {sector.freeParkingSpots}")
+            return jsonify({
+                "cocheras": sector.freeParkingSpots,
+                "nombre": sector.nameSec,
+                "success": True
+            })
+        else:
+            print(f"Sector no encontrado: {nombre_sector}")
+            # Fallback para desarrollo - datos de prueba si no se encuentra el sector
+            fallback_data = {
+                "Comedor": 12,
+                "IAE": 8,
+                "Medicina": 10,
+                "Olivo": 5,
+                "Profesores": 7
+            }
+            
+            if nombre_sector in fallback_data:
+                print(f"Usando datos de fallback para: {nombre_sector}")
+                return jsonify({
+                    "cocheras": fallback_data[nombre_sector],
+                    "nombre": nombre_sector,
+                    "success": True,
+                    "note": "Datos de respaldo (el sector no existe en la base de datos)"
+                })
+            
+            return jsonify({
+                "error": f"Sector '{nombre_sector}' no encontrado",
+                "success": False
+            }), 404
+    except Exception as e:
+        print(f"Error al obtener información del sector: {str(e)}")
+        return jsonify({
+            "error": f"Error interno del servidor: {str(e)}",
+            "success": False
         }), 500
 
-
-@app.route('/api/set-primary-vehicle', methods=['POST'])
-@jwt_required()
-def set_primary_vehicle():
+# También podemos agregar un endpoint para listar todos los sectores disponibles
+@app.route('/api/sectores', methods=['GET'])
+def listar_sectores():
     try:
-        # Obtener el usuario actual desde el token JWT
-        current_user = get_jwt_identity()
-        user_id = current_user['id']
+        sectores = Sectors.query.all()
+        resultado = []
         
-        # Obtener el ID del vehículo del cuerpo de la solicitud
-        data = request.get_json()
-        vehicle_id = data.get('idVehicle')
+        for sector in sectores:
+            resultado.append({
+                "id": sector.idSector,
+                "nombre": sector.nameSec,
+                "cocheras_disponibles": sector.availableParkingSpots,
+                "horario_apertura": sector.openingHour,
+                "horario_cierre": sector.closingHour
+            })
         
-        if not vehicle_id:
-            return jsonify({
-                'success': False,
-                'message': 'ID de vehículo no proporcionado'
-            }), 400
-        
-        # Verificar que el vehículo pertenece al usuario
-        ownership = db.session.query(Owns).filter(
-            Owns.idUser == user_id,
-            Owns.idVehicle == vehicle_id
-        ).first()
-        
-        if not ownership:
-            return jsonify({
-                'success': False,
-                'message': 'Este vehículo no te pertenece'
-            }), 403
-        
-        # Iniciar una transacción
-        try:
-            # Primero, establecer todos los vehículos del usuario como no principales
-            db.session.query(Owns).filter(
-                Owns.idUser == user_id
-            ).update({Owns.is_primary: False})
-            
-            # Luego, establecer el vehículo seleccionado como principal
-            db.session.query(Owns).filter(
-                Owns.idUser == user_id,
-                Owns.idVehicle == vehicle_id
-            ).update({Owns.is_primary: True})
-            
-            # Confirmar los cambios
+        return jsonify({
+            "sectores": resultado,
+            "total": len(resultado),
+            "success": True
+        })
+    except Exception as e:
+        print(f"Error al listar sectores: {str(e)}")
+        return jsonify({
+            "error": f"Error interno del servidor: {str(e)}",
+            "success": False
+        }), 500
+@app.route('/api/actualizar_freeParkingSpots', methods=['POST'])
+def actualizar_freeParkingSpots():
+    try:
+        nombre_sector = request.form.get('name')
+        cocheras_libres = request.form.get('CocherasLibres')
+
+        if not nombre_sector or cocheras_libres is None:
+            return jsonify({'success': False, 'message': 'Faltan datos.'}), 400
+
+        sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
+
+        if sector:
+            sector.freeParkingSpots = cocheras_libres
             db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': 'Vehículo principal actualizado correctamente'
-            }), 200
-            
-        except Exception as e:
-            db.session.rollback()
-            raise e
-        
-    except Exception as e:
-        print(f'Error al establecer vehículo principal: {str(e)}')
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'message': f'Error al establecer vehículo principal: {str(e)}'
-        }), 500
+            return jsonify({'success': True, 'message': 'Cocheras libres actualizadas correctamente'})
+        else:
+            return jsonify({'success': False, 'message': 'Sector no encontrado'}), 404
 
-@app.route('/api/user-primary-vehicle', methods=['GET'])
-@jwt_required()
-def get_user_primary_vehicle():
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/api/registrar_actualizar_cochera', methods=['POST'])
+def registrar_actualizar_cochera():
     try:
-        # Obtener el usuario actual desde el token JWT
-        current_user = get_jwt_identity()
-        user_id = current_user['id']
-        
-        # Buscar el vehículo principal del usuario
-        vehicle = db.session.query(Vehicle).\
-            join(Owns, Owns.idVehicle == Vehicle.idVehicle).\
-            filter(Owns.idUser == user_id, Owns.is_primary == True).\
-            first()
-        
-        if not vehicle:
-            return jsonify({
-                'success': True,
-                'has_primary': False,
-                'message': 'No tienes un vehículo principal establecido'
-            }), 200
-        
-        vehicle_data = {
-            'idVehicle': vehicle.idVehicle,
-            'brand': vehicle.brand,
-            'model': vehicle.model,
-            'licensePlate': getattr(vehicle, 'licensePlate', vehicle.idVehicle)
-        }
-        
-        return jsonify({
-            'success': True,
-            'has_primary': True,
-            'vehicle': vehicle_data
-        }), 200
-        
+        numero = request.form.get('numero')  # Número de cochera
+        nombre_sector = request.form.get('sector')  # Nombre del sector
+        ocupado = request.form.get('ocupado') == 'true'  # Estado: ocupado o no
+
+        if not numero or not nombre_sector:
+            return jsonify({'success': False, 'message': 'Datos incompletos.'}), 400
+
+        # Buscar sector
+        sector = Sectors.query.filter_by(nameSec=nombre_sector).first()
+        if not sector:
+            return jsonify({'success': False, 'message': 'Sector no encontrado.'}), 404
+
+        # Buscar cochera
+        cochera = ParkingSpot.query.filter_by(idParkingSpot=numero).first()
+
+        if not cochera:
+            # Crear nueva cochera si no existe
+            cochera = ParkingSpot(idParkingSpot=numero, estado=True)
+            db.session.add(cochera)
+            db.session.flush()  # Para obtener idParkingSpot
+        else:
+            # Actualizar estado si ya existe
+            cochera.estado = ocupado
+
+        # Buscar relación en ParkingSpotSector
+        relacion = ParkingSpotSector.query.filter_by(
+            idParkingSpot=cochera.idParkingSpot
+        ).first()
+
+        if not relacion:
+            # Crear la relación sector - cochera
+            nueva_relacion = ParkingSpotSector(
+                idParkingSpot=cochera.idParkingSpot,
+                idVehicle=None  # Inicialmente ninguna relación a vehículo
+            )
+            db.session.add(nueva_relacion)
+
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Cochera actualizada correctamente'})
+
     except Exception as e:
-        print(f'Error al obtener vehículo principal: {str(e)}')
-        import traceback
-        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+    
+
+@app.route('/api/crear_sector', methods=['POST'])
+def crear_sector():
+    try:
+        # Obtener valores desde el formulario
+        sectorName = request.form.get('sector')
+        establecimientoName = request.form.get('establecimiento')
+
+        if establecimientoName:
+            # Buscar establecimiento por nombre
+            establecimiento_obj = Establishment.query.filter_by(nameEst=establecimientoName).first()
+
+            if not establecimiento_obj:
+                # Crear nuevo establecimiento si no existe
+                establecimiento_obj = Establishment(
+                    nameEst=establecimientoName,
+                    totalParkingSpots=3,
+                    totalSectors=3,
+                    geographicLocation='unknown'
+                )
+            db.session.add(establecimiento_obj)
+            db.session.flush()  # Para obtener el ID asignado
+
+        if sectorName and establecimiento_obj:
+            # Buscar sector por nombre dentro del establecimiento
+            sector_obj = Sectors.query.filter_by(
+                nameSec=sectorName,
+                idEstablishment=establecimiento_obj.idEstablishment
+            ).first()
+
+            if not sector_obj:
+                # Crear nuevo sector si no existe
+                sector_obj = Sectors(
+                    nameSec=sectorName,
+                    idEstablishment=establecimiento_obj.idEstablishment,
+                    openingHour=1,
+                    closingHour=0,
+                    availableParkingSpots=0,
+                    freeParkingSpots=0
+                )
+                db.session.add(sector_obj)
+                db.session.flush()
+
+            # Crear relación con SectorEstablishment si no existe
+            if not db.session.query(SectorEstablishment).filter_by(
+                idSector=sector_obj.idSector,
+                idEstablishment=establecimiento_obj.idEstablishment
+            ).first():
+                new_secEst = SectorEstablishment(
+                    idSector=sector_obj.idSector,
+                    idEstablishment=establecimiento_obj.idEstablishment
+                )
+                db.session.add(new_secEst)
+
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Datos actualizados correctamente',
+                'success': True
+            }), 200
+
+        else:
+            return jsonify({'message': 'Usuario no encontrado', 'success': False}), 404
+
+    except Exception as e:
+        db.session.rollback()
         return jsonify({
-            'success': False,
-            'message': f'Error al obtener vehículo principal: {str(e)}'
+            'message': f'Error al guardar datos: {str(e)}',
+            'success': False
+        }), 500
+    
+
+@app.route('/api/crear_establecimiento', methods=['POST'])
+def crear_establecimiento():
+    try:
+        # Obtener el nombre del establecimiento
+        establecimientoName = request.form.get('establecimiento')
+
+        if establecimientoName:
+            # Buscar si el establecimiento ya existe
+            establecimiento_obj = Establishment.query.filter_by(nameEst=establecimientoName).first()
+
+            if not establecimiento_obj:
+                # Si no existe, crear uno nuevo
+                establecimiento_obj = Establishment(
+                    nameEst=establecimientoName,
+                    totalParkingSpots=3,
+                    totalSectors=3,
+                    geographicLocation='unknown'
+                )
+                db.session.add(establecimiento_obj)
+                db.session.flush()  # Para obtener el ID asignado
+
+            db.session.commit()
+
+            return jsonify({
+                'message': 'Establecimiento creado correctamente',
+                'success': True
+            }), 200
+        else:
+            return jsonify({'message': 'Establecimiento no encontrado', 'success': False}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'message': f'Error al guardar datos: {str(e)}',
+            'success': False
         }), 500
 
 
+        
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
