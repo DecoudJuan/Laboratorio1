@@ -9,6 +9,8 @@ function preventCaching() {
     }
 }
 
+preventCaching();
+
 function checkToken() {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');

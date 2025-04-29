@@ -2,6 +2,15 @@
 const API_BASE_URL = 'http://localhost:5000';
 let loadedModels = {};
 
+function preventCaching() {
+    // NO ALMACENA CACHÉ
+    if (window.location.protocol != 'file:') {
+        window.history.replaceState(null, document.title, window.location.href);
+    }
+}
+
+preventCaching();
+
 function checkToken() {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
