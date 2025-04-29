@@ -71,6 +71,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Función para manejar la obtención de datos y mostrar el modal
     async function obtenerCocheras(sector) {
+        sector = sector.charAt(0).toUpperCase() + sector.slice(1).toLowerCase();
         console.log(`Obteniendo datos para el sector: ${sector}`);
         try {
             const response = await fetch(`http://localhost:5000/api/cocheras/${encodeURIComponent(sector)}`);

@@ -23,7 +23,6 @@ function checkToken() {
 window.addEventListener('pageshow', (event) => {
     // Si la página se restaura desde el caché (botón atrás)
     if (event.persisted) {
-        console.log('Página restaurada desde caché - verificando autenticación');
         checkToken();
         // Recargar los datos cuando se vuelve desde caché
         loadUserData();
@@ -33,7 +32,6 @@ window.addEventListener('pageshow', (event) => {
 // También verificar cuando la página vuelve a estar visible
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        console.log('Página visible - verificando autenticación');
         checkToken();
         // Recargar los datos cuando la página vuelve a estar visible
         loadUserData();
@@ -125,6 +123,8 @@ function loadUserData() {
             // Actualizar la interfaz con los datos del usuario
             document.getElementById('nombre-completo').textContent = data.username || 'No disponible';
             document.getElementById('email').textContent = data.email || 'No disponible';
+            document.getElementById('telefono').textContent = data.phone || 'No disponible';
+
             
             // Ahora cargar los vehículos del usuario
             loadUserVehicles(userId, token);
@@ -136,6 +136,31 @@ function loadUserData() {
         });
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Configurar botones
+    const backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
+    if (backToPrincipalBtn) {
+        backToPrincipalBtn.addEventListener('click', function() {
+            window.location.href = 'principal.html';
+        });
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            // Eliminar token y datos de usuario del localStorage
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            
+            // Redireccionar a la página de inicio de sesión
+            window.location.href = 'index.html';
+        });
+    }
+
+    // Cargar datos del usuario al iniciar la página
+    loadUserData();
+});
 
 // Función para cargar los vehículos del usuario
 function loadUserVehicles(userId, token) {
@@ -237,31 +262,6 @@ function loadUserVehicles(userId, token) {
         vehiculosSecundariosElement.appendChild(li);
     });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Configurar botones
-    const backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
-    if (backToPrincipalBtn) {
-        backToPrincipalBtn.addEventListener('click', function() {
-            window.location.href = 'principal.html';
-        });
-    }
-
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-            // Eliminar token y datos de usuario del localStorage
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('currentUser');
-            
-            // Redireccionar a la página de inicio de sesión
-            window.location.href = 'index.html';
-        });
-    }
-
-    // Cargar datos del usuario al iniciar la página
-    loadUserData();
-});
 
 // Función para confirmar borrado
 function confirmarBorrado() {
