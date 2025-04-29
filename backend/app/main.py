@@ -181,8 +181,8 @@ def get_all_users():
                 'message': 'No tienes permisos de administrador'
             }), 403
         
-        # Obtener todos los usuarios de la base de datos
-        users = User.query.all()
+        # Obtener usuarios con rol "usuario" de la base de datos
+        users = User.query.filter_by(userRole='usuario').all()
         
         # Convertir la lista de usuarios a formato JSON
         users_list = []
@@ -206,7 +206,7 @@ def get_all_users():
             'success': False,
             'message': 'Error al obtener la lista de usuarios'
         }), 500
-
+    
 @app.route('/api/editarSector', methods=['POST'])
 @jwt_required()
 def editar_sector():
