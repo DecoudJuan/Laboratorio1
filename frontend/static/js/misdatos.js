@@ -1,3 +1,5 @@
+const API_BASE_URL = 'http://localhost:5000';
+
 function preventCaching() {
     // NO ALMACENA CACHÉ
     if (window.location.protocol != 'file:') {
@@ -38,6 +40,15 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
+// Función para verificar validez del token
+function checkToken() {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        window.location.href = 'index.html';
+        return;
+    }
+}
+
 // Función centralizada para cargar los datos del usuario
 function loadUserData() {
     // Obtener el token almacenado en localStorage
@@ -57,23 +68,6 @@ function loadUserData() {
             // Mostrar los datos básicos del localStorage
             document.getElementById('nombre-completo').textContent = userData.username || 'No disponible';
             document.getElementById('email').textContent = userData.email || 'No disponible';
-            document.getElementById('vehiculo-principal').textContent = userData.VP || 'No asignado';
-            
-            // Configurar lista de vehículos secundarios
-            const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
-            vehiculosSecundariosElement.innerHTML = '';
-            
-            if (userData.VP2 && userData.VP2.trim() !== '') {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = userData.VP2;
-                vehiculosSecundariosElement.appendChild(li);
-            } else {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = 'No tiene vehículos secundarios';
-                vehiculosSecundariosElement.appendChild(li);
-            }
         } catch (e) {
             console.error('Error al parsear datos del usuario desde localStorage:', e);
         }
@@ -128,20 +122,93 @@ function loadUserData() {
             // Actualizar localStorage con los datos más recientes
             localStorage.setItem('currentUser', JSON.stringify(data));
             
-            // Actualizar la interfaz con los datos nuevos
+            // Actualizar la interfaz con los datos del usuario
             document.getElementById('nombre-completo').textContent = data.username || 'No disponible';
             document.getElementById('email').textContent = data.email || 'No disponible';
-            document.getElementById('vehiculo-principal').textContent = data.VP || 'No asignado';
             
-            // Actualizar lista de vehículos secundarios
-            const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
-            vehiculosSecundariosElement.innerHTML = '';
+            // Ahora cargar los vehículos del usuario
+            loadUserVehicles(userId, token);
+        })
+        .catch(error => {
+            console.error('Error al obtener datos del usuario:', error);
+            // Si hay error para obtener el usuario, intentar igual con los vehículos
+            loadUserVehicles(userId, token);
+        });
+    }
+}
+
+// Función para cargar los vehículos del usuario
+function loadUserVehicles(userId, token) {
+    // Obtener vehículo principal
+    fetch(`${API_BASE_URL}/api/user-primary-vehicle`, {
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al obtener vehículo principal: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(primaryData => {
+        // Mostrar vehículo principal
+        const vehiculoPrincipalElement = document.getElementById('vehiculo-principal');
+        
+        if (primaryData.success && primaryData.has_primary) {
+            const vehiculo = primaryData.vehicle;
+            vehiculoPrincipalElement.textContent = `${vehiculo.brand} ${vehiculo.model} (${vehiculo.licensePlate || vehiculo.idVehicle})`;
+        } else {
+            vehiculoPrincipalElement.textContent = 'No asignado';
+        }
+        
+        // Ahora obtener todos los vehículos para mostrar los secundarios
+        return fetch(`${API_BASE_URL}/api/user-vehicles/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        });
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al obtener vehículos: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.message || 'Error al obtener vehículos');
+        }
+        
+        // Procesar vehículos secundarios
+        const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
+        vehiculosSecundariosElement.innerHTML = ''; // Limpiar lista anterior
+        
+        // Filtrar vehículos secundarios (los que no son primarios)
+        // Tenemos que hacer una segunda petición para obtener el primario e identificarlo
+        fetch(`${API_BASE_URL}/api/user-primary-vehicle`, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(primaryData => {
+            const primaryVehicleId = primaryData.has_primary ? primaryData.vehicle.idVehicle : null;
+            const vehiculosSecundarios = data.vehicles.filter(v => v.idVehicle !== primaryVehicleId);
             
-            if (data.VP2 && data.VP2.trim() !== '') {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = data.VP2;
-                vehiculosSecundariosElement.appendChild(li);
+            if (vehiculosSecundarios.length > 0) {
+                vehiculosSecundarios.forEach(vehiculo => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = `${vehiculo.brand} ${vehiculo.model} (${vehiculo.licensePlate || vehiculo.idVehicle})`;
+                    vehiculosSecundariosElement.appendChild(li);
+                });
             } else {
                 const li = document.createElement('li');
                 li.className = 'list-group-item';
@@ -150,11 +217,25 @@ function loadUserData() {
             }
         })
         .catch(error => {
-            console.error('Error al obtener datos del usuario:', error);
-            // Mostrar mensaje de error al usuario
-            alert('No se pudieron cargar los datos del usuario. Por favor, intenta más tarde.');
+            console.error('Error al filtrar vehículos secundarios:', error);
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = 'Error al cargar vehículos secundarios';
+            vehiculosSecundariosElement.appendChild(li);
         });
-    }
+    })
+    .catch(error => {
+        console.error('Error al obtener vehículos:', error);
+        // Mostrar error en los elementos de la interfaz
+        document.getElementById('vehiculo-principal').textContent = 'Error al cargar';
+        
+        const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
+        vehiculosSecundariosElement.innerHTML = '';
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = 'Error al cargar vehículos';
+        vehiculosSecundariosElement.appendChild(li);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -239,7 +320,7 @@ function confirmarBorrado() {
     }
 
     // Paso 3: Enviar solicitud a la API
-    fetch(`http://localhost:5000/api/borrar_usuario/${username}`, {
+    fetch(`${API_BASE_URL}/api/borrar_usuario/${username}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',

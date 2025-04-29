@@ -98,44 +98,7 @@
                 </form>
             </div>      
        
-        <!-- Modal de Edición de Vehículo -->
-        <div class="modal fade" id="editVehicleModal" tabindex="-1" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editVehicleModalLabel">Editar Vehículo</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="editVehicleFormModal">
-                            <input type="hidden" id="editVehicleId">
-                            <div class="input-group">
-                                <label for="editPatent">Patente</label>
-                                <input type="text" id="editPatent" name="editPatent" required>
-                                <div id="edit-detected-country" class="message"></div>
-                                <div id="edit-error-message" class="error-message" style="display: none; color: red;">Formato de patente inválido</div>
-                            </div>
-                            <div class="input-group">
-                                <label for="editBrand">Marca</label>
-                                <select id="editBrand" name="editBrand" required>
-                                    <option value="">Seleccione una marca</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="editModel">Modelo</label>
-                                <select id="editModel" name="editModel" required>
-                                    <option value="">Seleccione un modelo</option>
-                                </select>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>      
+    
         <!-- Modal de Confirmación de Eliminación -->
         <div class="modal fade" id="deleteVehicleModal" tabindex="-1" aria-labelledby="deleteVehicleModalLabel" aria-hidden="true">
             <div class="modal-dialog">
