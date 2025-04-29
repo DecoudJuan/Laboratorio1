@@ -914,11 +914,11 @@ def obtener_cocheras(nombre_sector):
             print(f"Sector no encontrado: {nombre_sector}")
             # Fallback para desarrollo - datos de prueba si no se encuentra el sector
             fallback_data = {
-                "Comedor": 12,
-                "IAE": 8,
-                "Medicina": 10,
-                "Olivo": 5,
-                "Profesores": 7
+                "Comedor": 0,
+                "IAE": 0,
+                "Medicina": 0,
+                "Olivo": 0,
+                "Profesores": 0
             }
             
             if nombre_sector in fallback_data:

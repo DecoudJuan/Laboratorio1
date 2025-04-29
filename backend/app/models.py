@@ -86,7 +86,6 @@ class Owns(db.Model):
     idVehicle = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
     is_primary = db.Column(db.Boolean, default=False)
 
-
 class Occupies(db.Model):
     __tablename__ = 'occupies'
 
