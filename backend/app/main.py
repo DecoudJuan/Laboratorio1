@@ -30,6 +30,7 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
 
 def create_app(enviroment):
     app = Flask(__name__)
+    
 
     jwt = JWTManager(app)
 
@@ -509,7 +510,82 @@ def borrar_sector(nameSec):
             'success': False,
             'message': f'Error al borrar sector: {str(e)}'
         }), 500
-
+@app.route('/api/usuario/<username>')
+def obtener_datos_usuario_por_username(username):
+    try:
+        # Debug: Imprimir el username recibido
+        print(f"Buscando usuario con username: '{username}'")
+        
+        # Buscar al usuario por su username
+        user = User.query.filter_by(username=username).first()
+        
+        # Debug: Imprimir el resultado de la búsqueda
+        print(f"Usuario encontrado: {user}")
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
+        
+        # Obtener los vehículos del usuario usando el username del usuario encontrado
+        owns = Owns.query.filter_by(username=user.username).all()
+        
+        # Preparar la lista de vehículos secundarios
+        vehiculos_secundarios = []
+        if owns:
+            for o in owns:
+                if o.vehicle != user.main_vehicle and o.vehicle:
+                    vehiculos_secundarios.append(o.vehicle)
+        
+        # Para administradores, buscar también información de parkings y sectores
+        parkings_data = []
+        sectores_data = []
+        
+        if user.userRole == 'administrador':
+            # Obtener parkings asociados al administrador
+            admin_parkings = AdminParking.query.filter_by(idUser=user.idUser).all()
+            
+            for admin_parking in admin_parkings:
+                # Obtener detalles del parking
+                parking = Parking.query.filter_by(idParking=admin_parking.idParking).first()
+                if parking:
+                    parkings_data.append({
+                        'id': parking.idParking,
+                        'name': parking.name,
+                        'address': parking.address
+                    })
+                    
+                    # Obtener sectores de este parking
+                    sectores = Sector.query.filter_by(idParking=parking.idParking).all()
+                    for sector in sectores:
+                        sectores_data.append({
+                            'id': sector.idSector,
+                            'name': sector.name,
+                            'capacity': sector.capacity,
+                            'parking_name': parking.name
+                        })
+        
+        # Construir y devolver la respuesta
+        return jsonify({
+            'id': user.idUser,
+            'success': True,
+            'email': user.email,
+            'phone': user.phone,
+            'vehiculo_principal': user.main_vehicle if hasattr(user, 'main_vehicle') else '',
+            'vehiculos_secundarios': vehiculos_secundarios,
+            'is_admin': user.userRole == 'administrador',
+            'parkings': parkings_data,
+            'sectores': sectores_data
+        }), 200
+    
+    except Exception as e:
+        print(f"Error al obtener datos del usuario: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al obtener datos del usuario: {str(e)}'
+        }), 500
+        
 @app.route('/api/usuario/<int:user_id>')
 def obtener_datos_usuario(user_id):
     try:
@@ -958,19 +1034,26 @@ def listar_sectores():
     try:
         sectores = Sectors.query.all()
         resultado = []
-        
+        print(sectores)
+
+
         for sector in sectores:
+            # Calcula las cocheras ocupadas (si no tienes un campo específico para esto)
+            cocheras_totales = sector.availableParkingSpots
+               
+            cocheras_libres = sector.freeParkingSpots  # Cocheras libres
+            
             resultado.append({
-                "id": sector.idSector,
-                "nombre": sector.nameSec,
-                "cocheras_disponibles": sector.availableParkingSpots,
-                "horario_apertura": sector.openingHour,
-                "horario_cierre": sector.closingHour
+                "idSector": sector.idSector,
+                "nameSec": sector.nameSec,                       # Nombre original como espera el frontend
+                "openingHour": sector.openingHour,               # Horario apertura original
+                "closingHour": sector.closingHour,               # Horario cierre original
+                "availableParkingSpots": cocheras_totales,       # Total de cocheras
+                "freeParkingSpots": cocheras_libres,             # Cocheras libres
             })
         
         return jsonify({
-            "sectores": resultado,
-            "total": len(resultado),
+            "sectors": resultado,  # Usando "sectors" como espera el frontend
             "success": True
         })
     except Exception as e:
@@ -1566,7 +1649,6 @@ def get_user_primary_vehicle():
             'success': False,
             'message': f'Error al obtener vehículo principal: {str(e)}'
         }), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

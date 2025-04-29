@@ -1,0 +1,79 @@
+// Función para mostrar los sectores en la tabla
+function displaySectors(sectors) {
+    const tableBody = document.querySelector('tbody');
+    tableBody.innerHTML = '';
+    
+    if (!sectors || sectors.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="6" class="text-center">No hay sectores registrados</td>';
+        tableBody.appendChild(row);
+        return;
+    }
+    
+    sectors.forEach(sector => {
+        const name = sector.nameSec || 'N/A';
+        const opening = sector.openingHour || 'No disponible';
+        const closing = sector.closingHour || 'No disponible';
+        const totalSpots = sector.availableParkingSpots ?? 0;
+        const freeSpots = sector.freeParkingSpots ?? 0;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${name}</td>
+            <td>${opening}</td>
+            <td>${closing}</td>
+
+            <td>${freeSpots}</td>
+     
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// Función para cargar la lista de sectores con mejor manejo de errores
+function loadSectors() {
+    const authToken = localStorage.getItem('authToken');
+    const tableBody = document.querySelector('tbody');
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando sectores...</td></tr>';
+    
+    fetch('http://localhost:5000/api/sectores', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                alert('No autorizado o sesión expirada. Por favor, inicia sesión nuevamente.');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
+                window.location.replace('index.html');
+                throw new Error('No autorizado');
+            }
+            throw new Error(`Error del servidor: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            displaySectors(data.sectors);
+        } else {
+            alert(data.message || 'Error al cargar sectores');
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Error al cargar sectores</td></tr>';
+        }
+    })
+    .catch(error => {
+        console.error('Error completo:', error);
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Error de conexión</td></tr>';
+        if (!error.message.includes('No autorizado')) {
+            alert('Error al cargar los sectores. Por favor, intenta más tarde.');
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Página cargada, ejecutando loadSectors()");
+    loadSectors();
+});

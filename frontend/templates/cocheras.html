@@ -56,26 +56,7 @@
         <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
     </div>
 
-    <!-- Contenedor con imagen centrada y puntos -->
-    <div class="general-container">
-        <img src="../static/images/estacionamientoActualizado.png" alt="Mapa" class="centered-image">
-
-        <!-- Puntos sobre el mapa -->
-        <span class="map-point" data-name="Comedor" style="top: 36%; left: 61%;"></span>
-        <span class="map-point" data-name="IAE" style="top: 20%; left: 44%;"></span>
-        <span class="map-point" data-name="Medicina" style="top: 26.8%; left: 37.5%;"></span>
-        <span class="map-point" data-name="Olivo" style="top: 39%; left: 56.8%;"></span>
-        <span class="map-point" data-name="Profesores" style="top: 52.5%; left: 58.7%;"></span>
-    </div>
-
-    <!-- Botones laterales -->
-    <div class="container d-flex flex-column align-items-start">
-        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9; border-color: #2980b9;" data-name="Comedor">Comedor</button>
-        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9; border-color: #2980b9;" data-name="IAE">IAE</button>
-        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9; border-color: #2980b9;" data-name="Medicina">Medicina</button>
-        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9; border-color: #2980b9;" data-name="Olivo">Olivo</button>
-        <button type="button" class="btn btn-success mt-2" style="background-color: #2980b9; border-color: #2980b9;" data-name="Profesores">Profesores</button>
-    </div>
+   
 
     <!-- Modal -->
     <div class="modal fade" id="cocheraModal" tabindex="-1" aria-labelledby="cocheraModalLabel" aria-hidden="true">
@@ -97,6 +78,26 @@
 
     <!-- Bootstrap JS (¡muy importante para que funcionen los modales!) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="main-content">
+        <div class="general-container">
+            <h2>Sectores registrados</h2>
+            <!-- Tabla sin restricciones de administrador -->
+            <table class="table table-striped table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Nombre del Sector</th>
+                        <th>Horario de Apertura</th>
+                        <th>Horario de Cierre</th>
+    
+                        <th>Cocheras Libres</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los datos se cargarán dinámicamente desde JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 
     <a href="llegadaUsuario.html">
@@ -107,6 +108,16 @@
 
     <!-- Incluir el archivo cocheras.js -->
     <script src="../static/js/cocheras.js"></script>
+    <script src="../static/js/todosSectoresuser.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.min.js"></script>
 
 </body>
 </html>
+
+
+
+    
+
+   
