@@ -7,6 +7,32 @@ let guardarBtn = document.querySelector('.btn-success');
 // Base URL de tu API
 const API_BASE_URL = 'http://localhost:5000';  // Asegurate que coincida con tu servidor
 
+
+function preventCaching() {
+    // NO ALMACENA CACHÉ
+    if (window.location.protocol != 'file:') {
+        window.history.replaceState(null, document.title, window.location.href);
+    }
+}
+
+preventCaching();
+
+function checkToken() {
+    const authToken = localStorage.getItem('authToken');
+    const currentUser = localStorage.getItem('currentUser');
+
+    console.log('Token de autenticación:', authToken); // Verifica el token
+    console.log('Usuario actual:', currentUser); // Verifica el usuario
+
+    if (!authToken || !currentUser) {
+        console.error('No se encontró el token o el usuario actual');
+        window.location.replace('index.html');
+        return false;
+    }
+    return true;
+}
+
+
 guardarBtn.addEventListener('click', async function() {
     const llegadaSalida = llegadaSalidaSelect.value;
     let sector = sectorSelect.value; // OJO, acá es "let" no "const" porque lo vamos a modificar
