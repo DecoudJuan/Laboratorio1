@@ -1,3 +1,44 @@
+function preventCaching() {
+    // NO ALMACENA CACHÉ
+    if (window.location.protocol != 'file:') {
+        window.history.replaceState(null, document.title, window.location.href);
+    }
+}
+
+preventCaching();
+
+// Verificación inmediata de autenticación (se ejecuta al cargar el script)
+function checkToken() {
+    const authToken = localStorage.getItem('authToken');
+    const currentUser = localStorage.getItem('currentUser');
+
+    // Si no hay token o usuario, redirigir al login
+    if (!authToken || !currentUser) {
+        window.location.replace('index.html');
+        return;
+    }
+}
+
+// Ejecutar verificación al cargar
+checkToken();
+
+// Verificar autenticación cuando la página vuelve a estar activa
+window.addEventListener('pageshow', (event) => {
+    // Si la página se restaura desde el caché (botón atrás)
+    if (event.persisted) {
+        console.log('Página restaurada desde caché - verificando autenticación');
+        checkToken();
+    }
+});
+
+// También verificar cuando la página vuelve a estar visible
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        console.log('Página visible - verificando autenticación');
+        checkToken();
+    }
+});
+
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Documento cargado. Inicializando funciones de cocheras.");
 
@@ -65,57 +106,20 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // Como alternativa, para asegurar que funcione al menos algo
-    console.log("Configurando manejador alternativo en caso de que falle el principal");
-    document.querySelectorAll("[data-name]").forEach(element => {
-    
-        element.onclick = function() {
-            const sector = this.getAttribute("data-name");
-            console.log("Elemento con data-name presionado:", sector);
-            
-            // Código alternativo que utiliza datos en memoria como fallback
-            const fallbackData = {
-                "Comedor": 12,
-                "IAE": 8,
-                "Medicina": 10,
-                "Olivo": 5,
-                "Profesores": 7
-            };
-            
-            const modalBody = document.getElementById("modal-body-content");
-            
-            if (sector && sector in fallbackData) {
-                modalBody.textContent = `Hay ${fallbackData[sector]} cocheras disponibles en el sector ${sector} (datos de respaldo).`;
-            } else {
-                modalBody.textContent = `No hay información disponible para el sector ${sector}.`;
-            }
-            
-            const modalElement = document.getElementById('cocheraModal');
-            if (bootstrap && bootstrap.Modal) {
-                const modal = new bootstrap.Modal(modalElement);
-                modal.show();
-            } else {
-                console.error("Bootstrap Modal no está disponible");
-                alert(`Sector: ${sector} - Ver consola para más detalles`);
-            }
-        };
+    // Arreglo para evitar que quede la pantalla gris al cerrar el modal
+    const modalElement = document.getElementById('cocheraModal');
+    modalElement.addEventListener('hidden.bs.modal', function () {
+        // Limpia clases y overlays si quedaron "pegados"
+        document.body.classList.remove('modal-open');
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
     });
-        // Arreglo para evitar que quede la pantalla gris al cerrar el modal
-        const modalElement = document.getElementById('cocheraModal');
-        modalElement.addEventListener('hidden.bs.modal', function () {
-            // Limpia clases y overlays si quedaron "pegados"
-            document.body.classList.remove('modal-open');
-            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-        });
-    
-});
 
-document.getElementById('logoutBtn').addEventListener('click', function() {
-    // Eliminar token y datos de usuario del localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    
-    // Redireccionar a la página de inicio de sesión
-    window.location.href = 'index.html';
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        // Eliminar token y datos de usuario del localStorage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        
+        // Redireccionar a la página de inicio de sesión
+        window.location.replace('index.html');
+    });
 });
-
