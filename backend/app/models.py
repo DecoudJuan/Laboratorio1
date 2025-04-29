@@ -78,6 +78,14 @@ class ParkingSpot(db.Model):
     idParkingSpot = db.Column(db.Integer, primary_key=True)
     estado = db.Column(db.Boolean, nullable=False)
 
+    
+class ParkingSpotSector(db.Model):
+    __tablename__ = 'parking_spot_sector'
+
+    idParkingSpot = db.Column(db.Integer, db.ForeignKey('parking_spot.idParkingSpot', ondelete='CASCADE'), primary_key=True)
+    idVehicle = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
+    estado = db.Column(db.Boolean, nullable=True)
+
 
 class Owns(db.Model):
     __tablename__ = 'owns'
@@ -103,14 +111,6 @@ class Sectors(db.Model):
     closingHour = db.Column(db.Integer)
     availableParkingSpots = db.Column(db.Integer, nullable=False)
     freeParkingSpots = db.Column(db.Integer, nullable=False)
-
-class ParkingSpotSector(db.Model):
-    __tablename__ = 'parking_spot_sector'
-
-    idParkingSpot = db.Column(db.Integer, db.ForeignKey('parking_spot.idParkingSpot', ondelete='CASCADE'), primary_key=True)
-    idVehicle = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
-    estado = db.Column(db.Boolean, nullable=True)
-
 
 class SectorEstablishment(db.Model):
     __tablename__ = 'sector_establishment'

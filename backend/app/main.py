@@ -3,7 +3,7 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, render
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdmin, SectorEstablishment
+from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdmin, SectorEstablishment, EstablishmentAdmin, Establishment, Sectors
 
 # MODULOS PARA LOGIN
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
@@ -544,11 +544,11 @@ def obtener_datos_usuario_por_username(username):
         
         if user.userRole == 'administrador':
             # Obtener parkings asociados al administrador
-            admin_parkings = AdminParking.query.filter_by(idUser=user.idUser).all()
+            admin_parkings = EstablishmentAdmin.query.filter_by(idUser=user.idUser).all()
             
             for admin_parking in admin_parkings:
                 # Obtener detalles del parking
-                parking = Parking.query.filter_by(idParking=admin_parking.idParking).first()
+                parking = Establishment.query.filter_by(idParking=admin_parking.idParking).first()
                 if parking:
                     parkings_data.append({
                         'id': parking.idParking,
@@ -557,7 +557,7 @@ def obtener_datos_usuario_por_username(username):
                     })
                     
                     # Obtener sectores de este parking
-                    sectores = Sector.query.filter_by(idParking=parking.idParking).all()
+                    sectores = Sectors.query.filter_by(idParking=parking.idParking).all()
                     for sector in sectores:
                         sectores_data.append({
                             'id': sector.idSector,
