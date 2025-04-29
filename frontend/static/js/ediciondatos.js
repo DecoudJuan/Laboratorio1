@@ -5,6 +5,17 @@ function preventCaching() {
     }
 }
 
+
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    // Eliminar token y datos de usuario del localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    
+    // Redireccionar a la página de inicio de sesión
+    window.location.href = 'index.html';
+});
+
+
 preventCaching();
 
 // Verificación inmediata de autenticación (se ejecuta al cargar el script)
@@ -63,8 +74,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Mostrar los datos actuales en el formulario como placeholders
             document.getElementById('registerName').placeholder = datosActuales.username;
             document.getElementById('registerEmail').placeholder = datosActuales.email;
-            document.getElementById('registerVP').placeholder = datosActuales.VP;
-            document.getElementById('registerVP2').placeholder = datosActuales.VP2;
         } catch (e) {
             console.error('Error al parsear datos del usuario:', e);
         }
@@ -85,6 +94,22 @@ document.addEventListener('DOMContentLoaded', function() {
             form.submit();
         });
     }
+
+    // Cargar los vehículos del usuario al cargar la página
+    cargarVehiculos();
+
+    // Manejar el cambio de vehículo principal
+    document.getElementById('vehiculoPrincipal').addEventListener('change', function() {
+        actualizarVehiculoPrincipal(this.value);
+    });
+
+    const backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
+    if (backToPrincipalBtn) {
+        backToPrincipalBtn.addEventListener('click', function() {
+            window.location.href = 'misdatos.html';
+        });
+    }
+
 });
 
 // Manejar el envío del formulario de edición
@@ -106,8 +131,6 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
         nombre_anterior: nombreAnterior,
         username: document.getElementById('registerName').value || datosActuales.username,
         email: document.getElementById('registerEmail').value || datosActuales.email,
-        VP: document.getElementById('registerVP').value || datosActuales.VP,
-        VP2: document.getElementById('registerVP2').value || datosActuales.VP2
     };
     
     // Crear FormData para el envío
@@ -153,4 +176,132 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
         console.error('Error:', error);
         alert('Error al procesar la solicitud');
     });
+
 });
+
+function getUserId() {
+    try {
+        // Obtener el objeto user del localStorage
+        const userStr = localStorage.getItem('currentUser');
+        if (userStr) {
+            const userData = JSON.parse(userStr);
+            return userData.id; // Devolver el ID del usuario
+        }
+        return null;
+    } catch (error) {
+        console.error('Error al obtener ID de usuario:', error);
+        return null;
+    }
+}
+
+function cargarVehiculos() {
+    // Obtener el token de autenticación
+    const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+        console.error('No se encontró token de autenticación');
+        return;
+    }
+    
+    // Obtener el ID del usuario
+    const userStr = localStorage.getItem('currentUser');
+    let userId = null;
+    
+    try {
+        if (userStr) {
+            const userData = JSON.parse(userStr);
+            userId = userData.id;
+        }
+    } catch (error) {
+        console.error('Error al parsear información del usuario:', error);
+    }
+    
+    if (!userId) {
+        console.error('No se pudo obtener el ID del usuario');
+        return;
+    }
+    
+    // Guardar el valor seleccionado actualmente (si existe)
+    const selectVehiculo = document.getElementById('vehiculoPrincipal');
+    const valorSeleccionado = selectVehiculo ? selectVehiculo.value : "";
+    
+    // Obtener la lista de vehículos del usuario
+    fetch(`${API_BASE_URL}/api/user-vehicles/${userId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al obtener vehículos');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (!data.success) {
+            console.error('Error al cargar vehículos:', data.message);
+            return;
+        }
+        
+        // Limpiar el contenido del select antes de agregar nuevas opciones
+        selectVehiculo.innerHTML = '<option value="">Seleccione un vehículo principal</option>';
+        
+        // Verificar si hay vehículos
+        if (!data.vehicles || data.vehicles.length === 0) {
+            return;
+        }
+        
+        // Añadir cada vehículo a la lista
+        data.vehicles.forEach(vehiculo => {
+            // Crear opción para el select
+            const option = document.createElement('option');
+            option.value = vehiculo.idVehicle;
+            option.textContent = `${vehiculo.brand} ${vehiculo.model} (${vehiculo.licensePlate || vehiculo.idVehicle})`;
+            
+            // Mantener seleccionado el vehículo que estaba seleccionado antes
+            // o marcar como seleccionado el vehículo principal si no había selección previa
+            if (valorSeleccionado && valorSeleccionado === vehiculo.idVehicle.toString()) {
+                option.selected = true;
+            } else if (!valorSeleccionado && vehiculo.is_primary) {
+                option.selected = true;
+            }
+            
+            selectVehiculo.appendChild(option);
+        });
+    })
+    .catch(error => console.error('Error al cargar vehículos:', error));
+}
+
+function actualizarVehiculoPrincipal(idVehicle) {
+    if (!idVehicle) return;
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        console.error('No se encontró token de autenticación');
+        return;
+    }
+    
+    fetch(`${API_BASE_URL}/api/set-primary-vehicle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ idVehicle: idVehicle })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al actualizar vehículo principal');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Recargar la lista de vehículos para reflejar el cambio
+            cargarVehiculos();
+        } else {
+            alert('Error al actualizar el vehículo principal: ' + (data.message || 'Error desconocido'));
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
