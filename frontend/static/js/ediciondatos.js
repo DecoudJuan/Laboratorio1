@@ -57,7 +57,6 @@ let datosActuales = {
     VP2: ''
 };
 
-// Cargar los datos actuales del usuario al iniciar la página
 document.addEventListener('DOMContentLoaded', function() {
     // Obtener datos actuales del usuario
     const currentUser = localStorage.getItem('currentUser');
@@ -68,12 +67,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const userData = JSON.parse(currentUser);
             datosActuales.username = userData.username || '';
             datosActuales.email = userData.email || '';
+            datosActuales.phone = userData.phone || ''; // Añadido campo teléfono
             datosActuales.VP = userData.VP || '';
             datosActuales.VP2 = userData.VP2 || '';
             
             // Mostrar los datos actuales en el formulario como placeholders
             document.getElementById('registerName').placeholder = datosActuales.username;
             document.getElementById('registerEmail').placeholder = datosActuales.email;
+            document.getElementById('registerPhone').placeholder = datosActuales.phone; // Placeholder para teléfono
         } catch (e) {
             console.error('Error al parsear datos del usuario:', e);
         }
@@ -92,6 +93,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             document.getElementById('nombreAnterior').value = nombreAnterior;
             form.submit();
+        });
+    }
+
+    // Validación del campo de teléfono
+    const phoneInput = document.getElementById('registerPhone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+            // Permitir solo números
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Limitar a una longitud máxima (por ejemplo, 10 dígitos)
+            if (this.value.length > 10) {
+                this.value = this.value.slice(0, 10);
+            }
         });
     }
 
@@ -131,6 +146,7 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
         nombre_anterior: nombreAnterior,
         username: document.getElementById('registerName').value || datosActuales.username,
         email: document.getElementById('registerEmail').value || datosActuales.email,
+        phone: document.getElementById('registerPhone').value || datosActuales.phone, // Añadido campo teléfono
     };
     
     // Crear FormData para el envío
@@ -158,6 +174,7 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
                     ...currentUserData, // dejamos todo lo que había
                     username: datosActualizados.username || currentUserData.username,
                     email: datosActualizados.email || currentUserData.email,
+                    phone: datosActualizados.phone || currentUserData.phone, // Actualizamos el teléfono
                     VP2: datosActualizados.VP2 || currentUserData.VP2
                     // id, vehiculos, etc., se mantienen
                 };

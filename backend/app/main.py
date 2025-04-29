@@ -592,6 +592,7 @@ def obtener_datos_usuario_por_id(user_id):
             'success': True,
             'username': user.username,
             'email': user.email,
+            'phone': user.phone,
             'vehiculos': vehiculos
         }), 200
     
@@ -617,6 +618,7 @@ def guardar_datos():
         # Obtener valores desde el formulario
         username = request.form.get('username')
         email = request.form.get('email')
+        phone = request.form.get('phone')  # Nuevo campo para teléfono
         VP = request.form.get('VP')  # Vehículo Principal
         VP2 = request.form.get('VP2')  # Vehículo Secundario
         nombre_anterior = request.form.get('nombre_anterior')
@@ -624,6 +626,10 @@ def guardar_datos():
         if not username or not nombre_anterior:
             return jsonify({'message': 'El nombre de usuario es requerido', 'success': False}), 400
 
+        # Validar formato de teléfono si se proporciona
+        if phone and not phone.isdigit():
+            return jsonify({'message': 'El teléfono debe contener solo números', 'success': False}), 400
+            
         # Buscar si existe un usuario con el nombre anterior
         user = User.query.filter_by(username=nombre_anterior).first()
 
@@ -631,6 +637,10 @@ def guardar_datos():
             # Actualizamos los datos del usuario
             user.username = username
             user.email = email
+            
+            # Actualizamos el teléfono sólo si se proporcionó uno nuevo
+            if phone:
+                user.phone = phone
 
             # Si se proporciona el VP, buscamos o creamos el vehículo
             if VP:
@@ -661,6 +671,7 @@ def guardar_datos():
                     'idUser': user.idUser,
                     'username': user.username,
                     'email': user.email,
+                    'phone': user.phone,  # Incluir teléfono en la respuesta
                     'VP2': VP2
                 }
             }), 200
@@ -676,7 +687,7 @@ def guardar_datos():
             'message': f'Error al guardar datos: {str(e)}',
             'success': False
         }), 500
-    
+     
 @app.route('/api/guardar_datosEstablecimiento', methods=['POST'])
 def guardar_datosEstablecimiento():
     try:
@@ -1318,9 +1329,7 @@ def get_user_vehicles(id_user):
                 'licensePlate': getattr(vehicle, 'licensePlate', vehicle.idVehicle)
             }
             vehicles_list.append(vehicle_data)
-            print(f"Encontrado vehículo: {vehicle_data}")
         
-        print(f"Total de vehículos encontrados: {len(vehicles_list)}")
         return jsonify({
             'success': True,
             'vehicles': vehicles_list
@@ -1390,7 +1399,6 @@ def get_vehicle(id_vehicle):
         }), 200
         
     except Exception as e:
-        print(f'Error al obtener vehículo: {str(e)}')
         return jsonify({
             'success': False,
             'message': 'Error al obtener el vehículo'
