@@ -46,6 +46,13 @@
             white-space: nowrap;
             font-size: 14px;
         }
+        
+        .loading {
+            display: inline-block;
+            margin-left: 10px;
+            font-style: italic;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -61,27 +68,37 @@
         <div class="container">
 
             <h2>¿Llegaste o te vas?</h2>
-            <select class="form-select" style="max-width: 300px;">
+            <select class="form-select" style="max-width: 300px;" id="llegadaSalidaSelect">
                 <option value="">Seleccioná una opción</option>
                 <option value="llegada">Llegué</option>
                 <option value="salida">Me voy</option>
             </select>
+        </div>
+    
+        <!-- Pregunta 2 -->
+        <div class="mb-3">
+            <h2>¿Qué sector usaste?</h2>
+            <select class="form-select" style="max-width: 300px;" id="sectorSelect">
+                <option value="">Seleccioná un sector</option>
+                <option value="comedor">Comedor</option>
+                <option value="iae">IAE</option>
+                <option value="medicina">Medicina</option>
+                <option value="olivo">Olivo</option>
+                <option value="profesores">Profesores</option>
+            </select>
+            <span id="loadingSector" class="loading" style="display:none;">Cargando cocheras...</span>
+        </div>
+    
+        <!-- Pregunta 3 -->
+        <div class="mb-3">
+            <h2>¿Qué cochera usaste?</h2>
+            <input type="text" class="form-control" style="max-width: 300px;" id="cocheraInput" placeholder="Escribí el número de cochera">
+        </div>
         
-            <h2>Selección de Sector</h2>
-            <label for="selector-sector">¿Qué sector usaste?</label>
-            <select id="selector-sector" class="form-select">
-                <option value="" disabled selected>Seleccioná un sector</option>
-                <!-- Aquí se cargarán dinámicamente los sectores desde la API -->
-            </select>
-            
-            <h2>¿Qué cochera usaste?</h5>
-            <select id="selector-cochera" class="form-select" style="max-width: 300px;" disabled>
-                <option value="">Seleccioná una cochera</option>
-            </select>
-
-            <div class="mb-3">
-                <button type="submit" class="btn btn-success" style="width: 100px; background-color: #45a049;">Guardar</button>
-            </div>
+        <!-- Botón alineado -->
+        <!-- Botón alineado con ancho 100px -->
+        <div class="mb-3">
+            <button type="submit" class="btn btn-success" style="width: 100px; background-color: #45a049;">Guardar</button>
         </div>
 
 
