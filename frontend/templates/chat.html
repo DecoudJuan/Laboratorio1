@@ -1,166 +1,30 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat de Advertencias</title>
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-  <!-- Custom CSS -->
-  <link href="../static/css/styles.css" rel="stylesheet">
-  
-  <style>
-    /* Estilos específicos del chat */
-    .chat {
-      display: flex;
-      flex-direction: column;
-      height: 80vh;
-      background: #f8f9fa;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    .chat__header, .chat__footer {
-      padding: 1rem;
-      background-color: #343a40;
-      color: white;
-    }
-
-    .chat__messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      background-color: #fff;
-    }
-
-    .message {
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      border-radius: 10px;
-      max-width: 70%;
-    }
-
-    .message--receptor {
-      background-color: #e9ecef;
-      align-self: flex-start;
-    }
-
-    .message--emisor {
-      background-color: #0d6efd;
-      color: white;
-      align-self: flex-end;
-    }
-
-    .chat__form {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .chat__input {
-      flex: 1;
-      min-height: 40px;
-      padding: 0.5rem;
-      border: 1px solid #ced4da;
-      border-radius: 5px;
-      background-color: white;
-      overflow-y: auto;
-    }
-
-    .chat__led {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      background: limegreen;
-      border-radius: 50%;
-      margin-right: 5px;
-    }
-
-    .button {
-      background: transparent;
-      border: none;
-      font-size: 1.5rem;
-    }
-
-    @media (max-width: 576px) {
-      .chat {
-        height: 90vh;
-      }
-      .message {
-        max-width: 85%;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+<body class="bg-light">
 
-<body>
+<div class="container mt-5">
+    <h2 class="mb-4">Chat</h2>
 
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <h1 style="background-color: #1f0322; color: #f1dede; margin-left: -40px; margin-top: -50px; padding: 50px;">Advertencias</h1>
-    <div class="dark-section"></div>
-    <div class="green-section"></div>
-    <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
-  </div>
-
-  <!-- Main Content -->
-  <div class="main-content d-flex justify-content-center align-items-center p-3">
-    <div class="container">
-      <section class="chat">
-
-        <!-- Chat Header -->
-        <header class="chat__header d-flex justify-content-between align-items-center">
-          <button class="button chat__close" aria-label="Cerrar">✖️</button>
-          <div>
-            <h2 class="h5 mb-0">Advertencias</h2>
-            <p class="chat__status mb-0">
-              <span class="chat__led"></span>
-              ¡Alerta a tus conocidos de problemas en el camino!
-            </p>
-          </div>
-        </header>
-
-        <!-- Chat Messages -->
-        <div class="chat__messages" aria-live="polite">
-          <!-- Mensaje receptor -->
-          <article class="message message--receptor">
-            <h3 class="h6">Caballero blanca luna</h3>
-            <p class="mb-0">
-              Tortor vitae purus faucibus ornare. Velit euismod in pellentesque massa placerat duis ultricies lacus sed turpis tincidunt id aliquet risus feugiat in ante metus, dictum at tempor commodo, ullamcorper a?
-            </p>
-          </article>
-
-          <!-- Mensaje emisor -->
-          <article class="message message--emisor">
-            <h3 class="h6">Don Quijote</h3>
-            <p class="mb-0">
-              Quis ipsum suspendisse ultrices gravida dictum fusce ut placerat orci nulla pellentesque dignissim.
-            </p>
-          </article>
+    <!-- Formulario para enviar mensaje - Añadido id y eliminado action -->
+    <form id="chatForm" class="mb-4">
+        <div class="mb-3">
+            <textarea name="mensaje" class="form-control" rows="3" placeholder="Escribe tu mensaje..." required></textarea>
         </div>
+        <button type="submit" class="btn btn-primary">Enviar</button>
+    </form>
 
-        <!-- Chat Footer -->
-        <footer class="chat__footer">
-            <form class="chat__form w-100">
-                <div class="password-field-container">
-                    <div role="textbox" aria-label="Nuevo mensaje" contenteditable="true" class="chat__input" placeholder="Escribe tu mensaje..."></div>
-                    <button type="button" class="button" aria-label="Emojis">😀</button>
-                    <button type="button" class="button" aria-label="Adjuntar archivo">📎</button>
-                </div>  
-            </form>
-        </footer>
-
-      </section>
+    <!-- Lista de mensajes - Añadido id para manipularlo con JS -->
+    <div class="card">
+        <div class="card-body" id="messages-container">
+            <!-- Los mensajes se cargarán dinámicamente con JavaScript -->
+        </div>
     </div>
-  </div>
-
-  <!-- Bootstrap JS Bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+</div>
+<script src="/static/js/chat.js" defer></script>
 </body>
 </html>
