@@ -192,7 +192,10 @@ def chat():
     
     # Para solicitudes POST - Enviar nuevo mensaje
     elif request.method == 'POST':
+        print(f"Solicitud POST recibida en /api/chat")
         data = request.get_json()
+        print(f"Datos recibidos en POST /api/chat: {data}")
+        #aca data no llega por que devuelve none
         if not data:
             return jsonify({'success': False, 'message': 'Error al procesar JSON'}), 400
 
