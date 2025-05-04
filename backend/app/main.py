@@ -1,5 +1,5 @@
 import random
-from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, url_for
+from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, url_for, session
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -11,6 +11,7 @@ from werkzeug.security import check_password_hash
 
 # MODULOS PARA BASE DE DATOS
 from sqlalchemy import text
+
 
 # MAILpip
 import string
@@ -30,7 +31,7 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
 
 def create_app(enviroment):
     app = Flask(__name__)
-    
+
 
     jwt = JWTManager(app)
 
@@ -38,7 +39,7 @@ def create_app(enviroment):
     CORS(app, resources={r"/api/*": {
         "origins": "http://localhost:3000",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "Pragma", "Expires"],
+        "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "Pragma", "Expires", "x-iduser"],
         "supports_credentials": True
     }})
 
@@ -131,6 +132,7 @@ def send_recovery_email():
 # NUEVA RUTA PARA LOGIN
 @app.route('/api/login', methods=['POST'])
 def login():
+
     try:
         data = request.get_json()
         email = data.get('email')
@@ -169,6 +171,30 @@ def login():
     except Exception as e:
         print(f'Error en login: {str(e)}')
         return jsonify({'success': False, 'message': 'Error en el servidor'}), 500
+    
+
+@app.route('/api/chat', methods=['POST'])
+@jwt_required()  # ✅ Requiere autenticación con JWT en cada solicitud
+def chat():
+    usuario = get_jwt_identity()  # ✅ Obtiene el usuario desde el token JWT
+    if not usuario:
+        return jsonify({'success': False, 'message': 'Usuario no autenticado'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'message': 'Error al procesar JSON'}), 400
+
+    contenido = data.get('mensaje')
+    if not contenido:
+        return jsonify({'success': False, 'message': 'Mensaje vacío'}), 400
+
+    nuevo_mensaje = Mensaje(usuario=usuario["username"], contenido=contenido)
+    db.session.add(nuevo_mensaje)
+    db.session.commit()
+
+    mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
+    return jsonify({'mensajes': [{'usuario': m.usuario, 'contenido': m.contenido} for m in mensajes]}), 200
+
 
 @app.route('/api/users', methods=['GET'])
 @jwt_required()
