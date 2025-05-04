@@ -11,19 +11,6 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../static/css/styles.css">
     <style>
-        .general-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-        }
-
-        .centered-image {
-            width: 60%;
-            height: auto;
-            display: block;
-        }
 
         .map-point {
             position: absolute;
@@ -75,28 +62,23 @@
             </select>
         </div>
     
-        <!-- Pregunta 2 -->
-        <div class="mb-3">
-            <h2>¿Qué sector usaste?</h2>
-            <select class="form-select" style="max-width: 300px;" id="sectorSelect">
-                <option value="">Seleccioná un sector</option>
-                <option value="comedor">Comedor</option>
-                <option value="iae">IAE</option>
-                <option value="medicina">Medicina</option>
-                <option value="olivo">Olivo</option>
-                <option value="profesores">Profesores</option>
-            </select>
-            <span id="loadingSector" class="loading" style="display:none;">Cargando cocheras...</span>
-        </div>
+        <h2>Selección de Sector</h2>
+        <label for="selector-sector">¿Qué sector usaste?</label>
+        <select id="selector-sector" class="form-select">
+            <option value="" disabled selected>Seleccioná un sector</option>
+            <!-- Aquí se cargarán dinámicamente los sectores desde la API -->
+        </select>
     
-        <!-- Pregunta 3 -->
-        <div class="mb-3">
-            <h2>¿Qué cochera usaste?</h2>
-            <input type="text" class="form-control" style="max-width: 300px;" id="cocheraInput" placeholder="Escribí el número de cochera">
-        </div>
+
         
-        <!-- Botón alineado -->
-        <!-- Botón alineado con ancho 100px -->
+        <h2>¿Qué cochera usaste?</h2>
+            <select id="selector-cochera" class="form-select" style="max-width: 300px;" disabled>
+                <option value="">Seleccioná una cochera</option>
+            </select>
+
+
+        
+
         <div class="mb-3">
             <button type="submit" class="btn btn-success" style="width: 100px; background-color: #45a049;">Guardar</button>
         </div>

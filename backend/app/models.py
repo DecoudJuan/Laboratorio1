@@ -71,7 +71,6 @@ class EstablishmentAdmin(db.Model):
     idAdmin = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'), primary_key=True)
     idEstablishment = db.Column(db.Integer, db.ForeignKey('establishment.idEstablishment', ondelete='CASCADE'), primary_key=True)
 
-
 class ParkingSpot(db.Model):
     __tablename__ = 'parking_spot'
 
@@ -94,8 +93,8 @@ class Sectors(db.Model):
     idSector = db.Column(db.Integer, primary_key=True)
     idEstablishment = db.Column(db.Integer, db.ForeignKey('establishment.idEstablishment', ondelete='CASCADE'))
     nameSec = db.Column(db.Text, nullable=False)
-    openingHour = db.Column(db.Integer)
-    closingHour = db.Column(db.Integer)
+    openingHour = db.Column(db.Time)
+    closingHour = db.Column(db.Time)
     availableParkingSpots = db.Column(db.Integer, nullable=False)
     freeParkingSpots = db.Column(db.Integer, nullable=False)
 

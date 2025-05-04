@@ -32,74 +32,6 @@ function checkToken() {
     return true;
 }
 
-// Función para cargar las cocheras según el sector seleccionado
-async function cargarCocheras(sector) {
-    if (!sector) return;
-
-    // Normalizar el nombre del sector
-    sector = sector.charAt(0).toUpperCase() + sector.slice(1).toLowerCase();
-
-    try {
-        // Limpiar el selector de cocheras
-        cocheraSelect.innerHTML = '<option value="">Seleccioná una cochera</option>';
-
-        // Obtener las cocheras del sector desde la API
-        const response = await fetch(`${API_BASE_URL}/api/cocheras/${sector}`);
-        const data = await response.json();
-
-        if (data.success && data.cocheras) {
-            // Ordenar las cocheras numéricamente
-            const cocheras = data.cocheras.sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
-
-            // Añadir cada cochera al selector
-            cocheras.forEach(cochera => {
-                const option = document.createElement('option');
-                option.value = cochera.numero;
-                option.textContent = cochera.numero;
-
-                // Marcar visualmente las cocheras ocupadas
-                if (cochera.ocupado) {
-                    option.disabled = true;
-                    option.textContent += ' (Ocupada)';
-                    option.style.color = 'red';
-                }
-
-                cocheraSelect.appendChild(option);
-            });
-        } else {
-            console.error('No se pudieron cargar las cocheras');
-        }
-    } catch (error) {
-        console.error('Error al cargar cocheras:', error);
-    }
-}
-
-// Evento para cuando cambia el sector seleccionado
-sectorSelect.addEventListener('change', function() {
-    cargarCocheras(this.value);
-});
-
-// Evento para verificar el estado de una cochera cuando se selecciona
-cocheraSelect.addEventListener('change', async function() {
-    const sector = sectorSelect.value;
-    const cochera = parseInt(this.value, 10);  // ✅ Convertir a número
-
-    if (!sector || isNaN(cochera)) return;  // ✅ Validar que sea un número válido
-
-    try {
-        const sectorNormalizado = sector.charAt(0).toUpperCase() + sector.slice(1).toLowerCase();
-        const response = await fetch(`${API_BASE_URL}/api/cocheras/${sectorNormalizado}/${cochera}`);
-        const data = await response.json();
-
-        if (data.success && data.ocupado) {
-            alert("Esta cochera ya está ocupada. Por favor selecciona otra.");
-            this.value = ""; // Limpiar la selección
-        }
-    } catch (error) {
-        console.error('Error al verificar estado de cochera:', error);
-    }
-});
-
 // Función para marcar llegada o salida de una cochera
 guardarBtn.addEventListener('click', async function() {
     const llegadaSalida = llegadaSalidaSelect.value;
@@ -166,17 +98,151 @@ guardarBtn.addEventListener('click', async function() {
     }
 });
 
-// Configurar evento para cerrar sesión
-document.getElementById('logoutBtn')?.addEventListener('click', function() {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    window.location.href = 'index.html';
-});
 
 // Cargar la información inicial cuando se carga la página
 window.addEventListener('DOMContentLoaded', function() {
+    
+    cargarSectores();
+    
     checkToken();
     if (sectorSelect.value) {
         cargarCocheras(sectorSelect.value);
     }
+
+    // Configurar evento para cerrar sesión
+    document.getElementById('logoutBtn')?.addEventListener('click', function() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+    });
+
+});
+
+// COCHERAS
+
+// Deshabilitar el select de cocheras al inicio
+cocheraSelect.disabled = true;
+
+async function actualizarCocheras(sectorId) {
+    try {
+        // Primero obtenemos la información del sector para saber cuántas cocheras hay disponibles
+        const response = await fetch(`${API_BASE_URL}/api/sector/${sectorId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const freeParkingSpots = parseInt(data.sector.freeParkingSpots);
+            
+            // Limpiamos las opciones existentes
+            cocheraSelect.innerHTML = '<option value="">Seleccioná una cochera</option>';
+            
+            // Solo habilitamos el select si hay cocheras disponibles
+            if (freeParkingSpots > 0) {
+                cocheraSelect.disabled = false;
+                
+                // Obtenemos las cocheras ocupadas del sector para no mostrarlas
+                const cocherasResponse = await fetch(`${API_BASE_URL}/api/cocheras_ocupadas/${sectorId}`);
+                const cocherasData = await cocherasResponse.json();
+                
+                let cocherasOcupadas = [];
+                if (cocherasData.success) {
+                    cocherasOcupadas = cocherasData.cocheras.map(c => parseInt(c.numero));
+                }
+                
+                // Generamos tantas opciones como espacios totales tenga el sector
+                // pero filtramos las ocupadas según la acción (llegada/salida)
+                const espaciosTotales = data.sector.totalParkingSpots || 100; // Asumimos 100 si no hay dato
+                const accion = llegadaSalidaSelect.value;
+                
+                for (let i = 1; i <= espaciosTotales; i++) {
+                    const estaOcupada = cocherasOcupadas.includes(i);
+                    
+                    // Si es llegada, mostramos solo las libres
+                    // Si es salida, mostramos solo las ocupadas
+                    if ((accion === "llegada" && !estaOcupada) || 
+                        (accion === "salida" && estaOcupada)) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i;
+                        cocheraSelect.appendChild(option);
+                    }
+                }
+            } else {
+                // No hay cocheras disponibles
+                cocheraSelect.disabled = true;
+                
+                if (llegadaSalidaSelect.value === "llegada") {
+                    alert("No hay cocheras disponibles en este sector.");
+                }
+            }
+        } else {
+            console.error('Error al obtener información del sector');
+            cocheraSelect.disabled = true;
+        }
+    } catch (error) {
+        console.error('Error al actualizar cocheras:', error);
+        cocheraSelect.disabled = true;
+    }
+}
+
+function cargarSectores() {
+    // Realizar petición al endpoint de sectores
+    fetch(`${API_BASE_URL}/api/sectores`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Obtener el select del DOM
+                const selectorSector = document.getElementById('selector-sector');
+                
+                // Limpiar opciones existentes
+                selectorSector.innerHTML = '<option value="" disabled selected>Seleccioná un sector</option>';
+                
+                // Agregar cada sector como una opción
+                data.sectors.forEach(sector => {
+                    const option = document.createElement('option');
+                    option.value = sector.idSector;
+                    option.textContent = `${sector.nameSec} (${sector.freeParkingSpots} disponibles)`;
+                    selectorSector.appendChild(option);
+                });
+                
+                // Escuchar cambios en la selección de sector
+                selectorSector.addEventListener('change', function() {
+                    const sectorSeleccionado = this.value;
+                    console.log('Sector seleccionado:', sectorSeleccionado);
+                    
+                    if (sectorSeleccionado) {
+                        // Verificar si se ha seleccionado una opción de llegada/salida
+                        if (!llegadaSalidaSelect.value) {
+                            alert("Primero seleccioná si llegaste o te vas");
+                            selectorSector.value = ""; // Reset selector
+                            return;
+                        }
+                        
+                        // Actualizamos las cocheras disponibles según el sector
+                        actualizarCocheras(sectorSeleccionado);
+                    } else {
+                        // Si no hay sector seleccionado, deshabilitamos el selector de cocheras
+                        cocheraSelect.disabled = true;
+                        cocheraSelect.innerHTML = '<option value="">Seleccioná una cochera</option>';
+                    }
+                });
+            } else {
+                console.error('Error al cargar sectores:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error al obtener los sectores:', error);
+        });
+}
+
+// Escuchar cambios en la selección de llegada/salida
+llegadaSalidaSelect.addEventListener('change', function() {
+    // Resetear los otros selects cuando cambia este
+    sectorSelect.value = "";
+    cocheraSelect.disabled = true;
+    cocheraSelect.innerHTML = '<option value="">Seleccioná una cochera</option>';
 });

@@ -31,32 +31,6 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
-setTimeout(function() {
-    if (!window.cocherasLoaded) {
-        console.log("cocheras.js no se cargó correctamente. Utilizando código alternativo...");
-        
-        // Código alternativo mínimo
-        document.querySelectorAll(".btn.btn-success, .map-point").forEach(element => {
-            element.onclick = function() {
-                const sector = this.getAttribute("data-name") || this.textContent.trim();
-                console.log("Clic en:", sector);
-                
-                document.getElementById("modal-body-content").textContent = 
-                    `Información para el sector ${sector} (modo alternativo)`;
-                
-                const modalEl = document.getElementById('cocheraModal');
-                if (bootstrap && bootstrap.Modal) {
-                    const modal = new bootstrap.Modal(modalEl);
-                    modal.show();
-                } else {
-                    alert("Error: Bootstrap Modal no está disponible");
-                }
-            };
-        });
-    }
-}, 1000);
-
-
 
 // También verificar cuando la página vuelve a estar visible
 document.addEventListener('visibilitychange', () => {

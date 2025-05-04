@@ -448,54 +448,6 @@ function setupModalListeners() {
     }
 }
 
-
-function openEditModal(idVehicle, brand, model) {
-    // Guardar el ID del vehículo en el campo oculto
-    document.getElementById('editVehicleId').value = idVehicle;
-    
-    // Obtener los datos completos del vehículo (incluida la patente)
-    fetchWithAuth(`${API_BASE_URL}/api/vehicles/${idVehicle}`)
-        .then(data => {
-            // Rellenar el campo de patente
-            document.getElementById('editPatent').value = data.idVehicle || idVehicle;
-            
-            // Cargar las marcas en el dropdown y luego seleccionar la actual
-            loadBrands(true).then(() => {
-                const brandSelect = document.getElementById('editBrand');
-                
-                // Buscar y seleccionar la marca actual
-                for (let i = 0; i < brandSelect.options.length; i++) {
-                    if (brandSelect.options[i].textContent === brand) {
-                        brandSelect.selectedIndex = i;
-                        
-                        // Una vez seleccionada la marca, cargar sus modelos
-                        const selectedBrandId = brandSelect.value;
-                        if (selectedBrandId) {
-                            loadModels(selectedBrandId, true).then(() => {
-                                // Buscar y seleccionar el modelo actual
-                                const modelSelect = document.getElementById('editModel');
-                                for (let j = 0; j < modelSelect.options.length; j++) {
-                                    if (modelSelect.options[j].textContent === model) {
-                                        modelSelect.selectedIndex = j;
-                                        break;
-                                    }
-                                }
-                            });
-                        }
-                        break;
-                    }
-                }
-            });
-        })
-        .catch(error => {
-            console.error('Error al obtener datos del vehículo:', error);
-        });
-    
-    // Mostrar el modal usando Bootstrap
-    const editModal = new bootstrap.Modal(document.getElementById('editVehicleModal'));
-    editModal.show();
-}
-
 // Función openDeleteModal para eliminar vehículos (también mencionada en tu código)
 function openDeleteModal(idVehicle, brand, model) {
     // Guardar el ID del vehículo en el campo oculto
