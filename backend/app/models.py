@@ -1,7 +1,8 @@
+import datetime
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
-
+from datetime import datetime
 class User(db.Model):
     __tablename__ = 'user'
 
@@ -115,3 +116,9 @@ class Establishment(db.Model):
     totalParkingSpots = db.Column(db.Integer, nullable=False)
     totalSectors = db.Column(db.Integer, nullable=False)
     geographicLocation = db.Column(db.Text, nullable=False)
+    
+class Mensaje(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario = db.Column(db.String(100), nullable=False)
+    contenido = db.Column(db.Text, nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
