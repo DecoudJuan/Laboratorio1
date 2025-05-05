@@ -174,39 +174,22 @@ def login():
     
 
 @app.route('/api/chat', methods=['GET', 'POST'])
-@jwt_required()  # ✅ Requiere autenticación con JWT en cada solicitud
 def chat():
-    usuario = get_jwt_identity()  # ✅ Obtiene el usuario desde el token JWT
-    if not usuario:
-        return jsonify({'success': False, 'message': 'Usuario no autenticado'}), 401
-    
-    # Para solicitudes GET - Obtener mensajes
+    # Verificar si el usuario está autenticado (esto se omite)
     if request.method == 'GET':
-        # Obtener todos los mensajes ordenados por fecha
+        # Obtener los mensajes
         mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
-        
-        # Convertir los mensajes a formato JSON
         mensajes_json = [{'usuario': m.usuario, 'contenido': m.contenido} for m in mensajes]
-        
         return jsonify({'success': True, 'mensajes': mensajes_json}), 200
     
-    # Para solicitudes POST - Enviar nuevo mensaje
     elif request.method == 'POST':
-        print(f"Solicitud POST recibida en /api/chat")
         data = request.get_json()
-        print(f"Datos recibidos en POST /api/chat: {data}")
-        #aca data no llega por que devuelve none
-        if not data:
-            return jsonify({'success': False, 'message': 'Error al procesar JSON'}), 400
-
         contenido = data.get('mensaje')
         if not contenido:
             return jsonify({'success': False, 'message': 'Mensaje vacío'}), 400
-
-        nuevo_mensaje = Mensaje(usuario=usuario["username"], contenido=contenido)
+        nuevo_mensaje = Mensaje(usuario="anonimo", contenido=contenido)
         db.session.add(nuevo_mensaje)
         db.session.commit()
-
         mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
         return jsonify({'success': True, 'mensajes': [{'usuario': m.usuario, 'contenido': m.contenido} for m in mensajes]}), 200
 
