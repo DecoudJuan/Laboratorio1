@@ -17,9 +17,6 @@ class User(db.Model):
     reported = db.relationship('Reported', foreign_keys='Reported.senderId', backref='reporting_user', cascade='all, delete-orphan')
     receivedReports = db.relationship('Reported', foreign_keys='Reported.reportedUserId', backref='reported_user', cascade='all, delete-orphan')
     
-
-
-
 class Message(db.Model):
     __tablename__ = 'message'
 
@@ -27,7 +24,6 @@ class Message(db.Model):
     idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
     content = db.Column(db.Text, nullable=False)
     timeStamp = db.Column(db.DateTime, server_default=db.func.current_timestamp())
-
 
 class Reported(db.Model):
     __tablename__ = 'reported'
@@ -46,7 +42,6 @@ class car_brands(db.Model):
 
     models = db.relationship('car_models', backref='brand', cascade='all, delete-orphan')
 
-
 class car_models(db.Model):
     __tablename__ = 'car_models'
 
@@ -63,9 +58,7 @@ class Vehicle(db.Model):
     model = db.Column(db.Text)
     checkInTime = db.Column(db.DateTime)
     checkOutTime = db.Column(db.DateTime)
-    occupiedParkingSpot = db.Column(db.Integer)
-
-
+    
 class EstablishmentAdmin(db.Model):
     __tablename__ = 'establishment_admin'
 
@@ -75,10 +68,14 @@ class EstablishmentAdmin(db.Model):
 class ParkingSpot(db.Model):
     __tablename__ = 'parking_spot'
 
-    idParkingSpot = db.Column(db.Integer, primary_key=True)
-    estado = db.Column(db.Boolean, nullable=False)
     idSector = db.Column(db.Integer, db.ForeignKey('sectors.idSector', ondelete='CASCADE'), primary_key=True)
-    idVehicle = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
+    spotNumber = db.Column(db.Integer, primary_key=True)
+
+    isOccupied = db.Column(db.Boolean, nullable=False, default=False)
+    idVehicle = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='SET NULL'), nullable=True)
+
+    sector = db.relationship('Sectors', backref='parking_spots')
+    vehicle = db.relationship('Vehicle', backref='parking_spot', uselist=False)
 
 class Owns(db.Model):
     __tablename__ = 'owns'
@@ -86,7 +83,6 @@ class Owns(db.Model):
     idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'), primary_key=True)
     idVehicle = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'), primary_key=True)
     is_primary = db.Column(db.Boolean, default=False)
-
 
 class Sectors(db.Model):
     __tablename__ = 'sectors'
@@ -99,14 +95,11 @@ class Sectors(db.Model):
     availableParkingSpots = db.Column(db.Integer, nullable=False)
     freeParkingSpots = db.Column(db.Integer, nullable=False)
 
-
-
 class SectorEstablishment(db.Model):
     __tablename__ = 'sector_establishment'
 
     idSector = db.Column(db.Integer, db.ForeignKey('sectors.idSector', ondelete='CASCADE'), primary_key=True)
     idEstablishment = db.Column(db.Integer, db.ForeignKey('establishment.idEstablishment', ondelete='CASCADE'), primary_key=True)
-
 
 class Establishment(db.Model):
     __tablename__ = 'establishment'
