@@ -308,6 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('logoutBtn')?.addEventListener('click', function() {
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('chatEmail');
         window.location.href = 'index.html';
     });
     

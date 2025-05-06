@@ -376,6 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function() {
+            sessionStorage.removeItem('chatEmail');
             localStorage.removeItem('authToken');
             localStorage.removeItem('currentUser');
             window.location.href = 'index.html';

@@ -179,7 +179,11 @@ def chat():
     if request.method == 'GET':
         # Obtener los mensajes
         mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
-        mensajes_json = [{'usuario': m.usuario, 'contenido': m.contenido} for m in mensajes]
+        mensajes_json = [{
+        'usuario': m.usuario,
+        'contenido': m.contenido,
+        'fecha_creacion': m.fecha_creacion.isoformat() if m.fecha_creacion else None
+        } for m in mensajes]
         return jsonify({'success': True, 'mensajes': mensajes_json}), 200
     
     elif request.method == 'POST':
@@ -192,7 +196,15 @@ def chat():
         db.session.add(nuevo_mensaje)
         db.session.commit()
         mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
-        return jsonify({'success': True, 'mensajes': [{'usuario': m.usuario, 'contenido': m.contenido} for m in mensajes]}), 200
+        return jsonify({
+        'success': True,
+        'mensajes': [{
+            'usuario': m.usuario,
+            'contenido': m.contenido,
+            'fecha_creacion': m.fecha_creacion.isoformat() if m.fecha_creacion else None
+        } for m in mensajes]
+    }), 200
+
 
 
 @app.route('/api/users', methods=['GET'])

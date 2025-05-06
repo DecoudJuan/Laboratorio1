@@ -111,7 +111,13 @@ document.addEventListener('DOMContentLoaded', function () {
         mensajes.forEach(mensaje => {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'mb-3 border-bottom pb-2';
-            messageDiv.innerHTML = `<strong>${mensaje.usuario}</strong>: ${mensaje.contenido}`;
+            const fecha = new Date(mensaje.fecha_creacion);
+            const fechaFormateada = fecha.toLocaleString();
+            messageDiv.innerHTML = `
+            <div>
+                <strong>${mensaje.usuario}</strong>: ${mensaje.contenido}
+                <div class="text-muted" style="font-size: 0.8rem;">${fechaFormateada}</div>
+            </div>`;
             messagesContainer.appendChild(messageDiv);
         });
     }
@@ -127,3 +133,10 @@ document.addEventListener('DOMContentLoaded', function () {
         window.location.replace('index.html');
     });
 });
+
+const backToPrincipalBtn = document.getElementById('backToPrincipalBtn');
+    if (backToPrincipalBtn) {
+        backToPrincipalBtn.addEventListener('click', function() {
+            window.location.href = 'principal.html';
+        });
+    }

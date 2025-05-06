@@ -120,6 +120,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Eliminar token y datos de usuario del localStorage
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('chatEmail');
         
         // Redireccionar a la página de inicio de sesión
         window.location.replace('index.html');
