@@ -12,7 +12,6 @@
     <link href="../static/css/styles.css" rel="stylesheet">
 </head>
 <body>
-    
     <div class="top-bar">
         <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Chat</h1>
         <div class="dark-section"></div>
@@ -20,22 +19,33 @@
         <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
     </div>
     
-<div class="container mt-5">
-    <h2 class="mb-4">¡Dejá tu advertencia!</h2>
-    <!-- Formulario para enviar mensaje - Añadido id y eliminado action -->
-    <form id="chatForm" class="mb-4">
-        <div class="mb-3">
-            <textarea name="mensaje" class="form-control" rows="3" placeholder="Escribe tu mensaje..." required></textarea>
+    <div class="container mt-5">
+        <h2 class="mb-4">¡Dejá tu advertencia!</h2>
+        
+        <!-- Formulario para ingresar el correo -->
+        <div id="emailFormContainer">
+            <form id="emailForm" class="mb-4">
+                <div class="mb-3">
+                    <input type="email" id="emailInput" class="form-control" placeholder="Ingresa tu correo" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+            </form>
         </div>
-        <button type="submit" class="btn btn-primary" style="background-color: #2980b9; margin-left: 30%;">Enviar</button>
-    </form>
-    <!-- Lista de mensajes - Añadido id para manipularlo con JS -->
-    <div class="card">
-        <div class="card-body" id="messages-container">
-            <!-- Los mensajes se cargarán dinámicamente con JavaScript -->
+
+        <!-- Formulario para enviar mensaje (invisible hasta que se ingrese el correo) -->
+        <div id="chatContainer" style="display: none;">
+            <form id="chatForm" class="mb-4">
+                <div class="mb-3">
+                    <textarea name="mensaje" class="form-control" rows="3" placeholder="Escribe tu mensaje..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="background-color: #2980b9; margin-left: 30%;">Enviar</button>
+            </form>
+            <div class="card">
+                <div class="card-body" id="messages-container"></div>
+            </div>
         </div>
     </div>
-</div>
-<script src="/static/js/chat.js" defer></script> 
+
+    <script src="/static/js/chat.js" defer></script>
 </body>
 </html>

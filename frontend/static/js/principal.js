@@ -1,5 +1,4 @@
 function preventCaching() {
-    // NO ALMACENA CACHÉ
     if (window.location.protocol != 'file:') {
         window.history.replaceState(null, document.title, window.location.href);
     }
@@ -7,28 +6,23 @@ function preventCaching() {
 
 preventCaching();
 
-// Verificación inmediata de autenticación (se ejecuta al cargar el script)
 function checkToken() {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
 
-    // Si no hay token o usuario, redirigir al login
     if (!authToken || !currentUser) {
         window.location.replace('index.html');
         return;
     }
 }
 
-// Verificar autenticación cuando la página vuelve a estar activa
 window.addEventListener('pageshow', (event) => {
-    // Si la página se restaura desde el caché (botón atrás)
     if (event.persisted) {
         console.log('Página restaurada desde caché - verificando autenticación');
         checkToken();
     }
 });
 
-// También verificar cuando la página vuelve a estar visible
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         console.log('Página visible - verificando autenticación');
@@ -37,10 +31,46 @@ document.addEventListener('visibilitychange', () => {
 });
 
 document.getElementById('logoutBtn').addEventListener('click', function() {
-    // Eliminar token y datos de usuario del localStorage
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
-    
-    // Redireccionar a la página de inicio de sesión
+    localStorage.removeItem('userEmail'); // también limpiamos el email del chat
+    sessionStorage.removeItem('chatEmail'); // Limpiar el email del chat
     window.location.href = 'index.html';
+});
+
+
+// ====== MANEJO DEL EMAIL PARA EL CHAT ======
+
+document.addEventListener('DOMContentLoaded', () => {
+    const chatLink = document.querySelector('a[href="chat.html"]');
+    const emailModal = new bootstrap.Modal(document.getElementById('emailModal'));
+    const submitBtn = document.getElementById('submitEmailBtn');
+
+    if (chatLink) {
+        chatLink.addEventListener('click', (event) => {
+            const email = localStorage.getItem('userEmail');
+            if (!email) {
+                event.preventDefault(); // Evita que vaya al chat
+                emailModal.show();
+            }
+        });
+    }
+
+    submitBtn.addEventListener('click', () => {
+        const emailInput = document.getElementById('userEmail');
+        const email = emailInput.value.trim();
+
+        if (email && validateEmail(email)) {
+            localStorage.setItem('userEmail', email);
+            emailModal.hide();
+            window.location.href = 'chat.html';
+        } else {
+            alert('Por favor ingresa un correo electrónico válido.');
+        }
+    });
+
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
 });

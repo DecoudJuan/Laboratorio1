@@ -1,19 +1,47 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("El script `chat.js` se ha cargado correctamente."); 
+    console.log("El script `chat.js` se ha cargado correctamente.");
+
+    const emailForm = document.getElementById('emailForm');
+    const emailInput = document.getElementById('emailInput');
+    const chatContainer = document.getElementById('chatContainer');
+    const emailFormContainer = document.getElementById('emailFormContainer');
     const chatForm = document.getElementById('chatForm');
     const messagesContainer = document.getElementById('messages-container');
 
-    if (!chatForm) {
-        console.error("Formulario de chat no encontrado en el DOM");
-        return;
+    // Verificar si el correo está en el localStorage
+    const storedEmail = sessionStorage.getItem('chatEmail');
+    if (storedEmail) {
+        showChat(storedEmail);
+    } else {
+        emailFormContainer.style.display = 'block';
+        chatContainer.style.display = 'none';
     }
 
+    // Manejar el envío del formulario de email
+    emailForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const email = emailInput.value.trim();
+
+        if (email) {
+            sessionStorage.setItem('chatEmail', email);
+            showChat(email);
+        } else {
+            alert('Por favor, ingresa un correo válido.');
+        }
+    });
+
+    // Mostrar el chat y ocultar el formulario de email
+    function showChat(email) {
+        emailFormContainer.style.display = 'none';
+        chatContainer.style.display = 'block';
+        loadMessages();
+    }
+
+    // Manejar el envío del formulario de chat
     chatForm.addEventListener('submit', function(event) {
         event.preventDefault();
 
         const mensaje = event.target.querySelector('[name="mensaje"]').value;
-
-        console.log("Mensaje a enviar:", mensaje); // ✅ Verificar que el mensaje se obtiene correctamente
 
         if (!mensaje) {
             alert("Por favor, escribe un mensaje.");
@@ -23,83 +51,79 @@ document.addEventListener('DOMContentLoaded', function () {
         enviarMensaje(mensaje);
     });
 
-    // Cargar mensajes al inicio
-    loadMessages();
-});
+    // Función para enviar mensaje
+    function enviarMensaje(mensaje) {
+        const email = sessionStorage.getItem("chatEmail");
 
-// 🔹 Enviar mensaje al servidor
-function enviarMensaje(mensaje) {
-    fetch('http://localhost:5000/api/chat', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + localStorage.getItem("token")  // ✅ Enviar JWT
-        },
-        body: JSON.stringify({ mensaje })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Respuesta del servidor:", data); // ✅ Verificar la respuesta del backend
-
-        if (data.success) {
-            loadMessages(); // ✅ Recargar mensajes
-            document.querySelector('[name="mensaje"]').value = ''; // ✅ Limpiar campo
-        } else {
-            alert("Error al enviar mensaje: " + data.message);
-        }
-    })
-    .catch(error => {
-        console.error("Error en la solicitud:", error);
-    });
-}
-
-// 🔹 Cargar mensajes existentes
-function loadMessages() {
-    fetch('http://localhost:5000/api/chat', {
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem("token")  // ✅ Enviar JWT
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        updateMessages(data.mensajes);
-    })
-    .catch(error => {
-        console.error("Error al cargar los mensajes:", error);
-    });
-}
-
-// 🔹 Mostrar mensajes en la interfaz
-function updateMessages(mensajes) {
-    const messagesContainer = document.getElementById('messages-container');
-
-    if (!messagesContainer) {
-        console.error("Contenedor de mensajes no encontrado en el DOM");
-        return;
+        fetch('http://localhost:5000/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem("token")
+            },
+            body: JSON.stringify({ mensaje, usuario: email })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadMessages();
+                document.querySelector('[name="mensaje"]').value = '';
+            } else {
+                alert("Error al enviar mensaje: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error en la solicitud:", error);
+        });
     }
 
-    messagesContainer.innerHTML = '';  // ✅ Limpiar mensajes anteriores
-
-    if (!mensajes || mensajes.length === 0) {
-        messagesContainer.innerHTML = '<div class="text-center text-muted">No hay mensajes aún</div>';
-        return;
+    // Función para cargar los mensajes
+    function loadMessages() {
+        fetch('http://localhost:5000/api/chat', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem("token")
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            updateMessages(data.mensajes);
+        })
+        .catch(error => {
+            console.error("Error al cargar los mensajes:", error);
+        });
     }
 
-    mensajes.forEach(mensaje => {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'mb-3 border-bottom pb-2';
-        messageDiv.innerHTML = `<strong>${mensaje.usuario}</strong>: ${mensaje.contenido}`;
-        messagesContainer.appendChild(messageDiv);
-    });
-}
+    // Mostrar mensajes en la interfaz
+    function updateMessages(mensajes) {
+        if (!messagesContainer) {
+            console.error("Contenedor de mensajes no encontrado en el DOM");
+            return;
+        }
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    // Eliminar token y datos de usuario del localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    console.log(localStorage.getItem('authToken'));
-    
-    // Redireccionar a la página de inicio de sesión
-    window.location.replace('index.html'); // replace elimina la entrada actual del historial
+        messagesContainer.innerHTML = '';
+
+        if (!mensajes || mensajes.length === 0) {
+            messagesContainer.innerHTML = '<div class="text-center text-muted">No hay mensajes aún</div>';
+            return;
+        }
+
+        mensajes.forEach(mensaje => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'mb-3 border-bottom pb-2';
+            messageDiv.innerHTML = `<strong>${mensaje.usuario}</strong>: ${mensaje.contenido}`;
+            messagesContainer.appendChild(messageDiv);
+        });
+    }
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        // Eliminar datos de la sesión
+        sessionStorage.removeItem('chatEmail');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        
+        // Redirigir al login
+        window.location.replace('index.html');
+    });
 });

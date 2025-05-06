@@ -185,9 +185,10 @@ def chat():
     elif request.method == 'POST':
         data = request.get_json()
         contenido = data.get('mensaje')
+        usuario = data.get('usuario') or "anonimo"
         if not contenido:
             return jsonify({'success': False, 'message': 'Mensaje vacío'}), 400
-        nuevo_mensaje = Mensaje(usuario="anonimo", contenido=contenido)
+        nuevo_mensaje = Mensaje(usuario=usuario, contenido=contenido)
         db.session.add(nuevo_mensaje)
         db.session.commit()
         mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
