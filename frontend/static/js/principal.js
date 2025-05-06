@@ -39,38 +39,4 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
 });
 
 
-// ====== MANEJO DEL EMAIL PARA EL CHAT ======
 
-document.addEventListener('DOMContentLoaded', () => {
-    const chatLink = document.querySelector('a[href="chat.html"]');
-    const emailModal = new bootstrap.Modal(document.getElementById('emailModal'));
-    const submitBtn = document.getElementById('submitEmailBtn');
-
-    if (chatLink) {
-        chatLink.addEventListener('click', (event) => {
-            const email = localStorage.getItem('userEmail');
-            if (!email) {
-                event.preventDefault(); // Evita que vaya al chat
-                emailModal.show();
-            }
-        });
-    }
-
-    submitBtn.addEventListener('click', () => {
-        const emailInput = document.getElementById('userEmail');
-        const email = emailInput.value.trim();
-
-        if (email && validateEmail(email)) {
-            localStorage.setItem('userEmail', email);
-            emailModal.hide();
-            window.location.href = 'chat.html';
-        } else {
-            alert('Por favor ingresa un correo electrónico válido.');
-        }
-    });
-
-    function validateEmail(email) {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
-    }
-});
