@@ -10,43 +10,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../static/css/styles.css">
-    <style>
-        .general-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-        }
-
-        .centered-image {
-            width: 60%;
-            height: auto;
-            display: block;
-        }
-
-        .map-point {
-            position: absolute;
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background-color: red;
-            cursor: pointer;
-        }
-
-        .map-point:hover::after {
-            content: attr(data-name);
-            position: absolute;
-            top: -25px;
-            left: 20px;
-            background: rgba(0,0,0,0.75);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            white-space: nowrap;
-            font-size: 14px;
-        }
-    </style>
 </head>
 <body>
     <div class="top-bar">
@@ -78,7 +41,7 @@
 
     <div class="main-content">
         <div class="general-container">
-            <h2>Sectores registrados</h2>
+            <h2>Sectores Disponibles</h2>
             <!-- Tabla sin restricciones de administrador -->
             <table class="table table-striped table-bordered">
                 <thead class="thead-dark">
@@ -94,13 +57,13 @@
                     <!-- Los datos se cargarán dinámicamente desde JavaScript -->
                 </tbody>
             </table>
+            <a href="llegadaUsuario.html">
+                <button id="miActividadBtn" class="button" style="background-color: #9b59b6; border-color: #9b59b6;">
+                    Mi Actividad
+                </button>
+            </a>
         </div>
     </div>
-    <a href="llegadaUsuario.html">
-        <button id="miActividadBtn" class="button" style="background-color: #9b59b6; border-color: #9b59b6;  top: 147px; left: -417%; position: relative;">
-            Mi Actividad
-        </button>
-    </a>
 
 
 
