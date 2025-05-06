@@ -1,5 +1,7 @@
 import datetime
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+import pytz
 
 db = SQLAlchemy()
 from datetime import datetime
@@ -17,13 +19,6 @@ class User(db.Model):
     reported = db.relationship('Reported', foreign_keys='Reported.senderId', backref='reporting_user', cascade='all, delete-orphan')
     receivedReports = db.relationship('Reported', foreign_keys='Reported.reportedUserId', backref='reported_user', cascade='all, delete-orphan')
     
-class Message(db.Model):
-    __tablename__ = 'message'
-
-    idMessage = db.Column(db.Integer, primary_key=True)
-    idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
-    content = db.Column(db.Text, nullable=False)
-    timeStamp = db.Column(db.DateTime, server_default=db.func.current_timestamp())
 
 class Reported(db.Model):
     __tablename__ = 'reported'
@@ -114,4 +109,12 @@ class Mensaje(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario = db.Column(db.String(100), nullable=False)
     contenido = db.Column(db.Text, nullable=False)
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha_creacion = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.timezone('America/Argentina/Buenos_Aires')))
+
+class Message(db.Model):
+    __tablename__ = 'message'
+
+    idMessage = db.Column(db.Integer, primary_key=True)
+    idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
+    content = db.Column(db.Text, nullable=False)
+    timeStamp = db.Column(db.DateTime, server_default=db.func.current_timestamp())
