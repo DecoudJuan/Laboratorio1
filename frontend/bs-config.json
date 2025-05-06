@@ -1,5 +1,14 @@
 {
-    "server": {
-      "baseDir": [".", "./templates"]
-    }
+  "server": {
+    "baseDir": [".", "./templates"]
+  },
+  "files": [],             
+  "ghostMode": false,         
+  "notify": false,           
+  "ui": false,               
+  "reloadOnRestart": false, 
+  "watchOptions": {
+    "ignoreInitial": true,
+    "ignored": "**/*"
   }
+}
