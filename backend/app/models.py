@@ -106,10 +106,17 @@ class Establishment(db.Model):
     geographicLocation = db.Column(db.Text, nullable=False)
     
 class Mensaje(db.Model):
+    __tablename__ = 'mensajes'
+    
     id = db.Column(db.Integer, primary_key=True)
+    contenido = db.Column(db.String(500), nullable=False)
     usuario = db.Column(db.String(100), nullable=False)
-    contenido = db.Column(db.Text, nullable=False)
-    fecha_creacion = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.timezone('America/Argentina/Buenos_Aires')))
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    thumpsUp = db.Column(db.Integer, default=0)
+    thumpsDown = db.Column(db.Integer, default=0)
+    
+    # Relación con la tabla de reacciones
+    reacciones = db.relationship('UsuarioReaccion', backref='mensaje', lazy=True, cascade="all, delete-orphan")
 
 class Message(db.Model):
     __tablename__ = 'message'
@@ -118,3 +125,17 @@ class Message(db.Model):
     idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
     content = db.Column(db.Text, nullable=False)
     timeStamp = db.Column(db.DateTime, server_default=db.func.current_timestamp())
+
+class UsuarioReaccion(db.Model):
+    __tablename__ = 'usuario_reacciones'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    usuario = db.Column(db.String(100), nullable=False)
+    mensaje_id = db.Column(db.Integer, db.ForeignKey('mensajes.id'), nullable=False)
+    tipo_reaccion = db.Column(db.String(10), nullable=False)  # 'like' o 'dislike'
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Restricción única para evitar que un usuario tenga múltiples reacciones al mismo mensaje
+    __table_args__ = (
+        db.UniqueConstraint('usuario', 'mensaje_id', name='usuario_mensaje_unique'),
+    )

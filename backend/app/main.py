@@ -7,7 +7,7 @@ from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdm
 
 # MODULOS PARA LOGIN
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
-from werkzeug.security import check_password_hash 
+from werkzeug.security import check_password_hash   
 
 # MODULOS PARA BASE DE DATOS
 from sqlalchemy import text
@@ -37,7 +37,7 @@ def create_app(enviroment):
 
     # CONFIGURAR CORS
     CORS(app, resources={r"/api/*": {
-        "origins": "http://localhost:3000",
+        "origins": "*",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "Pragma", "Expires", "x-iduser"],
         "supports_credentials": True
@@ -2297,6 +2297,57 @@ def get_establishments():
             'message': 'Error al obtener establecimientos',
             'error': str(e)
         }), 500
+    
+# Función auxiliar para verificar si el usuario ya reaccionó
+def usuario_reacciono_previamente(usuario, mensaje_id):
+    return UsuarioReaccion.query.filter_by(usuario=usuario, mensaje_id=mensaje_id).first()
+
+# Ruta para manejar reacciones de usuario
+@app.route('/api/chat/reaction', methods=['POST'])
+def update_reaction():
+    data = request.json
+    print(  "HOLA MUNDO")
+    print(data)
+    message_id = request.json.get('id')
+    print(message_id)
+    mensajes = Mensaje.query.all()
+    for mensaje in mensajes:
+        print(f"ID: {mensaje.id}, Contenido: {mensaje.contenido}")
+        reaction_type = data.get('reaction')
+        usuario = data.get('usuario')
+
+    mensaje = Mensaje.query.get(message_id)
+    
+    if not mensaje:
+        return jsonify({"success": False, "message": "Mensaje no encontrado"}), 404
+
+    reaccion_existente = usuario_reacciono_previamente(usuario, message_id)
+
+    if reaccion_existente:
+        if reaccion_existente.tipo_reaccion == reaction_type:
+            db.session.delete(reaccion_existente)
+            if reaction_type == "like":
+                mensaje.thumpsUp -= 1
+            else:
+                mensaje.thumpsDown -= 1
+        else:
+            reaccion_existente.tipo_reaccion = reaction_type
+            if reaction_type == "like":
+                mensaje.thumpsUp += 1
+                mensaje.thumpsDown -= 1
+            else:
+                mensaje.thumpsDown += 1
+                mensaje.thumpsUp -= 1
+    else:
+        nueva_reaccion = UsuarioReaccion(usuario=usuario, mensaje_id=message_id, tipo_reaccion=reaction_type)
+        db.session.add(nueva_reaccion)
+        if reaction_type == "like":
+            mensaje.thumpsUp += 1
+        else:
+            mensaje.thumpsDown += 1
+
+    db.session.commit()
+    return jsonify({"success": True, "thumpsUp": mensaje.thumpsUp, "thumpsDown": mensaje.thumpsDown}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
