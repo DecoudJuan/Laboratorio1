@@ -17,37 +17,38 @@
 <body>
 
     <div class="top-bar">
-        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Crear Establecimiento</h1>
+        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Gestión de Sectores</h1>
         <div class="dark-section"></div>
         <div class="green-section"></div>
         <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
     </div>
 
-    <div class="main-content">    
-        <a href="edicionestablecimiento.html">
-            <button type="button" class="back-button">
-                <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
-              </button>              
-                </a>
-        <h1 style="color: rgb(0, 0, 0);">Crear Establecimiento</h1>
-        <ul style="color: black; list-style-type: none; padding-left: 0;">
-            <form id="editUserForm" action="crear_establecimiento" method="post">
-                <div class="input-group">
-                    <div class="password-field-container">
-                        <label for="registerEstablecimiento">Establecimiento</label>
-                        <input type="text" id="registerEstablecimiento" name="establecimiento" class="form-control" required>
-                    </div>
+    <div class="main-content">  
+        <div class="general-container">
+        <button type="button" class="back-button" id="backBtn">
+            <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
+        </button>
+        <h2>Crear Nuevo Establecimiento</h2>
+        
+        <div class="container mt-4">
+            <form id="createEstablishmentForm">
+                <div class="mb-3">
+                    <label for="establishmentName" class="form-label">Nombre del Establecimiento</label>
+                    <input type="text" class="form-control" id="establishmentName" placeholder="Ingrese el nombre del establecimiento" required>
                 </div>
-                <input type="hidden" id="nombreAnterior" name="nombre_anterior">
-                <button type="submit" class="btn btn-success mt-3" style="background-color: #45a049; margin-left: 25%;">Guardar</button>
+                
+                <div class="mb-3">
+                    <label for="establishmentLocation" class="form-label">Ubicación Geográfica</label>
+                    <input type="text" class="form-control" id="establishmentLocation" placeholder="Ubicación del establecimiento" required>
+                </div>
+                
+                <button type="submit" class="btn btn-success">Crear Establecimiento</button>
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
             </form>
-            
-        </ul>
+        </div>
     </div>
-
-
-        </ul>
     </div>
-<script src="../static/js/crearEstablecimiento.js"></script>
+ 
+    <script src="../static/js/crearEstablecimiento.js">     </script>
 </body>
 </html>

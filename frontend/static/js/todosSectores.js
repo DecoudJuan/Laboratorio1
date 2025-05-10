@@ -47,7 +47,7 @@ function loadSectors() {
     const tableBody = document.querySelector('tbody') || document.getElementById('sectorsTableBody');
     
     if (tableBody) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando sectores...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando sectores...</td></tr>';
     }
     
     fetchWithAuth(`${API_BASE_URL}/api/sectores`)
@@ -62,7 +62,7 @@ function loadSectors() {
         .catch(error => {
             console.error('Error al cargar sectores:', error);
             if (tableBody) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Error de conexión</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Error de conexión</td></tr>';
             }
             alert('Error al cargar la lista de sectores');
         });
@@ -85,16 +85,33 @@ function displaySectors(sectors) {
         if (noSectorsMessage) noSectorsMessage.style.display = 'block';
         
         const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="6" class="text-center">No hay sectores registrados</td>';
+        row.innerHTML = '<td colspan="7" class="text-center">No hay sectores registrados</td>';
         tableBody.appendChild(row);
         return;
     }
     
     if (noSectorsMessage) noSectorsMessage.style.display = 'none';
     
+    // Actualizar el encabezado de la tabla para incluir el establecimiento
+    const thead = document.querySelector('table thead tr');
+    if (thead && !thead.innerHTML.includes('Establecimiento')) {
+        thead.innerHTML = `
+            <th>Establecimiento</th>
+            <th>Nombre del sector</th>
+            <th>Hora apertura</th>
+            <th>Hora cierre</th>
+            <th>Total cocheras</th>
+            <th>Cocheras libres</th>
+            <th>Acciones</th>
+        `;
+    }
+    
     sectors.forEach(sector => {
         // Usar nameSec como nombre principal del sector
         const name = sector.nameSec || 'N/A';
+        
+        // Nombre del establecimiento
+        const establishmentName = sector.establishmentName || 'N/A';
         
         // Formatear las horas directamente desde openingHour y closingHour
         const opening = sector.openingHour || 'No disponible';
@@ -106,16 +123,17 @@ function displaySectors(sectors) {
         
         const row = document.createElement('tr');
         row.innerHTML = `
+            <td>${establishmentName}</td>
             <td>${name}</td>
             <td>${opening}</td>
             <td>${closing}</td>
             <td>${totalSpots}</td>
             <td>${freeSpots}</td>
             <td>
-                <button class="btn btn-sm btn-primary edit-sector" data-id="${name}">
+                <button class="btn btn-sm btn-primary edit-sector" data-id="${sector.idSector}">
                     <i class="bi bi-pencil"></i> Editar
                 </button>
-                <button class="btn btn-sm btn-danger delete-sector" data-id="${name}" data-nombre="${name}">
+                <button class="btn btn-sm btn-danger delete-sector" data-id="${sector.idSector}" data-nombre="${name}">
                     <i class="bi bi-trash"></i> Eliminar
                 </button>
             </td>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Establecimientos</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../static/css/styles.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="top-bar">
+        <h1 style="background-color: #1f0322; color: #f1dede; position: relative; margin-left: -40px; margin-top: -45px; padding: 50px;">Gestión de Sectores</h1>
+        <div class="dark-section"></div>
+        <div class="green-section"></div>
+        <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
+    </div>
+
+    <div class="main-content">  
+        <!-- Lista de Establecimientos -->
+        <div class="general-container" id="establishmentListContainer">
+            <button type="button" class="back-button" id="backBtn">
+                <i class="bi bi-arrow-left-circle-fill" style="font-size: 1.5rem;"></i>
+            </button>
+            <h2>Todos los Establecimientos</h2>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Sectores</th>
+                            <th>Cocheras Totales</th>
+                            <th>Ubicación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="establishmentsTableBody">
+                        <!-- Los establecimientos se cargarán dinámicamente aquí -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="noEstablishmentsMessage" class="alert alert-warning" style="display: none;">
+                No hay establecimientos registrados. Puede añadir uno nuevo haciendo clic en "Crear Establecimiento".
+            </div>
+            <button id="showAddEstablishmentBtn" class="button">Crear Establecimiento</button>
+        </div>
+
+        <!-- Modal de Confirmación de Eliminación -->
+        <div class="modal fade" id="deleteEstablishmentModal" tabindex="-1" aria-labelledby="deleteEstablishmentModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteEstablishmentModalLabel">Confirmar Eliminación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>¿Estás seguro de que deseas eliminar este establecimiento?</p>
+                        <p id="deleteEstablishmentDetails" class="fw-bold"></p>
+                        <input type="hidden" id="deleteEstablishmentId">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteEstablishment">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Edición de Establecimiento -->
+        <div class="modal fade" id="editEstablishmentModal" tabindex="-1" aria-labelledby="editEstablishmentModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editEstablishmentModalLabel">Editar Establecimiento</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="editEstablishmentForm">
+                        <div class="modal-body">
+                            <input type="hidden" id="editEstablishmentId">
+                            
+                            <div class="mb-3">
+                                <label for="editEstablishmentName" class="form-label">Nombre del Establecimiento</label>
+                                <input type="text" class="form-control" id="editEstablishmentName" placeholder="Ingrese el nombre del establecimiento" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="editEstablishmentSectors" class="form-label">Número de Sectores</label>
+                                <input type="number" class="form-control" id="editEstablishmentSectors" placeholder="Número de sectores" min="1" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="editEstablishmentParkingSpots" class="form-label">Número de Cocheras</label>
+                                <input type="number" class="form-control" id="editEstablishmentParkingSpots" placeholder="Número de cocheras totales" min="1" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="editEstablishmentLocation" class="form-label">Ubicación Geográfica</label>
+                                <input type="text" class="form-control" id="editEstablishmentLocation" placeholder="Ubicación del establecimiento" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../static/js/establecimiento.js"></script>
+</body>
+</html>
