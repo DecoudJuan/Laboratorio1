@@ -187,7 +187,9 @@ def chat():
     'id': m.id,        
     'usuario': m.usuario,
     'contenido': m.contenido,
-    'fecha_creacion': m.fecha_creacion.replace(tzinfo=utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if m.fecha_creacion else None
+    'fecha_creacion': m.fecha_creacion.replace(tzinfo=utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if m.fecha_creacion else None,
+    'thumpsUp': m.thumpsUp,
+    'thumpsDown': m.thumpsDown
 } for m in mensajes]
 
         return jsonify({'success': True, 'mensajes': mensajes_json}), 200
@@ -208,7 +210,9 @@ def chat():
             'id': m.id,
             'usuario': m.usuario,
             'contenido': m.contenido,
-            'fecha_creacion': m.fecha_creacion.isoformat() if m.fecha_creacion else None
+            'fecha_creacion': m.fecha_creacion.isoformat() if m.fecha_creacion else None,
+            'thumpsUp': m.thumpsUp,
+            'thumpsDown': m.thumpsDown
         } for m in mensajes]
     }), 200
 
