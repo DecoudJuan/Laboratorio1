@@ -70,20 +70,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Función para manejar reacciones a mensajes
-    // Función para manejar reacciones a mensajes
 async function reactToMessage(id, reaction) {
     if (!id) {
         console.error("Error: ID de mensaje indefinido");
         showNotification("No se pudo procesar la reacción", "error");
         return;
     }
-    
+
     console.log("Reaccionando al mensaje con ID:", id, "Reacción:", reaction);
-    
+
     const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
     const email = currentUserData.email || 'anonimo';
-    
+
     try {
+        // Enviar la reacción al backend
         const data = await fetchWithErrorHandling(`${API_BASE_URL}/chat/reaction`, {
             method: 'POST',
             headers: {
@@ -92,18 +92,25 @@ async function reactToMessage(id, reaction) {
             },
             body: JSON.stringify({ id, reaction, usuario: email })
         });
-        
+
         if (data.success) {
+            // Si la reacción fue procesada correctamente, actualizar los contadores
             const messageElement = document.querySelector(`[data-message-id="${id}"]`);
             if (messageElement) {
+                // Actualizar los contadores en la interfaz
                 messageElement.querySelector('.like-count').textContent = data.thumpsUp;
                 messageElement.querySelector('.dislike-count').textContent = data.thumpsDown;
             }
+        } else {
+            // Si hubo un error en el backend
+            showNotification("Error al procesar la reacción", "error");
         }
     } catch (error) {
         console.error("Error al procesar reacción:", error);
+        showNotification("Hubo un problema al procesar la reacción", "error");
     }
 }
+
 
     // Enviar mensaje
     async function enviarMensaje(mensaje) {
