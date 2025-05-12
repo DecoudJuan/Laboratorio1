@@ -70,29 +70,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Función para manejar reacciones a mensajes
-    async function reactToMessage(id, reaction) {
-        console.log("Reaccionando al mensaje con ID:", id, "Reacción:", reaction);
-        const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        const email = currentUserData.email || 'anonimo';
-        
-        try {
-            const data = await fetchWithErrorHandling(`${API_BASE_URL}/chat/reaction`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                },
-                body: JSON.stringify({ id, reaction, usuario: email })
-            });
-            
-            if (data.success) {
-                document.querySelector(`[data-message-id="${id}"] .like-count`).textContent = data.thumpsUp;
-                document.querySelector(`[data-message-id="${id}"] .dislike-count`).textContent = data.thumpsDown;
-            }
-        } catch (error) {
-            console.error("Error al procesar reacción:", error);
-        }
+    // Función para manejar reacciones a mensajes
+async function reactToMessage(id, reaction) {
+    if (!id) {
+        console.error("Error: ID de mensaje indefinido");
+        showNotification("No se pudo procesar la reacción", "error");
+        return;
     }
+    
+    console.log("Reaccionando al mensaje con ID:", id, "Reacción:", reaction);
+    
+    const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const email = currentUserData.email || 'anonimo';
+    
+    try {
+        const data = await fetchWithErrorHandling(`${API_BASE_URL}/chat/reaction`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+            },
+            body: JSON.stringify({ id, reaction, usuario: email })
+        });
+        
+        if (data.success) {
+            const messageElement = document.querySelector(`[data-message-id="${id}"]`);
+            if (messageElement) {
+                messageElement.querySelector('.like-count').textContent = data.thumpsUp;
+                messageElement.querySelector('.dislike-count').textContent = data.thumpsDown;
+            }
+        }
+    } catch (error) {
+        console.error("Error al procesar reacción:", error);
+    }
+}
 
     // Enviar mensaje
     async function enviarMensaje(mensaje) {
@@ -135,58 +146,68 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Delegar eventos para los botones de reacción
+// Delegar eventos para los botones de reacción
     messagesContainer.addEventListener('click', function(event) {
         const button = event.target.closest('.thumb-btn');
         if (!button) return;
         
-        const messageDiv = button.closest('[data-message-id]');
-        console.log("Mensaje div encontrado:", messageDiv);  // 👀 Depuración
-        if (!messageDiv) return;
+        // Usar el atributo data-id del botón directamente
+        const messageId = button.dataset.id;
+        const action = button.dataset.action;
         
-        const messageId = messageDiv.dataset.messageId;
-        console.log("Message ID obtenido:", messageId);  // 👀 Verifica qué valor tiene antes de enviarlo
+        if (!messageId) {
+            console.error("No se encontró ID del mensaje");
+            return;
+        }
         
-        const isLike = button.querySelector('.bi-hand-thumbs-up') !== null;
-        
-        reactToMessage(messageId, isLike ? 'like' : 'dislike');
+        console.log(`Click en botón de reacción: ${action} para mensaje ${messageId}`);
+        reactToMessage(messageId, action);
     });
 
     // Mostrar mensajes
-    function updateMessages(mensajes) {
-        if (!messagesContainer) {
-            console.error("Contenedor de mensajes no encontrado en el DOM");
-            return;
-        }
+function updateMessages(mensajes) {
+    if (!messagesContainer) {
+        console.error("Contenedor de mensajes no encontrado en el DOM");
+        return;
+    }
 
-        messagesContainer.innerHTML = '';
+    messagesContainer.innerHTML = '';
 
-        if (!mensajes || mensajes.length === 0) {
-            messagesContainer.innerHTML = '<div class="text-center text-muted">No hay mensajes aún</div>';
-            return;
-        }
+    if (!mensajes || mensajes.length === 0) {
+        messagesContainer.innerHTML = '<div class="text-center text-muted">No hay mensajes aún</div>';
+        return;
+    }
 
-        mensajes.forEach(mensaje => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'mb-3 border-bottom pb-2';
-            console.log("Mensaje:", mensaje);
-            messageDiv.setAttribute('data-message-id', mensaje.id)
-            const fecha = new Date(mensaje.fecha_creacion);
-            const fechaFormateada = fecha.toLocaleString();
-            messageDiv.innerHTML = `
+    mensajes.forEach(mensaje => {
+        // Log para debug
+        console.log("Mensaje:", mensaje);
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'mb-3 border-bottom pb-2';
+        
+        // Establece el ID en el div del mensaje
+        messageDiv.setAttribute('data-message-id', mensaje.id);
+        
+        const fecha = new Date(mensaje.fecha_creacion);
+        const fechaFormateada = fecha.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+
+        // La diferencia clave: añadir data-id directamente a los botones
+        messageDiv.innerHTML = `
             <strong>${mensaje.usuario}</strong>: ${mensaje.contenido}
             <div class="text-muted" style="font-size: 0.8rem;">${fechaFormateada}</div>
             <div class="reaction-buttons">
-                <button class="thumb-btn">
+                <button class="thumb-btn" data-action="like" data-id="${mensaje.id}">
                     <i class="bi bi-hand-thumbs-up" style="color: #28a745"></i> <span class="like-count">${mensaje.thumpsUp || 0}</span>
                 </button>
-                <button class="thumb-btn">
+                <button class="thumb-btn" data-action="dislike" data-id="${mensaje.id}">
                     <i class="bi bi-hand-thumbs-down" style="color: #dc3545"></i> <span class="dislike-count">${mensaje.thumpsDown || 0}</span>
                 </button>
-            </div>`;
-        
-            messagesContainer.appendChild(messageDiv);
-        });
-    }
+            </div>
+        `;
+    
+        messagesContainer.appendChild(messageDiv);
+    });
+}
 
     // Añadir estilos CSS para las notificaciones
     const styleSheet = document.createElement("style");

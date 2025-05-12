@@ -11,6 +11,8 @@ from werkzeug.security import check_password_hash
 
 # MODULOS PARA BASE DE DATOS
 from sqlalchemy import text
+from pytz import timezone, utc
+from datetime import datetime
 
 
 # MAILpip
@@ -179,11 +181,15 @@ def chat():
     if request.method == 'GET':
         # Obtener los mensajes
         mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
+        argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+
         mensajes_json = [{
-        'usuario': m.usuario,
-        'contenido': m.contenido,
-        'fecha_creacion': m.fecha_creacion.isoformat() if m.fecha_creacion else None
-        } for m in mensajes]
+    'id': m.id,        
+    'usuario': m.usuario,
+    'contenido': m.contenido,
+    'fecha_creacion': m.fecha_creacion.replace(tzinfo=utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if m.fecha_creacion else None
+} for m in mensajes]
+
         return jsonify({'success': True, 'mensajes': mensajes_json}), 200
     
     elif request.method == 'POST':
@@ -199,6 +205,7 @@ def chat():
         return jsonify({
         'success': True,
         'mensajes': [{
+            'id': m.id,
             'usuario': m.usuario,
             'contenido': m.contenido,
             'fecha_creacion': m.fecha_creacion.isoformat() if m.fecha_creacion else None
