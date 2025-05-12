@@ -30,11 +30,16 @@
         }
 
         .general-container {
+        position: relative;
+        z-index: 1;
+        padding: 20px;
+        height: 100%;
+        overflow-y: auto; /* Habilita el scroll si hay overflow */
+        }
 
-            position: relative;
-            z-index: 1;
-            padding: 20px;
-            top: 50%
+        #messages-container {
+            max-height: 400px; /* Ajusta según el diseño */
+            overflow-y: auto;
         }
 
         .back-button {

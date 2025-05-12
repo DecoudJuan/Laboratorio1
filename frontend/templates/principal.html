@@ -11,7 +11,22 @@
     <!-- Custom CSS -->
     <link href="../static/css/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-
+<style>
+    #notificaciones-container {
+        position: absolute;
+        top: 50px;
+        right: 20px;
+        width: 250px;
+        background: white;
+        border: 1px solid #ccc;
+        padding: 10px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        display: none; /* Oculto por defecto */
+    }
+    .hidden {
+        display: none;
+    }
+</style>    
 </head>
 <body>
     
@@ -20,13 +35,13 @@
         <div class="dark-section"></div>
         <div class="green-section"></div>
         <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
-        <i class="bi bi-bell-fill" style="
-    position: absolute;
-    top: 5px;
-    right: 50px;
-    font-size: 1.8rem;
-    color: black;
-"></i>
+        <button id="notificaciones">
+            <i class="bi bi-bell-fill"></i>
+        </button>
+    <div id="notificaciones-container" class="hidden">
+        <!-- Aquí se agregarán los mensajes -->
+    </div>
+
 
 
     </div>
@@ -80,23 +95,6 @@
         </div>
     </div>
 
-    <div class="modal fade" id="emailModal" tabindex="-1" aria-labelledby="emailModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="emailModalLabel">Ingresa tu correo electrónico</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="email" id="userEmail" class="form-control" placeholder="Correo electrónico" required>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" id="submitEmailBtn">Iniciar Chat</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="../static/js/principal.js"></script>
     <script src="../static/js/generalscripts.js"></script>
