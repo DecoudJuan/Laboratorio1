@@ -151,8 +151,7 @@ async function reactToMessage(id, reaction) {
             console.error("Error al cargar los mensajes:", error);
         }
     }
-
-    // Delegar eventos para los botones de reacción
+    
 // Delegar eventos para los botones de reacción
     messagesContainer.addEventListener('click', function(event) {
         const button = event.target.closest('.thumb-btn');

@@ -3,8 +3,7 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, render
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdmin, SectorEstablishment, EstablishmentAdmin, Establishment, Sectors
-
+from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdmin, SectorEstablishment, Reports
 # MODULOS PARA LOGIN
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from werkzeug.security import check_password_hash   
@@ -2622,6 +2621,39 @@ def update_reaction():
 
     db.session.commit()
     return jsonify({"success": True, "thumpsUp": mensaje.thumpsUp, "thumpsDown": mensaje.thumpsDown}), 200
+
+@app.route('/api/report', methods=['POST'])
+def reportar():
+    print("➡️ Entró a /api/report")  # Marca que se llamó la ruta
+
+    try:
+        data = request.get_json()
+        print("📦 Datos recibidos:", data)
+
+        idUser = data.get('idUser')
+        sector = data.get('sector')
+        content = data.get('content')
+
+        if not idUser or not sector or not content:
+            print("❌ Faltan datos en el reporte")
+            return jsonify({"success": False, "message": "Datos incompletos"}), 400
+
+        # Simulación de guardado (sólo si tenés un modelo o DB configurada)
+        # Aquí debería ir la lógica para guardar el reporte...
+        
+        nuevo_reporte = Reports(idUser=idUser, sector=sector, content=content)
+        db.session.add(nuevo_reporte)
+        db.session.commit()
+
+        print(f"✅ Guardando reporte: Usuario {idUser}, Sector {sector}, Contenido: {content}")
+
+        return jsonify({"success": True, "message": "Reporte guardado"})
+    
+    except Exception as e:
+        print("🔥 Error en /api/report:", e)
+        return jsonify({"success": False, "message": "Error interno"}), 500
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
