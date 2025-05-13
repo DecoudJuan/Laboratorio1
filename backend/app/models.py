@@ -135,3 +135,4 @@ class Reports(db.Model): #cuidado que no quede dentro de la clase UsuarioReaccio
     idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
     sector = db.Column(db.String)
     content = db.Column(db.Text)
+    solucionado = db.Column(db.Boolean, default=False)

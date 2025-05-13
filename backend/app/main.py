@@ -2622,36 +2622,46 @@ def update_reaction():
     db.session.commit()
     return jsonify({"success": True, "thumpsUp": mensaje.thumpsUp, "thumpsDown": mensaje.thumpsDown}), 200
 
-@app.route('/api/report', methods=['POST'])
-def reportar():
-    print("➡️ Entró a /api/report")  # Marca que se llamó la ruta
+@app.route('/api/report', methods=['GET', 'POST'])
+def manejar_reportes():
+    if request.method == 'POST':
+        # Lógica para crear un nuevo reporte
+        try:
+            data = request.get_json()
+            idUser = data.get('idUser')
+            sector = data.get('sector')
+            content = data.get('content')
 
-    try:
-        data = request.get_json()
-        print("📦 Datos recibidos:", data)
+            if not idUser or not sector or not content:
+                return jsonify({"success": False, "message": "Datos incompletos"}), 400
 
-        idUser = data.get('idUser')
-        sector = data.get('sector')
-        content = data.get('content')
+            nuevo_reporte = Reports(idUser=idUser, sector=sector, content=content)
+            db.session.add(nuevo_reporte)
+            db.session.commit()
 
-        if not idUser or not sector or not content:
-            print("❌ Faltan datos en el reporte")
-            return jsonify({"success": False, "message": "Datos incompletos"}), 400
-
-        # Simulación de guardado (sólo si tenés un modelo o DB configurada)
-        # Aquí debería ir la lógica para guardar el reporte...
+            return jsonify({"success": True, "message": "Reporte guardado"})
         
-        nuevo_reporte = Reports(idUser=idUser, sector=sector, content=content)
-        db.session.add(nuevo_reporte)
-        db.session.commit()
+        except Exception as e:
+            print("🔥 Error en POST /api/report:", e)
+            return jsonify({"success": False, "message": "Error interno"}), 500
 
-        print(f"✅ Guardando reporte: Usuario {idUser}, Sector {sector}, Contenido: {content}")
+    elif request.method == 'GET':
+        # Lógica para obtener todos los reportes
+        try:
+            reportes = Reports.query.all()
+            lista_reportes = [{
+                'idReport': r.idReport,
+                'idUser': r.idUser,
+                'sector': r.sector,
+                'content': r.content,
+                'solucionado': r.solucionado
+            } for r in reportes]
 
-        return jsonify({"success": True, "message": "Reporte guardado"})
-    
-    except Exception as e:
-        print("🔥 Error en /api/report:", e)
-        return jsonify({"success": False, "message": "Error interno"}), 500
+            return jsonify({"success": True, "reportes": lista_reportes})
+        
+        except Exception as e:
+            print("🔥 Error en GET /api/report:", e)
+            return jsonify({"success": False, "message": "Error al obtener reportes"}), 500
 
 
 
