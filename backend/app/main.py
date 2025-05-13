@@ -2709,7 +2709,24 @@ def manejar_reportes():
         except Exception as e:
             print("🔥 Error en GET /api/report:", e)
             return jsonify({"success": False, "message": "Error al obtener reportes"}), 500
+@app.route('/api/report/<int:idReport>/solucionar', methods=['POST'])
+def marcar_como_solucionado(idReport):
+    try:
+        # Buscar el reporte por su ID
+        reporte = Reports.query.get(idReport)
+        
+        if not reporte:
+            return jsonify({"success": False, "message": "Reporte no encontrado"}), 404
 
+        # Marcar el reporte como solucionado
+        reporte.solucionado = True
+        db.session.commit()
+
+        return jsonify({"success": True, "message": "Reporte marcado como solucionado"})
+    
+    except Exception as e:
+        print("🔥 Error al marcar como solucionado:", e)
+        return jsonify({"success": False, "message": "Error interno"}), 500
 
 
 if __name__ == '__main__':

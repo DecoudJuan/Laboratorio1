@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     const reportesContainer = document.getElementById('reportes-container');
-    const API_BASE_URL = 'http://localhost:5000/api';
+    const API_BASE_URL = 'http://localhost:5000/api'; // Ruta base de la API
 
     async function cargarReportes() {
         try {
@@ -20,28 +20,64 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function mostrarReportes(reportes) {
         reportesContainer.innerHTML = '';
-
-        if (reportes.length === 0) {
-            reportesContainer.innerHTML = '<p>No hay reportes aún.</p>';
+    
+        const reportesNoSolucionados = reportes.filter(r => !r.solucionado);
+    
+        if (reportesNoSolucionados.length === 0) {
+            reportesContainer.innerHTML = '<p>No hay reportes pendientes.</p>';
             return;
         }
-
-        reportes.forEach(reporte => {
+    
+        reportesNoSolucionados.forEach(reporte => {
             const div = document.createElement('div');
             div.className = 'card mb-2';
-            div.innerHTML = `
+            div.setAttribute('data-id', reporte.idReport); // para facilitar la eliminación
+    
+            div.innerHTML = ` 
                 <div class="card-body">
-                    <h5 class="card-title">Sector: ${reporte.sector}</h5>
-                    <p class="card-text"><strong>Usuario ID:</strong> ${reporte.idUser}</p>
-                    <p class="card-text">${reporte.content}</p>
-                    <p class="card-text"><small class="text-muted">¿Solucionado?: ${reporte.solucionado ? 'Sí' : 'No'}</small></p>
-                </div>
+                <h5 class="card-title">Sector: ${reporte.sector}</h5>
+                <!-- <p class="card-text"><strong>Usuario ID:</strong> ${reporte.idUser}</p> -->
+                <p class="card-text">${reporte.content}</p>
+                <button class="btn btn-success btn-sm marcar-solucionado-btn">✅ Marcar como solucionado</button>
+            </div>
             `;
+    
             reportesContainer.appendChild(div);
+        });
+    
+        // Delegar evento a los botones de "Marcar como solucionado"
+        document.querySelectorAll('.marcar-solucionado-btn').forEach(button => {
+            button.addEventListener('click', async function () {
+                const card = this.closest('.card');
+                const idReport = card.getAttribute('data-id');
+    
+                try {
+                    const response = await fetch(`${API_BASE_URL}/report/${idReport}/solucionar`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+    
+                    const result = await response.json();
+    
+                    if (result.success) {
+                        card.remove(); // Eliminar del DOM si se marca como solucionado
+                        alert(result.message);
+                    } else {
+                        alert("Error al marcar como solucionado.");
+                    }
+    
+                } catch (error) {
+                    console.error("Error al marcar como solucionado:", error);
+                    alert("Error de conexión.");
+                }
+            });
         });
     }
 
     cargarReportes();
+    
 });
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
