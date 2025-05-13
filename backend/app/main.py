@@ -3,8 +3,7 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, render
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdmin, SectorEstablishment, EstablishmentAdmin, Establishment, Sectors
-
+from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdmin, SectorEstablishment, Reports
 # MODULOS PARA LOGIN
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from werkzeug.security import check_password_hash   
@@ -2669,6 +2668,49 @@ def update_reaction():
 
     db.session.commit()
     return jsonify({"success": True, "thumpsUp": mensaje.thumpsUp, "thumpsDown": mensaje.thumpsDown}), 200
+
+@app.route('/api/report', methods=['GET', 'POST'])
+def manejar_reportes():
+    if request.method == 'POST':
+        # Lógica para crear un nuevo reporte
+        try:
+            data = request.get_json()
+            idUser = data.get('idUser')
+            sector = data.get('sector')
+            content = data.get('content')
+
+            if not idUser or not sector or not content:
+                return jsonify({"success": False, "message": "Datos incompletos"}), 400
+
+            nuevo_reporte = Reports(idUser=idUser, sector=sector, content=content)
+            db.session.add(nuevo_reporte)
+            db.session.commit()
+
+            return jsonify({"success": True, "message": "Reporte guardado"})
+        
+        except Exception as e:
+            print("🔥 Error en POST /api/report:", e)
+            return jsonify({"success": False, "message": "Error interno"}), 500
+
+    elif request.method == 'GET':
+        # Lógica para obtener todos los reportes
+        try:
+            reportes = Reports.query.all()
+            lista_reportes = [{
+                'idReport': r.idReport,
+                'idUser': r.idUser,
+                'sector': r.sector,
+                'content': r.content,
+                'solucionado': r.solucionado
+            } for r in reportes]
+
+            return jsonify({"success": True, "reportes": lista_reportes})
+        
+        except Exception as e:
+            print("🔥 Error en GET /api/report:", e)
+            return jsonify({"success": False, "message": "Error al obtener reportes"}), 500
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

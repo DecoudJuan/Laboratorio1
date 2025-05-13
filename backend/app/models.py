@@ -16,18 +16,6 @@ class User(db.Model):
     userRole = db.Column(db.Text, nullable=False)
     
     messages = db.relationship('Message', backref='user', cascade='all, delete-orphan')
-    reported = db.relationship('Reported', foreign_keys='Reported.senderId', backref='reporting_user', cascade='all, delete-orphan')
-    receivedReports = db.relationship('Reported', foreign_keys='Reported.reportedUserId', backref='reported_user', cascade='all, delete-orphan')
-    
-
-class Reported(db.Model):
-    __tablename__ = 'reported'
-
-    idReport = db.Column(db.Integer, primary_key=True)
-    senderId = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
-    reportedUserId = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
-    reason = db.Column(db.Text, nullable=False)
-    content = db.Column(db.Text)
 
 class car_brands(db.Model):
     __tablename__ = 'car_brands'
@@ -84,7 +72,7 @@ class Sectors(db.Model):
 
     idSector = db.Column(db.Integer, primary_key=True)
     idEstablishment = db.Column(db.Integer, db.ForeignKey('establishment.idEstablishment', ondelete='CASCADE'))
-    nameSec = db.Column(db.Text, nullable=False)
+    nameSec = db.Column(db.Text, nullable=False, unique=True)
     openingHour = db.Column(db.Time)
     closingHour = db.Column(db.Time)
     availableParkingSpots = db.Column(db.Integer, nullable=False)
@@ -139,3 +127,12 @@ class UsuarioReaccion(db.Model):
     __table_args__ = (
         db.UniqueConstraint('usuario', 'mensaje_id', name='usuario_mensaje_unique'),
     )
+
+class Reports(db.Model): #cuidado que no quede dentro de la clase UsuarioReaccion
+    __tablename__ = 'Reports'
+
+    idReport = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
+    sector = db.Column(db.String)
+    content = db.Column(db.Text)
+    solucionado = db.Column(db.Boolean, default=False)
