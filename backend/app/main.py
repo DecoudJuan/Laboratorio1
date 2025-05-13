@@ -41,7 +41,7 @@ def create_app(enviroment):
     CORS(app, resources={r"/api/*": {
         "origins": "*",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "Pragma", "Expires", "x-iduser"],
+        "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "Pragma", "Expires", "x-iduser", "X-User-Email"],
         "supports_credentials": True
     }})
 
@@ -132,6 +132,7 @@ def send_recovery_email():
         return jsonify({'success': False, 'message': 'Ocurrió un error al enviar el email. Por favor intenta más tarde.'}), 500
     
 # NUEVA RUTA PARA LOGIN
+
 @app.route('/api/login', methods=['POST'])
 def login():
 
@@ -174,48 +175,6 @@ def login():
         print(f'Error en login: {str(e)}')
         return jsonify({'success': False, 'message': 'Error en el servidor'}), 500
     
-
-@app.route('/api/chat', methods=['GET', 'POST'])
-def chat():
-    # Verificar si el usuario está autenticado (esto se omite)
-    if request.method == 'GET':
-        # Obtener los mensajes
-        mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
-        argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
-
-        mensajes_json = [{
-    'id': m.id,        
-    'usuario': m.usuario,
-    'contenido': m.contenido,
-    'fecha_creacion': m.fecha_creacion.replace(tzinfo=utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if m.fecha_creacion else None,
-    'thumpsUp': m.thumpsUp,
-    'thumpsDown': m.thumpsDown
-} for m in mensajes]
-
-        return jsonify({'success': True, 'mensajes': mensajes_json}), 200
-    
-    elif request.method == 'POST':
-        data = request.get_json()
-        contenido = data.get('mensaje')
-        usuario = data.get('usuario') or "anonimo"
-        if not contenido:
-            return jsonify({'success': False, 'message': 'Mensaje vacío'}), 400
-        nuevo_mensaje = Mensaje(usuario=usuario, contenido=contenido)
-        db.session.add(nuevo_mensaje)
-        db.session.commit()
-        mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
-        return jsonify({
-        'success': True,
-        'mensajes': [{
-            'id': m.id,
-            'usuario': m.usuario,
-            'contenido': m.contenido,
-            'fecha_creacion': m.fecha_creacion.isoformat() if m.fecha_creacion else None,
-            'thumpsUp': m.thumpsUp,
-            'thumpsDown': m.thumpsDown
-        } for m in mensajes]
-    }), 200
-
 @app.route('/api/users', methods=['GET'])
 @jwt_required()
 def get_all_users():
@@ -2571,16 +2530,104 @@ def get_establishments():
             'message': 'Error al obtener establecimientos',
             'error': str(e)
         }), 500
+
+# CHAT 
+
+@app.route('/api/chat', methods=['GET', 'POST'])
+@jwt_required()
+def chat():
+    # Obtener el ID del usuario actual del token JWT
+    usuario_actual = get_jwt_identity()
+    usuario_actual_id = usuario_actual.get('id') if isinstance(usuario_actual, dict) else usuario_actual
     
+    if request.method == 'GET':
+        try:
+            # Obtener el email del usuario desde los headers o parámetros de la solicitud
+            usuario_email = request.args.get('email') or request.headers.get('X-User-Email')
+            
+            # Si no se proporciona el email en la solicitud, intentar obtenerlo del frontend
+            if not usuario_email:
+                # Fallback al ID del usuario si no podemos obtener el email
+                usuario_email = str(usuario_actual_id)
+            
+            # Obtener los mensajes que NO sean del usuario actual (por email)
+            mensajes = Mensaje.query.filter(Mensaje.usuario != usuario_email).order_by(Mensaje.fecha_creacion.asc()).all()
+            
+            argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+            
+            mensajes_json = []
+            for m in mensajes:
+                fecha = m.fecha_creacion
+                fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
+                
+                mensajes_json.append({
+                    'id': m.id,
+                    'usuario': m.usuario,
+                    'contenido': m.contenido,
+                    'fecha_creacion': fecha_formateada,
+                    'thumpsUp': m.thumpsUp,
+                    'thumpsDown': m.thumpsDown
+                })
+            
+            return jsonify({'success': True, 'mensajes': mensajes_json}), 200
+        
+        except Exception as e:
+            print(f"Error al obtener mensajes: {str(e)}")
+            return jsonify({'success': False, 'message': f'Error al obtener mensajes: {str(e)}'}), 500
+    
+    elif request.method == 'POST':
+        try:
+            data = request.get_json()
+            contenido = data.get('mensaje')
+            email_usuario = data.get('usuario', '')  # Obtener el email enviado desde el frontend
+            
+            if not contenido:
+                return jsonify({'success': False, 'message': 'Mensaje vacío'}), 400
+            
+            # Crear y guardar nuevo mensaje usando el email del usuario
+            nuevo_mensaje = Mensaje(
+                usuario=email_usuario,  # Usar el email en lugar del ID
+                contenido=contenido
+            )
+            
+            db.session.add(nuevo_mensaje)
+            db.session.commit()
+            
+            # Obtener todos los mensajes que NO son del usuario actual (comparando por email)
+            mensajes = Mensaje.query.filter(Mensaje.usuario != email_usuario).order_by(Mensaje.fecha_creacion.asc()).all()
+            
+            argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+            
+            mensajes_json = []
+            for m in mensajes:
+                fecha = m.fecha_creacion
+                fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
+                
+                mensajes_json.append({
+                    'id': m.id,
+                    'usuario': m.usuario,
+                    'contenido': m.contenido,
+                    'fecha_creacion': fecha_formateada,
+                    'thumpsUp': m.thumpsUp,
+                    'thumpsDown': m.thumpsDown
+                })
+            
+            return jsonify({'success': True, 'mensajes': mensajes_json}), 200
+        
+        except Exception as e:
+            # En caso de error, hacer rollback
+            db.session.rollback()
+            print(f"Error al enviar mensaje: {str(e)}")
+            return jsonify({'success': False, 'message': f'Error al enviar mensaje: {str(e)}'}), 500        
+
 # Función auxiliar para verificar si el usuario ya reaccionó
 def usuario_reacciono_previamente(usuario, mensaje_id):
     return UsuarioReaccion.query.filter_by(usuario=usuario, mensaje_id=mensaje_id).first()
 
 # Ruta para manejar reacciones de usuario
 @app.route('/api/chat/reaction', methods=['POST'])
-def update_reaction():
+def update_reaction():      
     data = request.json
-    print(  "HOLA MUNDO")
     print(data)
     message_id = request.json.get('id')
     print(message_id)

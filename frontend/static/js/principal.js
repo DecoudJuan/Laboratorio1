@@ -38,13 +38,12 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
     window.location.href = 'index.html';
 });
 
-// Función que verifica si hay mensajes nuevos y actualiza el estado del punto rojo
 function actualizarCampanita() {
-    const currentUser = localStorage.getItem('currentUser');
-    const ultimaFechaLeida = localStorage.getItem(`ultimaFechaMensaje_${currentUser}`);
-    const mensajesLeidos = JSON.parse(localStorage.getItem(`mensajesLeidos_${currentUser}`)) || [];
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const currentUserEmail = currentUser.email;
+    const ultimaFechaLeida = localStorage.getItem(`ultimaFechaMensaje_${currentUserEmail}`);
+    const mensajesLeidos = JSON.parse(localStorage.getItem(`mensajesLeidos_${currentUserEmail}`)) || [];
 
-    // Hacer una solicitud para obtener los mensajes
     fetch("http://localhost:5000/api/chat", {
         method: 'GET',
         headers: {
@@ -55,47 +54,39 @@ function actualizarCampanita() {
     .then(data => {
         const mensajes = data.mensajes || [];
 
-        // Filtrar los mensajes nuevos que no sean del usuario logueado y que sean posteriores a la última fecha leída
         const mensajesNuevos = mensajes.filter(msg => {
             const fechaMsg = new Date(msg.fecha_creacion);
             const esNuevo = !ultimaFechaLeida || fechaMsg > new Date(ultimaFechaLeida);
-            const noEsDelUsuario = msg.usuario !== currentUser;
-            const noEsLeido = !mensajesLeidos.includes(msg.id); // Asegurarnos de que no esté marcado como leído
+            const noEsDelUsuario = msg.usuario !== currentUserEmail;
+            const noEsLeido = !mensajesLeidos.includes(msg.id);
             return esNuevo && noEsDelUsuario && noEsLeido;
         });
 
-        // Si hay mensajes nuevos, mostrar el puntito rojo
         const campanita = document.getElementById('notificaciones');
-        const puntoRojo = document.getElementById('punto-rojo');
-
         if (mensajesNuevos.length > 0) {
-            // Si no existe el puntito rojo, lo creamos
+            campanita.style.color = 'red';
+            let puntoRojo = document.getElementById('punto-rojo');
             if (!puntoRojo) {
-                const puntoRojo = document.createElement('div');
+                puntoRojo = document.createElement('div');
                 puntoRojo.id = 'punto-rojo';
                 puntoRojo.style.position = 'absolute';
-                puntoRojo.style.top = '0';
-                puntoRojo.style.right = '0';
+                puntoRojo.style.top = '-5px';
+                puntoRojo.style.right = '-5px';
                 puntoRojo.style.width = '10px';
                 puntoRojo.style.height = '10px';
-                puntoRojo.style.borderRadius = '50%';
                 puntoRojo.style.backgroundColor = 'red';
-                campanita.style.position = 'relative';
+                puntoRojo.style.borderRadius = '50%';
                 campanita.appendChild(puntoRojo);
-            } else {
-                // Si ya existe el puntito, asegurarnos de que esté visible
-                puntoRojo.style.display = 'block';
             }
         } else {
-            // Si no hay mensajes nuevos, ocultamos el puntito rojo
+            campanita.style.color = '';
+            let puntoRojo = document.getElementById('punto-rojo');
             if (puntoRojo) {
-                puntoRojo.style.display = 'none';
+                puntoRojo.remove();
             }
         }
     })
-    .catch(error => {
-        console.error('Error al cargar mensajes:', error);
-    });
+    .catch(error => console.error('Error al cargar mensajes:', error));
 }
 
 // Ejecutar la función de actualización cada 10 segundos (puedes ajustar el intervalo)
@@ -163,16 +154,17 @@ document.getElementById('notificaciones').addEventListener('click', function () 
         borderRadius: '4px'
     });
 
-    const currentUser = localStorage.getItem('currentUser');
-    const ultimaFechaLeida = localStorage.getItem(`ultimaFechaMensaje_${currentUser}`);
-    const mensajesLeidos = JSON.parse(localStorage.getItem(`mensajesLeidos_${currentUser}`)) || [];
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const currentUserEmail = currentUser.email;
+    const ultimaFechaLeida = localStorage.getItem(`ultimaFechaMensaje_${currentUserEmail}`);
+    const mensajesLeidos = JSON.parse(localStorage.getItem(`mensajesLeidos_${currentUserEmail}`)) || [];
 
     tildeBtn.onclick = () => {
         const ahora = new Date().toISOString();
-        localStorage.setItem(`ultimaFechaMensaje_${currentUser}`, ahora);
+        localStorage.setItem(`ultimaFechaMensaje_${currentUserEmail}`, ahora);
         container.innerHTML = '<div style="text-align: center; padding: 10px;">No hay nuevos mensajes.</div>';
 
-        localStorage.setItem(`mensajesLeidos_${currentUser}`, JSON.stringify([]));
+        localStorage.setItem(`mensajesLeidos_${currentUserEmail}`, JSON.stringify([]));
 
         // Ocultar el punto rojo
         const puntoRojo = document.getElementById('punto-rojo');
@@ -202,7 +194,7 @@ document.getElementById('notificaciones').addEventListener('click', function () 
         const mensajesNuevos = mensajes.filter(msg => {
             const fechaMsg = new Date(msg.fecha_creacion);
             const esNuevo = !ultimaFechaLeida || fechaMsg > new Date(ultimaFechaLeida);
-            const noEsDelUsuario = msg.usuario !== currentUser;
+            const noEsDelUsuario = msg.usuario !== currentUserEmail;
             const noEsLeido = !mensajesLeidos.includes(msg.id);
             return esNuevo && noEsDelUsuario && noEsLeido;
         });
@@ -239,10 +231,10 @@ document.getElementById('notificaciones').addEventListener('click', function () 
         tildeBtn.onclick = () => {
             const leidos = mensajesNuevos.map(msg => msg.id);
             const mensajesActualizados = [...mensajesLeidos, ...leidos];
-            localStorage.setItem(`mensajesLeidos_${currentUser}`, JSON.stringify(mensajesActualizados));
+            localStorage.setItem(`mensajesLeidos_${currentUserEmail}`, JSON.stringify(mensajesActualizados));
 
             const ahora = new Date().toISOString();
-            localStorage.setItem(`ultimaFechaMensaje_${currentUser}`, ahora);
+            localStorage.setItem(`ultimaFechaMensaje_${currentUserEmail}`, ahora);
 
             container.innerHTML = '<div style="text-align: center; padding: 10px;">No hay nuevos mensajes.</div>';
 
