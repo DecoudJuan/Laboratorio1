@@ -2728,6 +2728,85 @@ def marcar_como_solucionado(idReport):
         print("🔥 Error al marcar como solucionado:", e)
         return jsonify({"success": False, "message": "Error interno"}), 500
 
+@app.route('/api/vehiculos', methods=['GET'])
+def obtener_vehiculos():
+    try:
+        vehiculos = Vehicle.query.all()
+        print("🔍 Vehículos obtenidos desde la base de datos:", vehiculos)  # Debugging
+        
+        vehicles_json = [{"idVehicle": v.idVehicle} for v in vehiculos]
+        print("✅ Respuesta JSON:", vehicles_json)  # Debugging
+        
+        return jsonify({"success": True, "vehicles": vehicles_json}), 200
+    except Exception as e:
+        print("🔥 Error al obtener vehículos:", e)  # Debugging
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/complaint', methods=['GET', 'POST'])
+def manejar_quejas():
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+            idSuperUser = data.get('idSuperUser')  # Coordinado con JS
+            idVehiculo = data.get('idVehiculo')    # Coordinado con JS
+            sector = data.get('sector')
+            content = data.get('content')
+
+            if not idSuperUser or not idVehiculo or not sector or not content:
+                return jsonify({"success": False, "message": "Datos incompletos"}), 400
+
+            nueva_queja = Complaints(
+                idSuperUser=idSuperUser,
+                idVehiculo=idVehiculo,
+                sector=sector,
+                content=content
+            )
+            db.session.add(nueva_queja)
+            db.session.commit()
+
+            return jsonify({"success": True, "message": "Queja guardada"}), 200
+
+        except Exception as e:
+            print("🔥 Error en POST /api/complaint:", e)
+            return jsonify({"success": False, "message": "Error interno"}), 500
+
+    elif request.method == 'GET':
+        try:
+            quejas = Complaints.query.all()
+            lista_quejas = [{
+                'idComplaint': q.idComplaint,
+                'idSuperUser': q.idSuperUser,
+                'idVehiculo': q.idVehiculo,
+                'sector': q.sector,
+                'content': q.content
+            } for q in quejas]
+
+            return jsonify({"success": True, "complaints": lista_quejas}), 200
+
+        except Exception as e:
+            print("🔥 Error en GET /api/complaint:", e)
+            return jsonify({"success": False, "message": "Error al obtener quejas"}), 500
+
+@app.route('/api/propietario/<string:id_vehicle>', methods=['GET'])
+def obtener_propietario(id_vehicle):
+    try:
+        print(f"🔍 Buscando propietario para el vehículo: {id_vehicle}")
+        
+        # Buscar el dueño del vehículo
+        propietario = db.session.query(User.phone).join(Owns, User.idUser == Owns.idUser) \
+            .filter(Owns.idVehicle == id_vehicle).first()
+
+        if not propietario:
+            return jsonify({"success": False, "message": "Propietario no encontrado"}), 404
+
+        print(f"✅ Celular encontrado: {propietario.phone}")
+        
+        return jsonify({"success": True, "phone": propietario.phone}), 200
+    
+    except Exception as e:
+        print("🔥 Error al obtener propietario:", e)
+        return jsonify({"success": False, "message": "Error interno"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -136,3 +136,13 @@ class Reports(db.Model): #cuidado que no quede dentro de la clase UsuarioReaccio
     sector = db.Column(db.String)
     content = db.Column(db.Text)
     solucionado = db.Column(db.Boolean, default=False)
+
+class Complaints(db.Model): 
+    __tablename__ = 'complaints'
+
+    idComplaint = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    idSuperUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
+    idVehiculo = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'))
+    sector = db.Column(db.String)
+    content = db.Column(db.Text)
+       

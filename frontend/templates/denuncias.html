@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cocheras</title>
+    <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+    <div class="top-bar">
+        <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Denunciar</h1>
+        <div class="dark-section"></div>
+        <div class="green-section"></div>
+        <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
+    </div>
+
+    <div class="main-content">
+        <div class="general-container">
+            <h2>Selección de Sector</h2>
+            <label for="selector-sector">Selección de Sector</label>
+            <select id="selector-sector" class="form-select">
+                <option value="" disabled selected>Seleccioná un sector</option>
+            </select>
+
+            <h2>Selección de Patente</h2>
+            <label for="selector-vehiculo">Selección de Patente</label> <!-- CORREGIDO id -->
+            <select id="selector-vehiculo" class="form-select"> <!-- CORREGIDO id -->
+                <option value="" disabled selected>Seleccioná una patente</option>
+            </select>
+
+            <h2>Descripción del problema</h2>
+            <div id="complaintContainer">
+                <form id="complaintForm" class="mb-4">
+                    <div class="mb-3">
+                        <textarea name="mensaje" class="form-control" rows="3" placeholder="Escribe tu mensaje..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="background-color: #2980b9; margin-left: 40%;">Enviar</button>
+                    <div class="flex-grow-1">
+                        <a href="contactarPatente.html" style="text-decoration: none; display: block;">
+                            <button type="button" class="button" style="background-color: #45a049;">Contactar al Usuario por la Patente</button>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/js/denuncias.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

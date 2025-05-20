@@ -58,7 +58,7 @@ function pedirContrasenaParking() {
     const contrasenaCorrecta = "superadmin123"; 
     const input = prompt("Ingrese la contraseña para acceder a Administración de Sectores:");
     if (input === contrasenaCorrecta) {
-        window.location.href = "establecimientos.html";
+        window.location.href = "funcionesSuperusuario.html";
     } else if (input !== null) {
         alert("Contraseña incorrecta.");
     }
