@@ -109,8 +109,8 @@ function displaySectors(sectors) {
     sectors.forEach(sector => {
         // Usar nameSec como nombre principal del sector
         const name = sector.nameSec || 'N/A';
-        
-        // Nombre del establecimiento
+
+// Nombre del establecimiento
         const establishmentName = sector.establishmentName || 'N/A';
         
         // Formatear las horas directamente desde openingHour y closingHour
@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const backBtn = document.getElementById('backBtn');
     if (backBtn) {
         backBtn.addEventListener('click', function() {
-            window.location.href = 'admin.html';
+            window.location.href = 'funcionesSuperusuario.html';
         });
     }
     

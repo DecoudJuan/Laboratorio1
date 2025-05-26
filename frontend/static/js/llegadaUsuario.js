@@ -199,8 +199,8 @@ function guardarLlegadaSalida() {
     const sector = sectorSelect.value;
     const cochera = parseInt(cocheraInput.value, 10);
     
-    // Obtener el ID del usuario actual (esto dependerá de cómo esté implementada la autenticación)
-    const userId = getUserId(); // Esta función debe obtener el ID del usuario actual
+    // Obtener el ID del usuario actual
+    const userId = getUserId();
 
     if (!llegadaSalida || !sector || isNaN(cochera) || !cocheraValida) {
         alert("Completá todas las opciones con valores válidos antes de guardar.");
@@ -213,6 +213,61 @@ function guardarLlegadaSalida() {
     }
 
     // Normalizar el nombre del sector (primera letra mayúscula, resto minúscula)
+    const sectorNormalizado = sector.charAt(0).toUpperCase() + sector.slice(1).toLowerCase();
+
+    // Si es una llegada, verificar primero si el usuario ya tiene una cochera ocupada
+    if (llegadaSalida === 'llegada') {
+        // Obtener el vehículo principal del usuario
+        fetch(`${API_BASE_URL}/api/user-primary-vehicle`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success || !data.has_primary) {
+                    alert("No tienes un vehículo principal registrado. Por favor, registra un vehículo primero.");
+                    return;
+                }
+
+                // Verificar si el vehículo ya está en alguna cochera
+                fetch(`${API_BASE_URL}/api/cocheras/${sectorNormalizado}`)
+                    .then(response => response.json())
+                    .then(sectorData => {
+                        if (sectorData.success) {
+                            // Buscar si alguna cochera está ocupada por el vehículo del usuario
+                            const cocheraOcupada = sectorData.cocheras.find(c => 
+                                c.ocupado && c.id_vehicle === data.vehicle.idVehicle
+                            );
+
+                            if (cocheraOcupada) {
+                                alert("Ya tienes una cochera ocupada. No puedes ocupar otra cochera.");
+                                return;
+                            }
+
+                            // Si no tiene cochera ocupada, continuar con el proceso normal
+                            procesarLlegadaSalida();
+                        } else {
+                            alert("Error al verificar el estado de las cocheras.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al verificar cocheras:', error);
+                        alert('Error al verificar el estado de las cocheras.');
+                    });
+            })
+            .catch(error => {
+                console.error('Error al obtener vehículo principal:', error);
+                alert('Error al verificar el vehículo principal.');
+            });
+    } else {
+        // Si es una salida, continuar con el proceso normal
+        procesarLlegadaSalida();
+    }
+}
+
+// Función auxiliar para procesar la llegada/salida
+function procesarLlegadaSalida() {
+    const llegadaSalida = llegadaSalidaSelect.value;
+    const sector = sectorSelect.value;
+    const cochera = parseInt(cocheraInput.value, 10);
+    const userId = getUserId();
     const sectorNormalizado = sector.charAt(0).toUpperCase() + sector.slice(1).toLowerCase();
 
     try {
@@ -248,7 +303,7 @@ function guardarLlegadaSalida() {
                 const formData = new FormData();
                 formData.append('numero', cochera);
                 formData.append('sector', sectorNormalizado);
-                formData.append('user_id', userId); // Añadir el ID del usuario
+                formData.append('user_id', userId);
                 
                 // Determinar el endpoint según la operación
                 const endpoint = llegadaSalida === 'llegada' ? 'marcar_llegada' : 'marcar_salida';

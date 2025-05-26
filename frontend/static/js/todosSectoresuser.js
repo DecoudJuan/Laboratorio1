@@ -12,17 +12,17 @@ function displaySectors(sectors) {
     
     sectors.forEach(sector => {
         const name = sector.nameSec || 'N/A';
+        const establishmentName = sector.establishmentName || 'N/A';
         const opening = sector.openingHour || 'No disponible';
         const closing = sector.closingHour || 'No disponible';
-        const totalSpots = sector.availableParkingSpots ?? 0;
         const freeSpots = sector.freeParkingSpots ?? 0;
         
         const row = document.createElement('tr');
         row.innerHTML = `
+            <td>${establishmentName}</td>
             <td>${name}</td>
             <td>${opening}</td>
             <td>${closing}</td>
-
             <td>${freeSpots}</td>
      
         `;

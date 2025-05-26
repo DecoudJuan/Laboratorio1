@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
     const reportesContainer = document.getElementById('reportes-container');
-    const API_BASE_URL = 'http://localhost:5000/api'; // Ruta base de la API
+    const API_BASE_URL = 'http://localhost:5000'; // Ruta base de la API
 
     async function cargarReportes() {
         try {
-            const response = await fetch(`${API_BASE_URL}/report`);
+            const response = await fetch(`${API_BASE_URL}/api/report`);
             const data = await response.json();
 
             if (data.success) {
