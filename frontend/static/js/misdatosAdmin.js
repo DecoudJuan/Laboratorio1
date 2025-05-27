@@ -246,3 +246,7 @@ function confirmarBorrado() {
         alert(`Error al borrar usuario: ${error.message || 'Error desconocido'}`);
     });
 }
+function goBackToAdmin() {
+    // Ir directamente a admin.html sin pasar por verificaciones
+    window.location.replace('admin.html');
+}
