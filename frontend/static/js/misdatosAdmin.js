@@ -8,7 +8,7 @@ function preventCaching() {
 // LLAMA A LA FUNCION
 preventCaching();
 
-// Verificación inmediata de autenticación (se ejecuta al cargar el script)
+// Verificación básica de autenticación (solo al cargar)
 function checkToken() {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
@@ -19,7 +19,7 @@ function checkToken() {
     // Si no hay token o usuario, redirigir al login
     if (!authToken || !currentUser) {
         window.location.replace('index.html');
-        return;
+        return false;
     }
     
     // Verificar si el usuario es administrador
@@ -28,46 +28,28 @@ function checkToken() {
         if (userData.userRole !== 'administrador') {
             alert('No tienes permisos de administrador');
             window.location.replace('index.html');
+            return false;
         }
     } catch (e) {
         console.error('Error al procesar datos de usuario:', e);
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
         window.location.replace('index.html');
+        return false;
     }
+    return true;
 }
 
-// Verificar autenticación cuando la página vuelve a estar activa
-window.addEventListener('pageshow', (event) => {
-    // Si la página se restaura desde el caché (botón atrás)
-    if (event.persisted) {
-        console.log('Página restaurada desde caché - verificando autenticación');
-        checkToken();
-    }
-});
-
-// También verificar cuando la página vuelve a estar visible
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        console.log('Página visible - verificando autenticación');
-        checkToken();
-    }
-});
-
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Obtener el token almacenado en localStorage
-    const token = localStorage.getItem('authToken');
-    
-    if (!token) {
-        // Si no hay token, redirigir a la página de login
-        window.location.href = 'index.html';
+    // Verificar autenticación solo al cargar la página
+    if (!checkToken()) {
         return;
     }
 
-    // Configurar botones
-   
+    // Obtener el token almacenado en localStorage
+    const token = localStorage.getItem('authToken');
 
+    // Configurar botón de logout
     document.getElementById('logoutBtn').addEventListener('click', function() {
         // Eliminar token y datos de usuario del localStorage
         localStorage.removeItem('authToken');
@@ -118,17 +100,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mostrar los datos básicos del token
     document.getElementById('nombre-completo').textContent = username || 'No disponible';
     document.getElementById('email').textContent = email || 'No disponible';
-    document.getElementById('telefono').textContent = data.phone || 'No disponible';
-    document.getElementById('parkings').textContent = 'No asignado';
+    document.getElementById('telefono').textContent = 'No disponible'; // Cambié data.phone por string fijo
     
     // Configurar lista de vehículos secundarios inicialmente vacía
     const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
-    vehiculosSecundariosElement.innerHTML = '';
-    
-    const li = document.createElement('li');
-    li.className = 'list-group-item';
-    li.textContent = 'No asignado';
-    vehiculosSecundariosElement.appendChild(li);
+    if (vehiculosSecundariosElement) {
+        vehiculosSecundariosElement.innerHTML = '';
+        
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = 'No asignado';
+        vehiculosSecundariosElement.appendChild(li);
+    }
     
     // Intentar obtener datos adicionales del servidor
     fetch(`http://localhost:5000/api/usuario/${username}`, {
@@ -148,23 +131,28 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(data => {
         if (data && data.success) {
             // Actualizar con datos más completos del servidor
-            document.getElementById('vehiculo-principal').textContent = data.vehiculo_principal || 'No asignado';
+            const vehiculoPrincipalElement = document.getElementById('vehiculo-principal');
+            if (vehiculoPrincipalElement) {
+                vehiculoPrincipalElement.textContent = data.vehiculo_principal || 'No asignado';
+            }
             
             // Actualizar vehículos secundarios
-            vehiculosSecundariosElement.innerHTML = '';
-            
-            if (data.vehiculos_secundarios && data.vehiculos_secundarios.length > 0) {
-                data.vehiculos_secundarios.forEach(vehiculo => {
+            if (vehiculosSecundariosElement) {
+                vehiculosSecundariosElement.innerHTML = '';
+                
+                if (data.vehiculos_secundarios && data.vehiculos_secundarios.length > 0) {
+                    data.vehiculos_secundarios.forEach(vehiculo => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item';
+                        li.textContent = vehiculo;
+                        vehiculosSecundariosElement.appendChild(li);
+                    });
+                } else {
                     const li = document.createElement('li');
                     li.className = 'list-group-item';
-                    li.textContent = vehiculo;
+                    li.textContent = 'No asignado';
                     vehiculosSecundariosElement.appendChild(li);
-                });
-            } else {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = 'No asignado';
-                vehiculosSecundariosElement.appendChild(li);
+                }
             }
         }
     })

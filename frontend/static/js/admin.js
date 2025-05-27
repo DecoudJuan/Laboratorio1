@@ -10,27 +10,47 @@ function preventCaching() {
     }
 }
 
-// LLAMA A LA FUNCION
-preventCaching();
+// Función para controlar el botón atrás
+function setupBackButton() {
+    // Reemplazar la página actual en el historial para que el botón atrás vaya a admin.html
+    if (document.referrer && !document.referrer.includes('admin.html')) {
+        window.history.replaceState(null, document.title, window.location.href);
+        window.history.pushState(null, document.title, window.location.href);
+    }
+    
+    // Escuchar el evento popstate (botón atrás)
+    window.addEventListener('popstate', function(event) {
+        // Redirigir a admin.html cuando se presione atrás
+        window.location.href = 'admin.html';
+    });
+}
 
-// Verificación inmediata de autenticación (se ejecuta al cargar el script)
+// LLAMA A LAS FUNCIONES
+preventCaching();
+setupBackButton();
+
+// Verificación simplificada de autenticación
 function checkToken() {
+    console.log('=== EJECUTANDO checkToken ===');
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
     
+    console.log('authToken:', authToken);
+    console.log('currentUser:', currentUser);
+    
     // Si no hay token o usuario, redirigir al login
     if (!authToken || !currentUser) {
+        console.log('No hay token o usuario - redirigiendo a index.html');
         window.location.replace('index.html');
         return false;
     }
     
-    // Verificar si el usuario es administrador
+    // Verificar que el usuario sea válido (sin verificar rol específico)
     try {
         const userData = JSON.parse(currentUser);
-        if (userData.userRole !== 'administrador') {
-            alert('No tienes permisos de administrador');
-            window.location.replace('index.html');
-            return false;
+        // Solo verificamos que el usuario tenga datos válidos
+        if (!userData || !userData.id) {
+            throw new Error("Datos de usuario inválidos");
         }
         return true;
     } catch (e) {
@@ -43,9 +63,7 @@ function checkToken() {
 }
 
 // Ejecutar verificación inmediatamente
-// Esto es crítico para evitar que se vea la página cuando se usa el botón atrás
 if (!checkToken()) {
-    // Si no pasa la verificación, no seguir ejecutando el script
     throw new Error("Verificación de autenticación fallida");
 }
 
@@ -63,12 +81,9 @@ function pedirContrasenaParking() {
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-        // Eliminar token y datos de usuario del localStorage
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
-        
-        // Redireccionar a la página de inicio de sesión
-        window.location.replace('index.html'); // replace elimina la entrada actual del historial
+        window.location.replace('index.html');
     });
 }
  
@@ -77,14 +92,13 @@ function getUserId() {
     if (currentUser) {
         try {
             const user = JSON.parse(currentUser);
-            return user.id; // Asumiendo que el ID del usuario está en el objeto
+            return user.id;
         } catch (error) {
             console.error('Error al parsear el usuario actual:', error);
         }
     }
     return null;
 }
-
 // Función para cargar los sectores al iniciar la página
 function cargarSectores() {
     fetch(`${API_BASE_URL}/api/sectores`)
