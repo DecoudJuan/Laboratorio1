@@ -5,6 +5,7 @@ import pytz
 
 db = SQLAlchemy()
 from datetime import datetime
+
 class User(db.Model):
     __tablename__ = 'user'
 

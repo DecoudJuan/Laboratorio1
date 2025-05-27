@@ -1318,9 +1318,10 @@ def obtener_sector_por_nombre(nombre_sector):
             'success': False,
             'message': f'Error al obtener el sector: {str(e)}'
         }), 500
-   
-# ESTABLECIMIENTOS
 
+#-----------------------#
+# ESTABLECIMIENTOS      #
+#-----------------------#
 # Mejorar la ruta para crear establecimiento
 @app.route('/api/crear_establecimiento', methods=['POST'])
 @jwt_required()
@@ -1531,7 +1532,9 @@ def borrar_establecimiento(nombre):
             'message': f'Error al eliminar establecimiento: {str(e)}'
         }), 500
 
-# VEHICULOS 
+#-----------------------#
+# VEHICULOS             #
+#-----------------------#
 
 @app.route('/api/brands')
 def get_brands():
@@ -2167,7 +2170,38 @@ def obtener_cocheras(nombre_sector):
             "error": f"Error interno del servidor: {str(e)}",
             "success": False
         }), 500
-  
+
+@app.route('/api/vehiculo/<patente>', methods=['GET'])
+def get_vehiculo_by_patente(patente):
+    try:
+        # Normalizar patente (mayúsculas y sin espacios)
+        patente_normalizada = patente.strip().upper()
+        
+        # Buscar vehículo por patente (que es el idVehicle)
+        vehiculo = Vehicle.query.filter_by(idVehicle=patente_normalizada).first()
+        
+        if not vehiculo:
+            return jsonify({
+                'success': False,
+                'message': f'Vehículo con patente {patente_normalizada} no encontrado'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'vehiculo': {
+                'idVehicle': vehiculo.idVehicle,
+                'brand': vehiculo.brand,
+                'model': vehiculo.model
+            }
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error al buscar vehículo: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al buscar vehículo: {str(e)}'
+        }), 500 
+
 # PARKING SPOTS
 
 @app.route('/api/actualizar_freeParkingSpots', methods=['POST'])
@@ -2475,6 +2509,184 @@ def marcar_salida():
             'message': f'Error al marcar salida: {str(e)}'
         }), 500
 
+@app.route('/api/marcar_llegada_patente', methods=['POST'])
+def marcar_llegada_patente():
+    try:
+        sector = request.form.get('sector')
+        cochera = request.form.get('cochera')
+        patente = request.form.get('patente')
+        
+        if not sector or not cochera or not patente:
+            return jsonify({
+                'success': False,
+                'message': 'Faltan datos requeridos'
+            }), 400
+        
+        # Normalizar datos
+        sector_name = sector.capitalize()
+        cochera_num = int(cochera)
+        patente_normalizada = patente.strip().upper()
+        
+        # Verificar que el sector existe
+        sector_obj = Sectors.query.filter_by(nameSec=sector_name).first()
+        if not sector_obj:
+            return jsonify({
+                'success': False,
+                'message': f'El sector {sector_name} no existe'
+            }), 404
+        
+        # Verificar que el vehículo existe
+        vehiculo = Vehicle.query.filter_by(idVehicle=patente_normalizada).first()
+        if not vehiculo:
+            return jsonify({
+                'success': False,
+                'message': f'Vehículo con patente {patente_normalizada} no encontrado'
+            }), 404
+        
+        # Verificar si el vehículo ya está en alguna cochera
+        cochera_ocupada = ParkingSpot.query.filter_by(idVehicle=patente_normalizada).first()
+        if cochera_ocupada:
+            return jsonify({
+                'success': False,
+                'message': f'El vehículo {patente_normalizada} ya está ocupando la cochera {cochera_ocupada.spotNumber} en sector {cochera_ocupada.sector.nameSec}'
+            }), 400
+        
+        # Buscar o crear la cochera específica
+        parking_spot = ParkingSpot.query.filter_by(
+            idSector=sector_obj.idSector,
+            spotNumber=cochera_num
+        ).first()
+        
+        if not parking_spot:
+            # Crear la cochera si no existe
+            parking_spot = ParkingSpot(
+                spotNumber=cochera_num,
+                isOccupied=False,
+                idSector=sector_obj.idSector,
+                idVehicle=None
+            )
+            db.session.add(parking_spot)
+        
+        # Verificar si la cochera ya está ocupada
+        if parking_spot.isOccupied:
+            return jsonify({
+                'success': False,
+                'message': f'La cochera {cochera_num} ya está ocupada'
+            }), 400
+        
+        # Marcar la cochera como ocupada
+        parking_spot.isOccupied = True
+        parking_spot.idVehicle = patente_normalizada
+        
+        # Actualizar tiempo de entrada del vehículo
+        vehiculo.checkInTime = datetime.now()
+        vehiculo.checkOutTime = None
+        
+        # Actualizar contador de cocheras libres del sector
+        if sector_obj.freeParkingSpots > 0:
+            sector_obj.freeParkingSpots -= 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Llegada registrada: {patente_normalizada} en cochera {cochera_num}, sector {sector_name}'
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error al marcar llegada: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error al marcar llegada: {str(e)}'
+        }), 500
+
+@app.route('/api/marcar_salida_admin', methods=['POST'])
+def marcar_salida_admin():
+    try:
+        sector = request.form.get('sector')
+        cochera = request.form.get('cochera')
+        
+        if not sector or not cochera:
+            return jsonify({
+                'success': False,
+                'message': 'Faltan datos requeridos'
+            }), 400
+        
+        # Normalizar el nombre del sector
+        sector_name = sector.capitalize()
+        
+        # Obtener el sector
+        sector_obj = Sectors.query.filter_by(nameSec=sector_name).first()
+        
+        if not sector_obj:
+            return jsonify({
+                'success': False,
+                'message': f'El sector {sector_name} no existe'
+            }), 404
+        
+        # Convertir cochera a int
+        cochera_num = int(cochera)
+        
+        # Verificar si la cochera existe
+        parking_spot = ParkingSpot.query.filter_by(
+            idSector=sector_obj.idSector,
+            spotNumber=cochera_num
+        ).first()
+        
+        if not parking_spot:
+            return jsonify({
+                'success': False,
+                'message': 'La cochera no existe'
+            }), 404
+        
+        # Si la cochera no está ocupada, error
+        if not parking_spot.isOccupied:
+            return jsonify({
+                'success': False,
+                'message': 'La cochera no está ocupada'
+            }), 400
+        
+        # Iniciar transacción
+        try:
+            # Obtener el vehículo asociado para registrar información
+            vehicle = Vehicle.query.filter_by(idVehicle=parking_spot.idVehicle).first()
+            patente_liberada = parking_spot.idVehicle  # Guardar para el mensaje
+            
+            if vehicle:
+                # Registrar la hora de salida
+                vehicle.checkOutTime = datetime.now()
+            
+            # Liberar la cochera
+            parking_spot.isOccupied = False
+            parking_spot.idVehicle = None
+            
+            # Actualizar contador de plazas libres en el sector
+            sector_obj.freeParkingSpots = sector_obj.freeParkingSpots + 1
+            
+            # Confirmar cambios
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Salida registrada correctamente. Vehículo {patente_liberada} liberado de cochera {cochera_num}, sector {sector_name}'
+            })
+            
+        except Exception as inner_e:
+            db.session.rollback()
+            app.logger.error(f"Error en transacción marcar_salida_admin: {str(inner_e)}")
+            return jsonify({
+                'success': False,
+                'message': f'Error al procesar la transacción: {str(inner_e)}'
+            }), 500
+        
+    except Exception as e:
+        app.logger.error(f"Error general en marcar_salida_admin: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al marcar salida: {str(e)}'
+        }), 500
+
 # Ruta para validar si una patente existe
 @app.route('/api/vehiculo/<patente>', methods=['GET'])
 def obtener_vehiculo(patente):
@@ -2508,237 +2720,6 @@ def obtener_vehiculo(patente):
             'success': False,
             'message': f'Error al buscar el vehículo: {str(e)}'
         }), 500
-
-# Ruta para marcar llegada como admin (con cualquier patente)
-@app.route('/api/marcar_llegada_admin', methods=['POST'])
-def marcar_llegada_admin():
-    try:
-        sector = request.form.get('sector')
-        cochera = request.form.get('numero')
-        patente = request.form.get('patente')
-        admin_override = request.form.get('admin_override')
-        
-        if not sector or not cochera or not patente:
-            return jsonify({
-                'success': False,
-                'message': 'Faltan datos requeridos: sector, número de cochera y patente'
-            }), 400
-        
-        # Verificar que es una operación de admin
-        if admin_override != 'true':
-            return jsonify({
-                'success': False,
-                'message': 'No autorizado'
-            }), 403
-        
-        # Normalizar datos
-        sector_name = sector.capitalize()
-        patente_normalizada = patente.strip().upper()
-        
-        # Obtener el sector
-        sector_obj = Sectors.query.filter_by(nameSec=sector_name).first()
-        
-        if not sector_obj:
-            return jsonify({
-                'success': False,
-                'message': f'El sector {sector_name} no existe'
-            }), 404
-        
-        # Convertir cochera a int
-        cochera_num = int(cochera)
-        
-        # Verificar que la cochera esté en el rango válido
-        if cochera_num < 1 or cochera_num > sector_obj.availableParkingSpots:
-            return jsonify({
-                'success': False,
-                'message': f'Número de cochera inválido. Debe estar entre 1 y {sector_obj.availableParkingSpots}'
-            }), 400
-        
-        # Buscar el vehículo por patente
-        vehicle = Vehicle.query.filter_by(licensePlate=patente_normalizada).first()
-        
-        if not vehicle:
-            return jsonify({
-                'success': False,
-                'message': 'La patente no existe en la base de datos'
-            }), 404
-        
-        # Verificar si la cochera existe
-        parking_spot = ParkingSpot.query.filter_by(
-            idSector=sector_obj.idSector,
-            spotNumber=cochera_num
-        ).first()
-        
-        # Iniciar transacción
-        try:
-            # Si la cochera no existe, crearla
-            if not parking_spot:
-                # Verificar disponibilidad en el sector
-                if sector_obj.freeParkingSpots <= 0:
-                    return jsonify({
-                        'success': False,
-                        'message': 'No hay plazas disponibles en este sector'
-                    }), 400
-                
-                # Crear la cochera como ocupada
-                parking_spot = ParkingSpot(
-                    spotNumber=cochera_num,
-                    isOccupied=True,
-                    idSector=sector_obj.idSector,
-                    idVehicle=vehicle.idVehicle
-                )
-                
-                db.session.add(parking_spot)
-                
-                # Actualizar contador de plazas libres
-                sector_obj.freeParkingSpots = sector_obj.freeParkingSpots - 1
-                
-            else:
-                # Si la cochera ya existe y está ocupada, error
-                if parking_spot.isOccupied:
-                    return jsonify({
-                        'success': False,
-                        'message': 'La cochera ya está ocupada'
-                    }), 400
-                
-                # Si la cochera existe pero está libre, marcarla como ocupada
-                parking_spot.isOccupied = True
-                parking_spot.idVehicle = vehicle.idVehicle
-                
-                # Actualizar contador de plazas libres
-                sector_obj.freeParkingSpots = sector_obj.freeParkingSpots - 1
-            
-            # Actualizar tiempos del vehículo
-            vehicle.checkInTime = db.func.current_timestamp()
-            vehicle.checkOutTime = None
-            
-            # Confirmar cambios
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': f'Llegada registrada correctamente. Vehículo {patente_normalizada} en cochera {cochera_num} del sector {sector_name}'
-            })
-            
-        except Exception as inner_e:
-            db.session.rollback()
-            app.logger.error(f"Error en transacción marcar_llegada_admin: {str(inner_e)}")
-            return jsonify({
-                'success': False,
-                'message': f'Error al procesar la transacción: {str(inner_e)}'
-            }), 500
-        
-    except Exception as e:
-        app.logger.error(f"Error general en marcar_llegada_admin: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': f'Error al marcar llegada: {str(e)}'
-        }), 500
-
-# Ruta para marcar salida como admin (sin verificar usuario)
-@app.route('/api/marcar_salida_admin', methods=['POST'])
-def marcar_salida_admin():
-    try:
-        sector = request.form.get('sector')
-        cochera = request.form.get('numero')
-        admin_override = request.form.get('admin_override')
-        
-        if not sector or not cochera:
-            return jsonify({
-                'success': False,
-                'message': 'Faltan datos requeridos: sector y número de cochera'
-            }), 400
-        
-        # Verificar que es una operación de admin
-        if admin_override != 'true':
-            return jsonify({
-                'success': False,
-                'message': 'No autorizado'
-            }), 403
-        
-        # Normalizar el nombre del sector
-        sector_name = sector.capitalize()
-        
-        # Obtener el sector
-        sector_obj = Sectors.query.filter_by(nameSec=sector_name).first()
-        
-        if not sector_obj:
-            return jsonify({
-                'success': False,
-                'message': f'El sector {sector_name} no existe'
-            }), 404
-        
-        # Convertir cochera a int
-        cochera_num = int(cochera)
-        
-        # Verificar que la cochera esté en el rango válido
-        if cochera_num < 1 or cochera_num > sector_obj.availableParkingSpots:
-            return jsonify({
-                'success': False,
-                'message': f'Número de cochera inválido. Debe estar entre 1 y {sector_obj.availableParkingSpots}'
-            }), 400
-        
-        # Verificar si la cochera existe
-        parking_spot = ParkingSpot.query.filter_by(
-            idSector=sector_obj.idSector,
-            spotNumber=cochera_num
-        ).first()
-        
-        if not parking_spot:
-            return jsonify({
-                'success': False,
-                'message': 'La cochera no existe'
-            }), 404
-        
-        # Si la cochera no está ocupada, error
-        if not parking_spot.isOccupied:
-            return jsonify({
-                'success': False,
-                'message': 'La cochera no está ocupada'
-            }), 400
-        
-        # Iniciar transacción
-        try:
-            # Obtener el vehículo asociado (si existe)
-            vehicle = None
-            patente_liberada = "N/A"
-            
-            if parking_spot.idVehicle:
-                vehicle = Vehicle.query.filter_by(idVehicle=parking_spot.idVehicle).first()
-                if vehicle:
-                    # Registrar la hora de salida
-                    vehicle.checkOutTime = db.func.current_timestamp()
-                    patente_liberada = vehicle.licensePlate
-            
-            # Liberar la cochera
-            parking_spot.isOccupied = False
-            parking_spot.idVehicle = None
-            
-            # Actualizar contador de plazas libres en el sector
-            sector_obj.freeParkingSpots = sector_obj.freeParkingSpots + 1
-            
-            # Confirmar cambios
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': f'Salida registrada correctamente. Cochera {cochera_num} del sector {sector_name} liberada (vehículo: {patente_liberada})'
-            })
-            
-        except Exception as inner_e:
-            db.session.rollback()
-            app.logger.error(f"Error en transacción marcar_salida_admin: {str(inner_e)}")
-            return jsonify({
-                'success': False,
-                'message': f'Error al procesar la transacción: {str(inner_e)}'
-            }), 500
-        
-    except Exception as e:
-        app.logger.error(f"Error general en marcar_salida_admin: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': f'Error al marcar salida: {str(e)}'
-        }), 500  
 
 # Función para registrar este blueprint en la aplicación Flask
 def register_api_routes(app):

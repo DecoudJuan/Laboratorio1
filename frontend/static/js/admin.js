@@ -273,70 +273,120 @@ function guardarLlegadaSalida(modalId) {
     const modal = document.getElementById(modalId);
     const sectorSelect = modal.querySelector('#sectorSelect');
     const cocheraInput = modal.querySelector('#cocheraInput');
+    const patenteInput = modal.querySelector('#patenteInput');
     
     const sector = sectorSelect.value;
     const cochera = parseInt(cocheraInput.value, 10);
-    
-    // Obtener el ID del usuario actual
-    const userId = getUserId();
 
     if (!accionActual || !sector || isNaN(cochera) || !cocheraValida) {
         alert("Completá todas las opciones con valores válidos antes de guardar.");
         return;
     }
 
-    if (!userId) {
-        alert("Debes iniciar sesión para realizar esta acción.");
-        return;
-    }
-
-    // Normalizar el nombre del sector (primera letra mayúscula, resto minúscula)
+    // Normalizar el nombre del sector
     const sectorNormalizado = sector.charAt(0).toUpperCase() + sector.slice(1).toLowerCase();
 
-    // Si es una llegada, verificar primero si el usuario ya tiene una cochera ocupada
     if (accionActual === 'llegada') {
-        // Obtener el vehículo principal del usuario
-        fetch(`${API_BASE_URL}/api/user-primary-vehicle`)
+        // Para llegadas, verificar patente
+        const patente = patenteInput.value.trim().toUpperCase();
+        
+        if (!patente) {
+            alert("Ingresá la patente del vehículo.");
+            return;
+        }
+
+        // Verificar que el vehículo existe
+        fetch(`${API_BASE_URL}/api/vehiculo/${patente}`)
             .then(response => response.json())
             .then(data => {
-                if (!data.success || !data.has_primary) {
-                    alert("No tienes un vehículo principal registrado. Por favor, registra un vehículo primero.");
+                if (!data.success) {
+                    alert("La patente ingresada no está registrada en el sistema.");
                     return;
                 }
 
-                // Verificar si el vehículo ya está en alguna cochera
-                fetch(`${API_BASE_URL}/api/cocheras/${sectorNormalizado}`)
-                    .then(response => response.json())
-                    .then(sectorData => {
-                        if (sectorData.success) {
-                            // Buscar si alguna cochera está ocupada por el vehículo del usuario
-                            const cocheraOcupada = sectorData.cocheras.find(c => 
-                                c.ocupado && c.id_vehicle === data.vehicle.idVehicle
-                            );
+                // Procesar llegada con patente
+                const formData = new FormData();
+                formData.append('sector', sectorNormalizado);
+                formData.append('cochera', cochera);
+                formData.append('patente', patente);
 
-                            if (cocheraOcupada) {
-                                alert("Ya tienes una cochera ocupada. No puedes ocupar otra cochera.");
-                                return;
-                            }
-
-                            // Si no tiene cochera ocupada, continuar con el proceso normal
-                            procesarLlegadaSalida(modalId);
-                        } else {
-                            alert("Error al verificar el estado de las cocheras.");
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error al verificar cocheras:', error);
-                        alert('Error al verificar el estado de las cocheras.');
-                    });
+                fetch(`${API_BASE_URL}/api/marcar_llegada_patente`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        // Cerrar modal y actualizar datos
+                        bootstrap.Modal.getInstance(modal).hide();
+                        location.reload();
+                    } else {
+                        alert(result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al marcar llegada:', error);
+                    alert('Error al procesar la llegada.');
+                });
             })
             .catch(error => {
-                console.error('Error al obtener vehículo principal:', error);
-                alert('Error al verificar el vehículo principal.');
+                console.error('Error al verificar patente:', error);
+                alert('Error al verificar la patente.');
             });
-    } else {
-        // Si es una salida, continuar con el proceso normal
-        procesarLlegadaSalida(modalId);
+            
+    } else if (accionActual === 'salida') {
+        // Para salidas, no requiere patente - solo sector y cochera
+        
+        // Verificar primero que la cochera esté ocupada
+        fetch(`${API_BASE_URL}/api/cocheras/${sectorNormalizado}/${cochera}`)
+            .then(response => response.json())
+            .then(dataCochera => {
+                if (!dataCochera.success) {
+                    alert("La cochera especificada no existe.");
+                    return;
+                }
+                
+                if (!dataCochera.ocupado) {
+                    alert("La cochera no está ocupada. No se puede registrar una salida.");
+                    return;
+                }
+                
+                // Confirmar la acción
+                const confirmar = confirm(`¿Confirmar salida de cochera ${cochera} en sector ${sectorNormalizado}?`);
+                if (!confirmar) {
+                    return;
+                }
+
+                // Procesar salida administrativa
+                const formData = new FormData();
+                formData.append('sector', sectorNormalizado);
+                formData.append('cochera', cochera);
+
+                fetch(`${API_BASE_URL}/api/marcar_salida_admin`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        // Cerrar modal y actualizar datos
+                        bootstrap.Modal.getInstance(modal).hide();
+                        location.reload();
+                    } else {
+                        alert(result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al marcar salida:', error);
+                    alert('Error al procesar la salida.');
+                });
+            })
+            .catch(error => {
+                console.error('Error al verificar cochera:', error);
+                alert('Error al verificar el estado de la cochera.');
+            });
     }
 }
 
@@ -418,6 +468,28 @@ function procesarLlegadaSalida(modalId) {
         console.error('Error al guardar:', error);
         alert('Ocurrió un error al guardar los datos.');
     }
+}
+
+function verificarCocheraParaSalida(sector, cochera) {
+    fetch(`${API_BASE_URL}/api/cocheras/${sector}/${cochera}`)
+        .then(response => response.json())
+        .then(data => {
+            const feedback = document.getElementById('cocheraFeedback');
+            
+            if (data.success && data.ocupado) {
+                feedback.innerHTML = `✓ Cochera ocupada por vehículo: <strong>${data.id_vehicle}</strong>`;
+                feedback.className = 'form-text text-success';
+            } else if (data.success && !data.ocupado) {
+                feedback.textContent = '⚠ Cochera libre - no se puede registrar salida';
+                feedback.className = 'form-text text-warning';
+            } else {
+                feedback.textContent = 'X Cochera no encontrada';
+                feedback.className = 'form-text text-danger';
+            }
+        })
+        .catch(error => {
+            console.error('Error al verificar cochera:', error);
+        });
 }
 
 // Verificar autenticación cuando la página vuelve a estar activa
@@ -831,6 +903,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalDenunciar) {
         modalDenunciar.addEventListener('shown.bs.modal', function() {
             inicializarModalDenuncia();
+        });
+    }
+
+    const patenteInput = document.getElementById('patenteInput');
+    const patenteFeedback = document.getElementById('patenteFeedback');
+    
+    if (patenteInput) {
+        patenteInput.addEventListener('input', function() {
+            const patente = this.value.trim().toUpperCase();
+            this.value = patente; // Convertir a mayúsculas automáticamente
+            
+            if (patente.length >= 3) {
+                // Verificar si la patente existe
+                fetch(`${API_BASE_URL}/api/vehiculo/${patente}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            patenteFeedback.textContent = `✓ Vehículo encontrado: ${data.vehiculo.brand} ${data.vehiculo.model}`;
+                            patenteFeedback.className = 'form-text text-success';
+                        } else {
+                            patenteFeedback.textContent = '⚠ Patente no encontrada en el sistema';
+                            patenteFeedback.className = 'form-text text-warning';
+                        }
+                    })
+                    .catch(error => {
+                        patenteFeedback.textContent = '';
+                    });
+            } else {
+                patenteFeedback.textContent = '';
+            }
         });
     }
 
