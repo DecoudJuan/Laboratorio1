@@ -796,7 +796,7 @@ function contactarUsuario() {
         return;
     }
     alert(`Contactando al usuario con patente: ${patente}`);
-    // Aquí puedes agregar la lógica para contactar al usuario
+
 }
 
 
