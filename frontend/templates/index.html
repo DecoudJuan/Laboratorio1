@@ -1,76 +1,161 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ubica2</title>
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-    <!-- Custom CSS -->
-    <link href="../static/css/styles.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ubica2</title>
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="../static/images/favicon.ico" sizes="16x16" />
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+<!-- Custom CSS -->
+<link href="../static/css/styles.css" rel="stylesheet">
+<style>
+    /* Estilos para el carrusel de fondo */
+    .background-carousel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        z-index: -1;
+        overflow: hidden;
+    }
+    
+    .background-carousel .carousel-item {
+        height: 100vh;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    
+    .background-carousel .carousel-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4); /* Overlay oscuro para mejor legibilidad */
+        z-index: 1;
+    }
+    
+    /* Asegurar que el contenido esté por encima del overlay */
+    .main-content {
+        position: relative;
+        z-index: 2;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .form-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    /* Ocultar controles del carrusel */
+    .background-carousel .carousel-control-prev,
+    .background-carousel .carousel-control-next,
+    .background-carousel .carousel-indicators {
+        display: none;
+    }
+    
+    /* Eliminar márgenes y padding del body */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+    
+    .top-bar {
+        position: relative;
+        z-index: 3;
+    }
+</style>
 </head>
 <body>
-
-    <div class="top-bar">
-        <div class="dark-section"></div>
-        <div class="green-section"></div>
+<!-- Carrusel de fondo -->
+<div id="backgroundCarousel" class="carousel slide background-carousel" data-bs-ride="carousel" data-bs-interval="4000">
+    <div class="carousel-inner">
+        <div class="carousel-item active" style="background-image: url('../static/images/indexCarrousel/1.png');"></div>
+        <div class="carousel-item" style="background-image: url('../static/images/indexCarrousel/2.png');"></div>
+        <div class="carousel-item" style="background-image: url('../static/images/indexCarrousel/3.png');"></div>
+        <div class="carousel-item" style="background-image: url('../static/images/indexCarrousel/4.png');"></div>
+        <div class="carousel-item" style="background-image: url('../static/images/indexCarrousel/5.png');"></div>
+        <div class="carousel-item" style="background-image: url('../static/images/indexCarrousel/6.png');"></div>
+        <div class="carousel-item" style="background-image: url('../static/images/indexCarrousel/7.png');"></div>
+        <div class="carousel-item" style="background-image: url('../static/images/indexCarrousel/8.png');"></div>
+        <div class="carousel-item" style="background-image: url('../static/images/indexCarrousel/9.png');"></div>
+        <div class="carousel-item" style="background-image: url('../static/images/indexCarrousel/10.png');"></div>
     </div>
+</div>
 
-    <div class="main-content"> 
-        <div class="container">
-            <!-- Formulario de Inicio de Sesión -->
-            <div class="form-container" id="loginContainer">
-                <div>
-                    <img src="../static/images/logo.png" alt="Logo" class="centered-image img-fluid mx-auto d-block mb-3" style="width: 50%; margin: auto;">
-                </div>
-                <h2>Iniciar Sesión</h2>
-                <form id="loginForm">
-                    <div class="input-group">
-                        <div class="password-field-container">
-                            <label for="loginEmail">Correo Electrónico</label>
-                            <input type="email" id="loginEmail" class="form-control" required>
-                        </div>
+<div class="main-content"> 
+    <div class="container">
+        <!-- Formulario de Inicio de Sesión -->
+        <div class="form-container" id="loginContainer">
+            <div>
+                <img src="../static/images/logo.png" alt="Logo" class="centered-image img-fluid mx-auto d-block mb-3" style="width: 50%; margin: auto;">
+            </div>
+            <h2>Iniciar Sesión</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <div class="password-field-container">
+                        <label for="loginEmail">Correo Electrónico</label>
+                        <input type="email" id="loginEmail" class="form-control" required>
                     </div>
-                    <div class="input-group">
-                        <label for="loginPassword">Contraseña</label>
-                        <div class="password-field-container">
-                            <input type="password" id="loginPassword" class="form-control" required>
-                            <button type="button" class="password-toggle-btn toggle-password" data-target="loginPassword">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
+                </div>
+                <div class="input-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <div class="password-field-container">
+                        <input type="password" id="loginPassword" class="form-control" required>
+                        <button type="button" class="password-toggle-btn toggle-password" data-target="loginPassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
                     </div>
-                    <button type="submit" class="button">Iniciar Sesión</button>
-                    <div id="loginMessage" class="message"></div>
-                </form>
-
-                <!-- Botón de Recuperar Contraseña -->
-                <div style="display: flex; justify-content: center; align-items: center; height: 5vh;">
-                    <p class="text-center mt-3">
-                        <a href="passwordrecup.html">Olvidé mi contraseña.</a>
-                    </p>
                 </div>
+                <button type="submit" class="button">Iniciar Sesión</button>
+                <div id="loginMessage" class="message"></div>
+            </form>
 
+            <!-- Botón de Recuperar Contraseña -->
+            <div style="display: flex; justify-content: center; align-items: center; height: 5vh;">
+                <p class="text-center mt-3">
+                    <a href="passwordrecup.html">Olvidé mi contraseña.</a>
+                </p>
+            </div>
 
-                <!-- Texto de Registro -->
-                <div style="display: flex; justify-content: center; align-items: center; height: 5vh;">
-                    <p class="text-center mt-3">¿No tienes cuenta? <a href="register.html" id="showRegisterModal" data-bs-toggle="modal" data-bs-target="#registerModal">Regístrate aquí</a></p>
-                </div>
-                </div>
+            <!-- Texto de Registro -->
+            <div style="display: flex; justify-content: center; align-items: center; height: 5vh;">
+                <p class="text-center mt-3">¿No tienes cuenta? <a href="register.html">Regístrate aquí</a></p>
+            </div>
         </div>
+    </div>
 </div>
 
 <!-- Bootstrap JS, Popper.js, and jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="../static/js/index.js"> </script>
-<script src="../static/js/scripts.js"> </script>
-
+<script>
+    // Inicializar el carrusel de fondo al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        const backgroundCarousel = new bootstrap.Carousel(document.getElementById('backgroundCarousel'), {
+            interval: 4000,
+            wrap: true,
+            pause: false
+        });
+    });
+</script>
+<script src="../static/js/index.js"></script>
+<script src="../static/js/scripts.js"></script>
 </body>
 </html>

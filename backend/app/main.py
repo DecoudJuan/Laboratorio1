@@ -335,7 +335,6 @@ def register_admin():
     password = data.get('password')
     admin_code = data.get('adminCode')
     
-    # Validar código de administrador (mejor tenerlo en una variable de entorno)
     ADMIN_CODE = 'admin123'  # En producción, usar variables de entorno
     
     if admin_code != ADMIN_CODE:

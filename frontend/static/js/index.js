@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (isLoggedIn() && !isLoginPage) {
     const user = JSON.parse(localStorage.getItem('currentUser'));
     redirectByRole(user.userRole);
-    }
+    }    
+
+
 });
 
 // Verificar al cargar la página si el usuario ya está logueado
