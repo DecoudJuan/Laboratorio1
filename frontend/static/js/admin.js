@@ -300,6 +300,14 @@ function guardarLlegadaSalida(modalId) {
     // Normalizar el nombre del sector
     const sectorNormalizado = sector.charAt(0).toUpperCase() + sector.slice(1).toLowerCase();
 
+
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+        alert('Token de autorización no encontrado. Por favor, inicia sesión nuevamente.');
+        window.location.replace('index.html');
+        return;
+    }
+
     if (accionActual === 'llegada') {
         // Para llegadas, verificar patente
         const patente = patenteInput.value.trim().toUpperCase();
@@ -326,6 +334,10 @@ function guardarLlegadaSalida(modalId) {
 
                 fetch(`${API_BASE_URL}/api/marcar_llegada_patente`, {
                     method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                        // No incluir Content-Type cuando se usa FormData
+                    },    
                     body: formData
                 })
                 .then(response => response.json())
@@ -379,6 +391,11 @@ function guardarLlegadaSalida(modalId) {
 
                 fetch(`${API_BASE_URL}/api/marcar_salida_admin`, {
                     method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                        // No incluir Content-Type cuando se usa FormData
+                    },
+    
                     body: formData
                 })
                 .then(response => response.json())
