@@ -146,4 +146,5 @@ class Complaints(db.Model):
     idVehiculo = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'))
     sector = db.Column(db.String)
     content = db.Column(db.Text)
+    solucionado = db.Column(db.Boolean, default=False)
        

@@ -3099,7 +3099,7 @@ def obtener_vehiculos():
         print("Error al obtener vehículos:", e)  # Debugging
         return jsonify({"success": False, "message": str(e)}), 500
 
-@app.route('/api/complaint', methods=['GET', 'POST'])
+@app.route('/api/denuncia', methods=['GET', 'POST'])
 def manejar_quejas():
     if request.method == 'POST':
         try:
@@ -3162,6 +3162,69 @@ def obtener_propietario(id_vehicle):
     
     except Exception as e:
         print("Error al obtener propietario:", e)
+        return jsonify({"success": False, "message": "Error interno"}), 500
+    
+@app.route('/api/complaint', methods=['GET', 'POST'])
+def manejar_denuncias():
+    if request.method == 'POST':
+        # Lógica para crear una nueva denuncia
+        try:
+            data = request.get_json()
+            idSuperUser = data.get('idSuperUser')
+            idVehiculo = data.get('idVehiculo')
+            sector = data.get('sector')
+            content = data.get('content')
+
+            if not idSuperUser or not idVehiculo or not sector or not content:
+                return jsonify({"success": False, "message": "Datos incompletos"}), 400
+
+            nueva_denuncia = Complaints(idSuperUser=idSuperUser, idVehiculo=idVehiculo, sector=sector, content=content)
+            db.session.add(nueva_denuncia)
+            db.session.commit()
+
+            return jsonify({"success": True, "message": "Denuncia guardada"})
+
+        except Exception as e:
+            print("🔥 Error en POST /api/complaint:", e)
+            return jsonify({"success": False, "message": "Error interno"}), 500
+
+    elif request.method == 'GET':
+        # Lógica para obtener todas las denuncias
+        try:
+            denuncias = Complaints.query.all()
+            lista_denuncias = [{
+                'idComplaint': d.idComplaint,
+                'idSuperUser': d.idSuperUser,
+                'idVehiculo': d.idVehiculo,
+                'sector': d.sector,
+                'content': d.content,
+                'solucionado': d.solucionado
+            } for d in denuncias]
+
+            return jsonify({"success": True, "denuncias": lista_denuncias})
+
+        except Exception as e:
+            print("🔥 Error en GET /api/complaint:", e)
+            return jsonify({"success": False, "message": "Error al obtener denuncias"}), 500
+
+
+@app.route('/api/complaint/<int:idComplaint>/solucionar', methods=['POST'])
+def marcar_denuncia_solucionada(idComplaint):
+    try:
+        # Buscar la denuncia por su ID
+        denuncia = Complaints.query.get(idComplaint)
+
+        if not denuncia:
+            return jsonify({"success": False, "message": "Denuncia no encontrada"}), 404
+
+        # Marcar la denuncia como solucionada
+        denuncia.solucionado = True
+        db.session.commit()
+
+        return jsonify({"success": True, "message": "Denuncia marcada como solucionada"})
+
+    except Exception as e:
+        print("Error al marcar como solucionado:", e)
         return jsonify({"success": False, "message": "Error interno"}), 500
 
 if __name__ == '__main__':
