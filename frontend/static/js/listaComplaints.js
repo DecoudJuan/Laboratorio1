@@ -69,6 +69,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     <h5 class="card-title">Sector: ${denuncia.sector}</h5>
                     <p class="card-text">${denuncia.content}</p>
                     <button class="btn btn-success btn-sm marcar-solucionado-btn">✅ Marcar como solucionado</button>
+                    <div class="text-muted" style="font-size: 0.8rem;">${denuncia.fecha_creacion}</div>
+
                 </div>
             `;
     

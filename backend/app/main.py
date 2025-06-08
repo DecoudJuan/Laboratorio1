@@ -2990,7 +2990,8 @@ def manejar_reportes():
                 'idUser': r.idUser,
                 'sector': r.sector,
                 'content': r.content,
-                'solucionado': r.solucionado
+                'solucionado': r.solucionado,
+                'fecha_creacion': r.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') if r.fecha_creacion else None
             } for r in reportes]
 
             return jsonify({"success": True, "reportes": lista_reportes})
@@ -3068,7 +3069,8 @@ def manejar_quejas():
                 'idSuperUser': q.idSuperUser,
                 'idVehiculo': q.idVehiculo,
                 'sector': q.sector,
-                'content': q.content
+                'content': q.content,
+                'fecha_creacion': q.fecha_creacion
             } for q in quejas]
 
             return jsonify({"success": True, "complaints": lista_quejas}), 200
@@ -3131,7 +3133,8 @@ def manejar_denuncias():
                 'idVehiculo': d.idVehiculo,
                 'sector': d.sector,
                 'content': d.content,
-                'solucionado': d.solucionado
+                'solucionado': d.solucionado,
+                'fecha_creacion': d.fecha_creacion
             } for d in denuncias]
 
             return jsonify({"success": True, "denuncias": lista_denuncias})

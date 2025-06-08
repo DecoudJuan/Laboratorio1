@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <h5 class="card-title">Sector: ${denuncia.sector}</h5>
                     <p class="card-text">${denuncia.content}</p>
                     <p class="card-text">${`Solucionado: ${denuncia.solucionado}`}</p>
+                    <div class="text-muted" style="font-size: 0.8rem;">${denuncia.fecha_creacion}</div>
                 </div>
             `;
             denunciasContainer.appendChild(div);

@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <!-- <p class="card-text"><strong>Usuario ID:</strong> ${reporte.idUser}</p> -->
                 <p class="card-text">${reporte.content}</p>
                 <button class="btn btn-success btn-sm marcar-solucionado-btn">✅ Marcar como solucionado</button>
+                <div class="text-muted" style="font-size: 0.8rem;">${reporte.fecha_creacion}</div>
             </div>
             `;
     
