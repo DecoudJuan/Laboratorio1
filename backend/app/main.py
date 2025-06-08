@@ -2907,92 +2907,6 @@ def get_establishments():
 
 # CHAT 
 
-@app.route('/api/chat', methods=['GET', 'POST'])
-@jwt_required()
-def chat():
-    # Obtener el ID del usuario actual del token JWT
-    usuario_actual = get_jwt_identity()
-    usuario_actual_id = usuario_actual.get('id') if isinstance(usuario_actual, dict) else usuario_actual
-    
-    if request.method == 'GET':
-        try:
-            # Obtener el email del usuario desde los headers o parámetros de la solicitud
-            usuario_email = request.args.get('email') or request.headers.get('X-User-Email')
-            
-            # Si no se proporciona el email en la solicitud, intentar obtenerlo del frontend
-            if not usuario_email:
-                # Fallback al ID del usuario si no podemos obtener el email
-                usuario_email = str(usuario_actual_id)
-            
-            # Obtener los mensajes que NO sean del usuario actual (por email)
-            mensajes = Mensaje.query.filter(Mensaje.usuario != usuario_email).order_by(Mensaje.fecha_creacion.asc()).all()
-            
-            argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
-            
-            mensajes_json = []
-            for m in mensajes:
-                fecha = m.fecha_creacion
-                fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
-                
-                mensajes_json.append({
-                    'id': m.id,
-                    'usuario': m.usuario,
-                    'contenido': m.contenido,
-                    'fecha_creacion': fecha_formateada,
-                    'thumpsUp': m.thumpsUp,
-                    'thumpsDown': m.thumpsDown
-                })
-            
-            return jsonify({'success': True, 'mensajes': mensajes_json}), 200
-        
-        except Exception as e:
-            print(f"Error al obtener mensajes: {str(e)}")
-            return jsonify({'success': False, 'message': f'Error al obtener mensajes: {str(e)}'}), 500
-    
-    elif request.method == 'POST':
-        try:
-            data = request.get_json()
-            contenido = data.get('mensaje')
-            email_usuario = data.get('usuario', '')  # Obtener el email enviado desde el frontend
-            
-            if not contenido:
-                return jsonify({'success': False, 'message': 'Mensaje vacío'}), 400
-            
-            # Crear y guardar nuevo mensaje usando el email del usuario
-            nuevo_mensaje = Mensaje(
-                usuario=email_usuario,  # Usar el email en lugar del ID
-                contenido=contenido
-            )
-            
-            db.session.add(nuevo_mensaje)
-            db.session.commit()
-            
-            # Obtener todos los mensajes que NO son del usuario actual (comparando por email)
-            mensajes = Mensaje.query.filter(Mensaje.usuario != email_usuario).order_by(Mensaje.fecha_creacion.asc()).all()
-            
-            argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
-            
-            mensajes_json = []
-            for m in mensajes:
-                fecha = m.fecha_creacion
-                fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
-                
-                mensajes_json.append({
-                    'id': m.id,
-                    'usuario': m.usuario,
-                    'contenido': m.contenido,
-                    'fecha_creacion': fecha_formateada,
-                    'thumpsUp': m.thumpsUp,
-                    'thumpsDown': m.thumpsDown
-                })
-            
-            return jsonify({'success': True, 'mensajes': mensajes_json}), 200
-        
-        except Exception as e:
-            # En caso de error, hacer rollback
-            db.session.rollback()
-            print(f"Error al enviar mensaje: {str(e)}")
-            return jsonify({'success': False, 'message': f'Error al enviar mensaje: {str(e)}'}), 500        
 
 # Función auxiliar para verificar si el usuario ya reaccionó
 def usuario_reacciono_previamente(usuario, mensaje_id):
@@ -3262,6 +3176,192 @@ def get_owns():
         'owns': owns_list,
         'success': True
     })
+
+# Ruta para marcar mensajes como leídos
+@app.route('/api/mark-messages-read', methods=['POST'])
+@jwt_required()
+def mark_messages_read():
+    try:
+        usuario_actual = get_jwt_identity()
+        usuario_actual_id = usuario_actual.get('id') if isinstance(usuario_actual, dict) else usuario_actual
+        
+        data = request.get_json()
+        message_ids = data.get('message_ids', [])
+        
+        if not message_ids:
+            return jsonify({'success': False, 'message': 'No message IDs provided'}), 400
+        
+        # Marcar mensajes como leídos
+        for message_id in message_ids:
+            # Verificar si ya existe el registro
+            existing = ReadMessage.query.filter_by(
+                message_id=message_id, 
+                user_id=usuario_actual_id
+            ).first()
+            
+            if not existing:
+                read_message = ReadMessage(
+                    message_id=message_id,
+                    user_id=usuario_actual_id
+                )
+                db.session.add(read_message)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Messages marked as read'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error marking messages as read: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+# Ruta para obtener mensajes no leídos
+@app.route('/api/unread-messages', methods=['GET'])
+@jwt_required()
+def get_unread_messages():
+    try:
+        usuario_actual = get_jwt_identity()
+        usuario_actual_id = usuario_actual.get('id') if isinstance(usuario_actual, dict) else usuario_actual
+        
+        # Obtener el email del usuario actual
+        usuario_actual_obj = User.query.get(usuario_actual_id)
+        if not usuario_actual_obj:
+            return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
+        
+        usuario_email = usuario_actual_obj.email
+        
+        # Subconsulta para obtener mensajes leídos por el usuario actual
+        from sqlalchemy import and_
+        read_subquery = db.session.query(ReadMessage.message_id).filter(
+            ReadMessage.user_id == usuario_actual_id
+        ).subquery()
+        
+        # Obtener mensajes que:
+        # 1. NO sean del usuario actual (comparar por email)
+        # 2. NO estén en la lista de mensajes leídos
+        mensajes_no_leidos = Mensaje.query.filter(
+            and_(
+                Mensaje.usuario != usuario_email,
+                ~Mensaje.id.in_(read_subquery)
+            )
+        ).order_by(Mensaje.fecha_creacion.desc()).all()
+        
+        argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+        
+        mensajes_json = []
+        for m in mensajes_no_leidos:
+            fecha = m.fecha_creacion
+            fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
+            
+            mensajes_json.append({
+                'id': m.id,
+                'usuario': m.usuario,
+                'contenido': m.contenido,
+                'fecha_creacion': fecha_formateada,
+                'thumpsUp': m.thumpsUp,
+                'thumpsDown': m.thumpsDown
+            })
+        
+        return jsonify({'success': True, 'mensajes': mensajes_json}), 200
+        
+    except Exception as e:
+        print(f"Error getting unread messages: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+# Modificar la ruta existente /api/chat para GET
+@app.route('/api/chat', methods=['GET', 'POST'])
+@jwt_required()
+def chat():
+    usuario_actual = get_jwt_identity()
+    usuario_actual_id = usuario_actual.get('id') if isinstance(usuario_actual, dict) else usuario_actual
+    
+    if request.method == 'GET':
+        try:
+            usuario_email = request.args.get('email') or request.headers.get('X-User-Email')
+            
+            if not usuario_email:
+                usuario_email = str(usuario_actual_id)
+            
+            # Obtener todos los mensajes que NO sean del usuario actual
+            mensajes = Mensaje.query.filter(Mensaje.usuario != usuario_email).order_by(Mensaje.fecha_creacion.asc()).all()
+            
+            argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+            
+            mensajes_json = []
+            for m in mensajes:
+                fecha = m.fecha_creacion
+                fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
+                
+                # Verificar si el mensaje está leído por el usuario actual
+                is_read = ReadMessage.query.filter_by(
+                    message_id=m.id,
+                    user_id=usuario_actual_id
+                ).first() is not None
+                
+                mensajes_json.append({
+                    'id': m.id,
+                    'usuario': m.usuario,
+                    'contenido': m.contenido,
+                    'fecha_creacion': fecha_formateada,
+                    'thumpsUp': m.thumpsUp,
+                    'thumpsDown': m.thumpsDown,
+                    'is_read': is_read  # Nuevo campo
+                })
+            
+            return jsonify({'success': True, 'mensajes': mensajes_json}), 200
+        
+        except Exception as e:
+            print(f"Error al obtener mensajes: {str(e)}")
+            return jsonify({'success': False, 'message': f'Error al obtener mensajes: {str(e)}'}), 500
+    
+    elif request.method == 'POST':
+        # El POST se mantiene igual
+        try:
+            data = request.get_json()
+            contenido = data.get('mensaje')
+            email_usuario = data.get('usuario', '')
+            
+            if not contenido:
+                return jsonify({'success': False, 'message': 'Mensaje vacío'}), 400
+            
+            nuevo_mensaje = Mensaje(
+                usuario=email_usuario,
+                contenido=contenido
+            )
+            
+            db.session.add(nuevo_mensaje)
+            db.session.commit()
+            
+            # Retornar mensajes actualizados con información de lectura
+            mensajes = Mensaje.query.filter(Mensaje.usuario != email_usuario).order_by(Mensaje.fecha_creacion.asc()).all()
+            
+            argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+            
+            mensajes_json = []
+            for m in mensajes:
+                fecha = m.fecha_creacion
+                fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
+                
+                is_read = ReadMessage.query.filter_by(
+                    message_id=m.id,
+                    user_id=usuario_actual_id
+                ).first() is not None
+                
+                mensajes_json.append({
+                    'id': m.id,
+                    'usuario': m.usuario,
+                    'contenido': m.contenido,
+                    'fecha_creacion': fecha_formateada,
+                    'thumpsUp': m.thumpsUp,
+                    'thumpsDown': m.thumpsDown,
+                    'is_read': is_read
+                })
+            
+            return jsonify({'success': True, 'mensajes': mensajes_json}), 200
+        
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error al enviar mensaje: {str(e)}")
+            return jsonify({'success': False, 'message': f'Error al enviar mensaje: {str(e)}'}), 500
 
 
 if __name__ == '__main__':

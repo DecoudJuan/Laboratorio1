@@ -33,64 +33,70 @@ document.addEventListener('visibilitychange', () => {
 document.getElementById('logoutBtn').addEventListener('click', function() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
-    localStorage.removeItem('userEmail'); // también limpiamos el email del chat
-    sessionStorage.removeItem('chatEmail'); // Limpiar el email del chat
+    localStorage.removeItem('userEmail');
+    sessionStorage.removeItem('chatEmail');
     window.location.href = 'index.html';
 });
 
 function actualizarCampanita() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const currentUserEmail = currentUser.email;
-    const ultimaFechaLeida = localStorage.getItem(`ultimaFechaMensaje_${currentUserEmail}`);
-    const mensajesLeidos = JSON.parse(localStorage.getItem(`mensajesLeidos_${currentUserEmail}`)) || [];
-
-    fetch("http://localhost:5000/api/chat", {
+    // Usar la nueva ruta para obtener mensajes no leídos
+    fetch("http://localhost:5000/api/unread-messages", {
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+            'Authorization': 'Bearer ' + localStorage.getItem('authToken'),
+            'Content-Type': 'application/json'
         }
     })
     .then(response => response.json())
     .then(data => {
-        const mensajes = data.mensajes || [];
-
-        const mensajesNuevos = mensajes.filter(msg => {
-            const fechaMsg = new Date(msg.fecha_creacion);
-            const esNuevo = !ultimaFechaLeida || fechaMsg > new Date(ultimaFechaLeida);
-            const noEsDelUsuario = msg.usuario !== currentUserEmail;
-            const noEsLeido = !mensajesLeidos.includes(msg.id);
-            return esNuevo && noEsDelUsuario && noEsLeido;
-        });
-
-        const campanita = document.getElementById('notificaciones');
-        if (mensajesNuevos.length > 0) {
-            campanita.style.color = 'red';
-            let puntoRojo = document.getElementById('punto-rojo');
-            if (!puntoRojo) {
-                puntoRojo = document.createElement('div');
-                puntoRojo.id = 'punto-rojo';
-                puntoRojo.style.position = 'absolute';
-                puntoRojo.style.top = '-5px';
-                puntoRojo.style.right = '-5px';
-                puntoRojo.style.width = '10px';
-                puntoRojo.style.height = '10px';
-                puntoRojo.style.backgroundColor = 'red';
-                puntoRojo.style.borderRadius = '50%';
-                campanita.appendChild(puntoRojo);
-            }
-        } else {
-            campanita.style.color = '';
-            let puntoRojo = document.getElementById('punto-rojo');
-            if (puntoRojo) {
-                puntoRojo.remove();
+        if (data.success) {
+            const mensajesNuevos = data.mensajes || [];
+            const campanita = document.getElementById('notificaciones');
+            
+            if (mensajesNuevos.length > 0) {
+                campanita.style.color = 'red';
+                let puntoRojo = document.getElementById('punto-rojo');
+                if (!puntoRojo) {
+                    puntoRojo = document.createElement('div');
+                    puntoRojo.id = 'punto-rojo';
+                    puntoRojo.style.position = 'absolute';
+                    puntoRojo.style.top = '-5px';
+                    puntoRojo.style.right = '-5px';
+                    puntoRojo.style.width = '10px';
+                    puntoRojo.style.height = '10px';
+                    puntoRojo.style.backgroundColor = 'red';
+                    puntoRojo.style.borderRadius = '50%';
+                    campanita.appendChild(puntoRojo);
+                }
+            } else {
+                campanita.style.color = '';
+                let puntoRojo = document.getElementById('punto-rojo');
+                if (puntoRojo) {
+                    puntoRojo.remove();
+                }
             }
         }
     })
-    .catch(error => console.error('Error al cargar mensajes:', error));
+    .catch(error => console.error('Error al cargar mensajes no leídos:', error));
 }
 
-// Ejecutar la función de actualización cada 10 segundos (puedes ajustar el intervalo)
-setInterval(actualizarCampanita, 1000); // cada 10 segundos
+// Ejecutar la función de actualización cada segundo
+setInterval(actualizarCampanita, 1000);
+
+// Función para marcar mensajes como leídos
+function marcarMensajesComoLeidos(messageIds) {
+    return fetch("http://localhost:5000/api/mark-messages-read", {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('authToken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            message_ids: messageIds
+        })
+    })
+    .then(response => response.json());
+}
 
 // Función que se ejecuta cuando se hace clic en la campanita
 document.getElementById('notificaciones').addEventListener('click', function () {
@@ -154,24 +160,6 @@ document.getElementById('notificaciones').addEventListener('click', function () 
         borderRadius: '4px'
     });
 
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const currentUserEmail = currentUser.email;
-    const ultimaFechaLeida = localStorage.getItem(`ultimaFechaMensaje_${currentUserEmail}`);
-    const mensajesLeidos = JSON.parse(localStorage.getItem(`mensajesLeidos_${currentUserEmail}`)) || [];
-
-    tildeBtn.onclick = () => {
-        const ahora = new Date().toISOString();
-        localStorage.setItem(`ultimaFechaMensaje_${currentUserEmail}`, ahora);
-        container.innerHTML = '<div style="text-align: center; padding: 10px;">No hay nuevos mensajes.</div>';
-
-        localStorage.setItem(`mensajesLeidos_${currentUserEmail}`, JSON.stringify([]));
-
-        // Ocultar el punto rojo
-        const puntoRojo = document.getElementById('punto-rojo');
-        if (puntoRojo) {
-            puntoRojo.style.display = 'none';
-        }
-    };
     container.appendChild(tildeBtn);
 
     const loadingMsg = document.createElement('div');
@@ -180,24 +168,28 @@ document.getElementById('notificaciones').addEventListener('click', function () 
     loadingMsg.style.padding = '10px';
     container.appendChild(loadingMsg);
 
-    fetch("http://localhost:5000/api/chat", {
+    // Obtener mensajes no leídos
+    fetch("http://localhost:5000/api/unread-messages", {
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+            'Authorization': 'Bearer ' + localStorage.getItem('authToken'),
+            'Content-Type': 'application/json'
         }
     })
     .then(response => response.json())
     .then(data => {
         container.removeChild(loadingMsg);
-        const mensajes = data.mensajes || [];
+        
+        if (!data.success) {
+            const errorMsg = document.createElement('div');
+            errorMsg.textContent = 'Error al cargar mensajes.';
+            errorMsg.style.color = 'red';
+            errorMsg.style.padding = '10px';
+            container.appendChild(errorMsg);
+            return;
+        }
 
-        const mensajesNuevos = mensajes.filter(msg => {
-            const fechaMsg = new Date(msg.fecha_creacion);
-            const esNuevo = !ultimaFechaLeida || fechaMsg > new Date(ultimaFechaLeida);
-            const noEsDelUsuario = msg.usuario !== currentUserEmail;
-            const noEsLeido = !mensajesLeidos.includes(msg.id);
-            return esNuevo && noEsDelUsuario && noEsLeido;
-        });
+        const mensajesNuevos = data.mensajes || [];
 
         if (mensajesNuevos.length === 0) {
             const vacio = document.createElement('div');
@@ -205,9 +197,13 @@ document.getElementById('notificaciones').addEventListener('click', function () 
             vacio.style.textAlign = 'center';
             vacio.style.padding = '10px';
             container.appendChild(vacio);
+            
+            // Ocultar el botón de marcar como leído si no hay mensajes
+            tildeBtn.style.display = 'none';
             return;
         }
 
+        // Mostrar los mensajes
         mensajesNuevos.forEach(mensaje => {
             const msgContainer = document.createElement('div');
             msgContainer.style.padding = '8px';
@@ -228,25 +224,41 @@ document.getElementById('notificaciones').addEventListener('click', function () 
             container.appendChild(msgContainer);
         });
 
+        // Configurar el botón de marcar como leído
         tildeBtn.onclick = () => {
-            const leidos = mensajesNuevos.map(msg => msg.id);
-            const mensajesActualizados = [...mensajesLeidos, ...leidos];
-            localStorage.setItem(`mensajesLeidos_${currentUserEmail}`, JSON.stringify(mensajesActualizados));
-
-            const ahora = new Date().toISOString();
-            localStorage.setItem(`ultimaFechaMensaje_${currentUserEmail}`, ahora);
-
-            container.innerHTML = '<div style="text-align: center; padding: 10px;">No hay nuevos mensajes.</div>';
-
-            // Ocultar el punto rojo
-            const puntoRojo = document.getElementById('punto-rojo');
-            if (puntoRojo) {
-                puntoRojo.style.display = 'none';
-            }
+            const messageIds = mensajesNuevos.map(msg => msg.id);
+            
+            marcarMensajesComoLeidos(messageIds)
+                .then(response => {
+                    if (response.success) {
+                        container.innerHTML = '<div style="text-align: center; padding: 10px;">No hay nuevos mensajes.</div>';
+                        
+                        // Ocultar el punto rojo
+                        const puntoRojo = document.getElementById('punto-rojo');
+                        if (puntoRojo) {
+                            puntoRojo.remove();
+                        }
+                        
+                        // Actualizar el color de la campanita
+                        const campanita = document.getElementById('notificaciones');
+                        campanita.style.color = '';
+                    } else {
+                        alert('Error al marcar mensajes como leídos: ' + response.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al marcar mensajes como leídos');
+                });
         };
     })
     .catch(error => {
         console.error('Error al cargar mensajes:', error);
-        container.innerHTML = '<div style="color: red; padding: 10px;">Error al cargar mensajes.</div>';
+        container.removeChild(loadingMsg);
+        const errorMsg = document.createElement('div');
+        errorMsg.textContent = 'Error al cargar mensajes.';
+        errorMsg.style.color = 'red';
+        errorMsg.style.padding = '10px';
+        container.appendChild(errorMsg);
     });
 });
