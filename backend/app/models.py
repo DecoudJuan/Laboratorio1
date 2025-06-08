@@ -107,6 +107,14 @@ class Mensaje(db.Model):
     # Relación con la tabla de reacciones
     reacciones = db.relationship('UsuarioReaccion', backref='mensaje', lazy=True, cascade="all, delete-orphan")
 
+class ReadMessage(db.Model):
+    __tablename__ = 'read_messages'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # la primary key podria ser la composicion de dos claves foraneas, pero no lo acepta el ORM
+    message_id = db.Column(db.Integer, db.ForeignKey('mensajes.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.idUser'), nullable=False)
+    #read = db.Column(db.Boolean, default=False) 
+
 class Message(db.Model):
     __tablename__ = 'message'
 
@@ -137,6 +145,7 @@ class Reports(db.Model): #cuidado que no quede dentro de la clase UsuarioReaccio
     sector = db.Column(db.String)
     content = db.Column(db.Text)
     solucionado = db.Column(db.Boolean, default=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Complaints(db.Model): 
     __tablename__ = 'complaints'
@@ -147,4 +156,5 @@ class Complaints(db.Model):
     sector = db.Column(db.String)
     content = db.Column(db.Text)
     solucionado = db.Column(db.Boolean, default=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
        

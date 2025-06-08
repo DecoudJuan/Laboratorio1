@@ -2619,7 +2619,16 @@ def marcar_salida():
         }), 500
 
 @app.route('/api/marcar_llegada_patente', methods=['POST'])
+@jwt_required()
 def marcar_llegada_patente():
+
+    current_user = get_jwt_identity()
+    if current_user['userRole'] != 'administrador':
+        return jsonify({
+            'success': False,
+            'message': 'No tienes permisos de administrador'
+        }), 403
+    
     try:
         sector = request.form.get('sector')
         cochera = request.form.get('cochera')
@@ -2711,7 +2720,17 @@ def marcar_llegada_patente():
         }), 500
 
 @app.route('/api/marcar_salida_admin', methods=['POST'])
+@jwt_required()
+
 def marcar_salida_admin():
+
+    current_user = get_jwt_identity()
+    if current_user['userRole'] != 'administrador':
+        return jsonify({
+            'success': False,
+            'message': 'No tienes permisos de administrador'
+        }), 403
+    
     try:
         sector = request.form.get('sector')
         cochera = request.form.get('cochera')
@@ -3226,6 +3245,24 @@ def marcar_denuncia_solucionada(idComplaint):
     except Exception as e:
         print("Error al marcar como solucionado:", e)
         return jsonify({"success": False, "message": "Error interno"}), 500
+
+# Agrega este endpoint a tu backend
+
+@app.route('/api/owns', methods=['GET'])
+def get_owns():
+    owns = Owns.query.all()
+    owns_list = []
+    for own in owns:
+        owns_list.append({
+            'idUser': own.idUser,
+            'idVehicle': own.idVehicle,
+            'is_primary': own.is_primary
+        })
+    return jsonify({
+        'owns': owns_list,
+        'success': True
+    })
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
