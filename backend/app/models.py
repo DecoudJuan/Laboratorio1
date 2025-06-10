@@ -115,6 +115,14 @@ class ReadMessage(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.idUser'), nullable=False)
     #read = db.Column(db.Boolean, default=False) 
 
+class ReadComplaints(db.Model):
+    __tablename__ = 'read_complaints'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # la primary key podria ser la composicion de dos claves foraneas, pero no lo acepta el ORM
+    Complaints_id = db.Column(db.Integer, db.ForeignKey('complaints.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.idUser'), nullable=False)
+    #read = db.Column(db.Boolean, default=False) 
+
 class Message(db.Model):
     __tablename__ = 'message'
 
