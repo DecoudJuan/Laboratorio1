@@ -83,22 +83,128 @@ function actualizarCampanita() {
 // Ejecutar la función de actualización cada segundo
 setInterval(actualizarCampanita, 1000);
 
-// Función para marcar mensajes como leídos
-function marcarMensajesComoLeidos(messageIds) {
-    return fetch("http://localhost:5000/api/mark-messages-read", {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('authToken'),
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            message_ids: messageIds
-        })
-    })
-    .then(response => response.json());
+// Función para marcar mensajes como leídos (mejorada)
+function marcarMensajesComoLeidos(mensajes) {
+    // Separar mensajes por tipo
+    const mensajesRegulares = mensajes.filter(msg => msg.tipo === 'mensaje').map(msg => msg.id);
+    const complaints = mensajes.filter(msg => msg.tipo === 'complaint').map(msg => msg.id);
+    
+    const promises = [];
+    
+    // Solo hacer peticiones si hay mensajes de cada tipo
+    if (mensajesRegulares.length > 0) {
+        promises.push(
+            fetch("http://localhost:5000/api/mark-messages-read", {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('authToken'),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message_ids: mensajesRegulares
+                })
+            }).then(response => response.json())
+        );
+    }
+    
+    if (complaints.length > 0) {
+        promises.push(
+            fetch("http://localhost:5000/api/mark-complaints-read", {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('authToken'),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    complaint_ids: complaints
+                })
+            }).then(response => response.json())
+        );
+    }
+    
+    return Promise.all(promises);
 }
 
-// Función que se ejecuta cuando se hace clic en la campanita
+function mostrarMensajesEnContainer(mensajesNuevos, container, tildeBtn) {
+    // Mostrar los mensajes
+    mensajesNuevos.forEach(mensaje => {
+        const msgContainer = document.createElement('div');
+        msgContainer.style.padding = '8px';
+        msgContainer.style.margin = '5px 0';
+        msgContainer.style.borderBottom = '1px solid #eee';
+        
+        // Agregar indicador visual según el tipo
+        if (mensaje.tipo === 'complaint') {
+            msgContainer.style.borderLeft = '3px solid #dc3545'; // Rojo para complaints
+        } else {
+            msgContainer.style.borderLeft = '3px solid #007bff'; // Azul para mensajes regulares
+        }
+
+        const header = document.createElement('div');
+        header.style.fontSize = '0.8em';
+        header.style.color = '#666';
+        
+        // Agregar tipo de mensaje al header
+        const tipoTexto = mensaje.tipo === 'complaint' ? '[COMPLAINT]' : '[MENSAJE]';
+        header.textContent = `${tipoTexto} ${mensaje.usuario} - ${new Date(mensaje.fecha_creacion).toLocaleString()}`;
+        msgContainer.appendChild(header);
+
+        const content = document.createElement('div');
+        content.style.marginTop = '3px';
+        content.textContent = mensaje.contenido || mensaje.content || '[Sin contenido]';
+        msgContainer.appendChild(content);
+        
+        // Agregar información adicional para complaints
+        if (mensaje.tipo === 'complaint') {
+            if (mensaje.sector) {
+                const sector = document.createElement('div');
+                sector.style.fontSize = '0.7em';
+                sector.style.color = '#888';
+                sector.textContent = `Sector: ${mensaje.sector}`;
+                msgContainer.appendChild(sector);
+            }
+            
+            const estado = document.createElement('div');
+            estado.style.fontSize = '0.7em';
+            estado.style.color = mensaje.solucionado ? '#28a745' : '#dc3545';
+            estado.textContent = mensaje.solucionado ? 'Solucionado' : 'Pendiente';
+            msgContainer.appendChild(estado);
+        }
+
+        container.appendChild(msgContainer);
+    });
+
+    // Configurar el botón de marcar como leído
+    tildeBtn.onclick = () => {
+        marcarMensajesComoLeidos(mensajesNuevos)
+        .then(responses => {
+            // Verificar si al menos una operación fue exitosa
+            const algunoExitoso = responses.length === 0 || responses.some(response => response.success);
+            
+            if (algunoExitoso) {
+                container.innerHTML = '<div style="text-align: center; padding: 10px;">No hay nuevos mensajes.</div>';
+                
+                // Ocultar el punto rojo
+                const puntoRojo = document.getElementById('punto-rojo');
+                if (puntoRojo) {
+                    puntoRojo.remove();
+                }
+                
+                // Actualizar el color de la campanita
+                const campanita = document.getElementById('notificaciones');
+                campanita.style.color = '';
+            } else {
+                alert('Error al marcar mensajes como leídos');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al marcar mensajes como leídos');
+        });
+    };
+}
+
+// Función principal de notificaciones
 document.getElementById('notificaciones').addEventListener('click', function () {
     console.log('Botón de notificaciones clickeado');
 
@@ -114,7 +220,7 @@ document.getElementById('notificaciones').addEventListener('click', function () 
         position: 'absolute',
         top: '50px',
         right: '20px',
-        width: '250px',
+        width: '300px',
         maxHeight: '400px',
         overflowY: 'auto',
         backgroundColor: '#fff',
@@ -168,7 +274,7 @@ document.getElementById('notificaciones').addEventListener('click', function () 
     loadingMsg.style.padding = '10px';
     container.appendChild(loadingMsg);
 
-    // Obtener mensajes no leídos
+    // Obtener mensajes no leídos (ahora incluye complaints)
     fetch("http://localhost:5000/api/unread-messages", {
         method: 'GET',
         headers: {
@@ -203,54 +309,8 @@ document.getElementById('notificaciones').addEventListener('click', function () 
             return;
         }
 
-        // Mostrar los mensajes
-        mensajesNuevos.forEach(mensaje => {
-            const msgContainer = document.createElement('div');
-            msgContainer.style.padding = '8px';
-            msgContainer.style.margin = '5px 0';
-            msgContainer.style.borderBottom = '1px solid #eee';
-
-            const header = document.createElement('div');
-            header.style.fontSize = '0.8em';
-            header.style.color = '#666';
-            header.textContent = `${mensaje.usuario} - ${new Date(mensaje.fecha_creacion).toLocaleString()}`;
-            msgContainer.appendChild(header);
-
-            const content = document.createElement('div');
-            content.style.marginTop = '3px';
-            content.textContent = mensaje.contenido || '[Sin contenido]';
-            msgContainer.appendChild(content);
-
-            container.appendChild(msgContainer);
-        });
-
-        // Configurar el botón de marcar como leído
-        tildeBtn.onclick = () => {
-            const messageIds = mensajesNuevos.map(msg => msg.id);
-            
-            marcarMensajesComoLeidos(messageIds)
-                .then(response => {
-                    if (response.success) {
-                        container.innerHTML = '<div style="text-align: center; padding: 10px;">No hay nuevos mensajes.</div>';
-                        
-                        // Ocultar el punto rojo
-                        const puntoRojo = document.getElementById('punto-rojo');
-                        if (puntoRojo) {
-                            puntoRojo.remove();
-                        }
-                        
-                        // Actualizar el color de la campanita
-                        const campanita = document.getElementById('notificaciones');
-                        campanita.style.color = '';
-                    } else {
-                        alert('Error al marcar mensajes como leídos: ' + response.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error al marcar mensajes como leídos');
-                });
-        };
+        // Usar la función mejorada para mostrar mensajes
+        mostrarMensajesEnContainer(mensajesNuevos, container, tildeBtn);
     })
     .catch(error => {
         console.error('Error al cargar mensajes:', error);
