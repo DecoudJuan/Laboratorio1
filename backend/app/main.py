@@ -3217,7 +3217,41 @@ def mark_messages_read():
         print(f"Error marking messages as read: {str(e)}")
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-# Ruta para obtener mensajes no leídos
+@app.route('/api/mark-complaints-read', methods=['POST'])
+@jwt_required()
+def mark_complaints_read():
+    try:
+        data = request.get_json()
+        complaint_ids = data.get('complaint_ids', [])
+        
+        if not complaint_ids:
+            return jsonify({'success': False, 'message': 'No se proporcionaron IDs de complaints'}), 400
+        
+        usuario_actual = get_jwt_identity()
+        usuario_actual_id = usuario_actual.get('id') if isinstance(usuario_actual, dict) else usuario_actual
+        
+        for complaint_id in complaint_ids:
+            # Verificar si ya existe el registro
+            existing_read = ReadComplaints.query.filter_by(
+                Complaints_id=complaint_id,
+                user_id=usuario_actual_id
+            ).first()
+            
+            if not existing_read:
+                # Solo agregar si no existe
+                read_complaint = ReadComplaints(
+                    Complaints_id=complaint_id,
+                    user_id=usuario_actual_id
+                )
+                db.session.add(read_complaint)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Complaints marcados como leídos'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
 @app.route('/api/unread-messages', methods=['GET'])
 @jwt_required()
 def get_unread_messages():
@@ -3226,31 +3260,45 @@ def get_unread_messages():
         usuario_actual_id = usuario_actual.get('id') if isinstance(usuario_actual, dict) else usuario_actual
         
         # Obtener el email del usuario actual
-        usuario_actual_obj = User.query.get(usuario_actual_id)
+        usuario_actual_obj = db.session.get(User, usuario_actual_id)
         if not usuario_actual_obj:
             return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
         
         usuario_email = usuario_actual_obj.email
         
-        # Subconsulta para obtener mensajes leídos por el usuario actual
-        from sqlalchemy import and_
-        read_subquery = db.session.query(ReadMessage.message_id).filter(
+        # Subconsulta para obtener mensajes leídos por el usuario actual (tabla ReadMessage)
+        from sqlalchemy import and_, or_, select, union_all
+        read_messages_subquery = select(ReadMessage.message_id).filter(
             ReadMessage.user_id == usuario_actual_id
-        ).subquery()
+        )
         
-        # Obtener mensajes que:
-        # 1. NO sean del usuario actual (comparar por email)
-        # 2. NO estén en la lista de mensajes leídos
+        # Subconsulta para obtener complaints leídos por el usuario actual (tabla ReadComplaints)
+        read_complaints_subquery = select(ReadComplaints.Complaints_id).filter(
+            ReadComplaints.user_id == usuario_actual_id
+        )
+        
+        # Obtener mensajes regulares no leídos
         mensajes_no_leidos = Mensaje.query.filter(
             and_(
                 Mensaje.usuario != usuario_email,
-                ~Mensaje.id.in_(read_subquery)
+                ~Mensaje.id.in_(read_messages_subquery)
             )
-        ).order_by(Mensaje.fecha_creacion.desc()).all()
+        ).all()
+        
+        # Obtener complaints no leídos
+        # Asumiendo que quieres complaints que NO sean del usuario actual
+        complaints_no_leidos = Complaints.query.filter(
+            and_(
+                Complaints.idSuperUser != usuario_actual_id,  # No son del usuario actual
+                ~Complaints.idComplaint.in_(read_complaints_subquery)  # No están marcados como leídos
+            )
+        ).all()
         
         argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
         
         mensajes_json = []
+        
+        # Procesar mensajes regulares
         for m in mensajes_no_leidos:
             fecha = m.fecha_creacion
             fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
@@ -3261,16 +3309,38 @@ def get_unread_messages():
                 'contenido': m.contenido,
                 'fecha_creacion': fecha_formateada,
                 'thumpsUp': m.thumpsUp,
-                'thumpsDown': m.thumpsDown
+                'thumpsDown': m.thumpsDown,
+                'tipo': 'mensaje'  # Identificador del tipo
             })
+        
+        # Procesar complaints
+        for c in complaints_no_leidos:
+            fecha = c.fecha_creacion
+            fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
+            
+            # Obtener el usuario que hizo el complaint
+            usuario_complaint = db.session.get(User, c.idSuperUser)
+            usuario_nombre = usuario_complaint.email if usuario_complaint else "Usuario desconocido"
+            
+            mensajes_json.append({
+                'id': c.idComplaint,
+                'usuario': usuario_nombre,
+                'contenido': c.content,
+                'fecha_creacion': fecha_formateada,
+                'sector': c.sector,
+                'solucionado': c.solucionado,
+                'tipo': 'complaint'  # Identificador del tipo
+            })
+        
+        # Ordenar todos los mensajes por fecha de creación (más recientes primero)
+        mensajes_json.sort(key=lambda x: x['fecha_creacion'] if x['fecha_creacion'] else '', reverse=True)
         
         return jsonify({'success': True, 'mensajes': mensajes_json}), 200
         
     except Exception as e:
         print(f"Error getting unread messages: {str(e)}")
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
-
-# Modificar la ruta existente /api/chat para GET
+    
 @app.route('/api/chat', methods=['GET', 'POST'])
 @jwt_required()
 def chat():
