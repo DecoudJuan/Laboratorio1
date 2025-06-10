@@ -3256,89 +3256,192 @@ def mark_complaints_read():
 @jwt_required()
 def get_unread_messages():
     try:
+        print("=== DEBUG: Iniciando get_unread_messages ===")
         usuario_actual = get_jwt_identity()
         usuario_actual_id = usuario_actual.get('id') if isinstance(usuario_actual, dict) else usuario_actual
+        print(f"DEBUG: Usuario actual ID: {usuario_actual_id}")
         
         # Obtener el email del usuario actual
         usuario_actual_obj = db.session.get(User, usuario_actual_id)
         if not usuario_actual_obj:
+            print("DEBUG: Usuario no encontrado")
             return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
         
         usuario_email = usuario_actual_obj.email
+        print(f"DEBUG: Usuario email: {usuario_email}")
+        
+        # Importar las funciones necesarias
+        from sqlalchemy import and_, select
         
         # Subconsulta para obtener mensajes leídos por el usuario actual (tabla ReadMessage)
-        from sqlalchemy import and_, or_, select, union_all
+        print("DEBUG: Creando subconsulta de mensajes leídos...")
         read_messages_subquery = select(ReadMessage.message_id).filter(
             ReadMessage.user_id == usuario_actual_id
         )
         
         # Subconsulta para obtener complaints leídos por el usuario actual (tabla ReadComplaints)
+        print("DEBUG: Creando subconsulta de complaints leídos...")
         read_complaints_subquery = select(ReadComplaints.Complaints_id).filter(
             ReadComplaints.user_id == usuario_actual_id
         )
         
         # Obtener mensajes regulares no leídos
-        mensajes_no_leidos = Mensaje.query.filter(
-            and_(
-                Mensaje.usuario != usuario_email,
-                ~Mensaje.id.in_(read_messages_subquery)
-            )
-        ).all()
+        print("DEBUG: Obteniendo mensajes regulares...")
+        try:
+            mensajes_no_leidos = Mensaje.query.filter(
+                and_(
+                    Mensaje.usuario != usuario_email,
+                    ~Mensaje.id.in_(read_messages_subquery)
+                )
+            ).all()
+            print(f"DEBUG: Mensajes regulares encontrados: {len(mensajes_no_leidos)}")
+        except Exception as e:
+            print(f"DEBUG: Error obteniendo mensajes regulares: {str(e)}")
+            mensajes_no_leidos = []
         
-        # Obtener complaints no leídos
-        # Asumiendo que quieres complaints que NO sean del usuario actual
-        complaints_no_leidos = Complaints.query.filter(
-            and_(
-                Complaints.idSuperUser != usuario_actual_id,  # No son del usuario actual
-                ~Complaints.idComplaint.in_(read_complaints_subquery)  # No están marcados como leídos
-            )
-        ).all()
+        # Obtener complaints no leídos que correspondan a vehículos del usuario actual
+        print("DEBUG: Obteniendo vehículos del usuario...")
+        try:
+            # Usar una consulta más simple para obtener vehículos
+            user_vehicles = db.session.query(Owns.idVehicle).filter(
+                Owns.idUser == usuario_actual_id
+            ).all()
+            
+            user_vehicle_ids = [v.idVehicle for v in user_vehicles]
+            print(f"DEBUG: Vehículos del usuario: {user_vehicle_ids}")
+            
+            # Si el usuario no tiene vehículos, no hay complaints para mostrar
+            if not user_vehicle_ids:
+                print("DEBUG: Usuario no tiene vehículos")
+                complaints_no_leidos = []
+            else:
+                print("DEBUG: Obteniendo complaints...")
+                complaints_no_leidos = Complaints.query.filter(
+                    and_(
+                        Complaints.idVehiculo.in_(user_vehicle_ids),  # Complaints de vehículos del usuario
+                        ~Complaints.idComplaint.in_(read_complaints_subquery)  # No están marcados como leídos
+                    )
+                ).all()
+                print(f"DEBUG: Complaints encontrados: {len(complaints_no_leidos)}")
+                
+        except Exception as e:
+            print(f"DEBUG: Error obteniendo complaints: {str(e)}")
+            complaints_no_leidos = []
         
-        argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+        # Configurar timezone
+        try:
+            argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+        except Exception as e:
+            print(f"DEBUG: Error configurando timezone: {str(e)}")
+            argentina_tz = None
         
         mensajes_json = []
         
         # Procesar mensajes regulares
+        print("DEBUG: Procesando mensajes regulares...")
         for m in mensajes_no_leidos:
-            fecha = m.fecha_creacion
-            fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
-            
-            mensajes_json.append({
-                'id': m.id,
-                'usuario': m.usuario,
-                'contenido': m.contenido,
-                'fecha_creacion': fecha_formateada,
-                'thumpsUp': m.thumpsUp,
-                'thumpsDown': m.thumpsDown,
-                'tipo': 'mensaje'  # Identificador del tipo
-            })
+            try:
+                fecha = getattr(m, 'fecha_creacion', None)
+                fecha_formateada = None
+                
+                if fecha and argentina_tz:
+                    try:
+                        fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S')
+                    except Exception as e:
+                        print(f"DEBUG: Error formateando fecha: {str(e)}")
+                        fecha_formateada = str(fecha)
+                elif fecha:
+                    fecha_formateada = str(fecha)
+                
+                mensajes_json.append({
+                    'id': getattr(m, 'id', 0),
+                    'usuario': getattr(m, 'usuario', ''),
+                    'contenido': getattr(m, 'contenido', ''),
+                    'fecha_creacion': fecha_formateada,
+                    'thumpsUp': getattr(m, 'thumpsUp', 0),
+                    'thumpsDown': getattr(m, 'thumpsDown', 0),
+                    'tipo': 'mensaje'
+                })
+            except Exception as e:
+                print(f"DEBUG: Error procesando mensaje {getattr(m, 'id', 'unknown')}: {str(e)}")
+                continue
         
         # Procesar complaints
+        print("DEBUG: Procesando complaints...")
         for c in complaints_no_leidos:
-            fecha = c.fecha_creacion
-            fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
-            
-            # Obtener el usuario que hizo el complaint
-            usuario_complaint = db.session.get(User, c.idSuperUser)
-            usuario_nombre = usuario_complaint.email if usuario_complaint else "Usuario desconocido"
-            
-            mensajes_json.append({
-                'id': c.idComplaint,
-                'usuario': usuario_nombre,
-                'contenido': c.content,
-                'fecha_creacion': fecha_formateada,
-                'sector': c.sector,
-                'solucionado': c.solucionado,
-                'tipo': 'complaint'  # Identificador del tipo
-            })
+            try:
+                fecha = getattr(c, 'fecha_creacion', None)
+                fecha_formateada = None
+                
+                if fecha and argentina_tz:
+                    try:
+                        fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S')
+                    except Exception as e:
+                        print(f"DEBUG: Error formateando fecha complaint: {str(e)}")
+                        fecha_formateada = str(fecha)
+                elif fecha:
+                    fecha_formateada = str(fecha)
+                
+                # Obtener información del vehículo
+                vehiculo = None
+                vehicle_info = "Vehículo desconocido"
+                if hasattr(c, 'idVehiculo') and c.idVehiculo:
+                    try:
+                        vehiculo = db.session.get(Vehicle, c.idVehiculo)
+                        if vehiculo:
+                            # Intentar diferentes campos posibles para el nombre del vehículo
+                            vehicle_info = (getattr(vehiculo, 'nombre', None) or 
+                                          getattr(vehiculo, 'name', None) or 
+                                          getattr(vehiculo, 'model', None) or 
+                                          getattr(vehiculo, 'marca', None) or 
+                                          f"Vehículo {c.idVehiculo}")
+                    except Exception as e:
+                        print(f"DEBUG: Error obteniendo vehículo: {str(e)}")
+                
+                # Obtener usuario que hizo el complaint
+                usuario_nombre = "Usuario desconocido"
+                if hasattr(c, 'idSuperUser') and c.idSuperUser:
+                    try:
+                        usuario_complaint = db.session.get(User, c.idSuperUser)
+                        if usuario_complaint:
+                            usuario_nombre = getattr(usuario_complaint, 'email', 'Usuario desconocido')
+                    except Exception as e:
+                        print(f"DEBUG: Error obteniendo usuario complaint: {str(e)}")
+                
+                complaint_data = {
+                    'id': getattr(c, 'idComplaint', 0),
+                    'usuario': usuario_nombre,
+                    'contenido': getattr(c, 'content', ''),
+                    'fecha_creacion': fecha_formateada,
+                    'sector': getattr(c, 'sector', ''),
+                    'solucionado': getattr(c, 'solucionado', False),
+                    'tipo': 'complaint'
+                }
+                
+                # Agregar información del vehículo si está disponible
+                if hasattr(c, 'idVehiculo'):
+                    complaint_data['idVehiculo'] = c.idVehiculo
+                    complaint_data['vehicle_info'] = vehicle_info
+                
+                mensajes_json.append(complaint_data)
+                
+            except Exception as e:
+                print(f"DEBUG: Error procesando complaint {getattr(c, 'idComplaint', 'unknown')}: {str(e)}")
+                continue
         
         # Ordenar todos los mensajes por fecha de creación (más recientes primero)
-        mensajes_json.sort(key=lambda x: x['fecha_creacion'] if x['fecha_creacion'] else '', reverse=True)
+        try:
+            mensajes_json.sort(key=lambda x: x.get('fecha_creacion', '') or '', reverse=True)
+        except Exception as e:
+            print(f"DEBUG: Error ordenando mensajes: {str(e)}")
         
+        print(f"DEBUG: Total mensajes procesados: {len(mensajes_json)}")
         return jsonify({'success': True, 'mensajes': mensajes_json}), 200
-        
+    
     except Exception as e:
-        print(f"Error getting unread messages: {str(e)}")
+        print(f"ERROR PRINCIPAL: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
     
 @app.route('/api/chat', methods=['GET', 'POST'])
