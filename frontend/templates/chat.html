@@ -30,16 +30,20 @@
         }
 
         .general-container {
-        position: relative;
-        z-index: 1;
-        padding: 20px;
-        height: 100%;
-        overflow-y: auto; /* Habilita el scroll si hay overflow */
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
         }
 
         #messages-container {
-            max-height: 400px; /* Ajusta según el diseño */
+            max-height: 400px;
             overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
         }
 
         .back-button {
@@ -56,17 +60,64 @@
             font-size: 1.5rem;
             color: #fff;
         }
+
+        .reaction-buttons {
+            margin-top: 0.5rem;
+        }
+        
+        .thumb-btn {
+            background: none;
+            border: none;
+            margin-right: 1rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+        }
+        
+        .thumb-btn:hover {
+            background-color: rgba(0,0,0,0.1);
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            z-index: 1050;
+        }
+        
+        .connected {
+            background-color: #d1edff;
+            color: #0c63e4;
+            border: 1px solid #b8daff;
+        }
+        
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
     <div class="background-layer"></div>
 
+    <!-- Indicador de estado de conexión -->
+    <div id="connectionStatus" class="connection-status disconnected">
+        <i class="bi bi-wifi-off"></i> Desconectado
+    </div>
+
     <div class="general-container">
         <div class="top-bar">
-            <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Chat</h1>
+            <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Chat en Tiempo Real</h1>
             <div class="dark-section"></div>
             <div class="green-section"></div>
-            <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
+            <button id="logoutBtn" class="logout-button">
+                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+            </button>
             <button type="button" class="back-button" id="backToPrincipalBtn">
                 <i class="bi bi-arrow-left-circle-fill"></i>
             </button>        
@@ -74,23 +125,86 @@
 
         <div class="container mt-5">
             <h2 class="mb-4">¡Dejá tu advertencia!</h2>
-            <p>Bienvenido: <span id="emailDisplay" class="fw-bold"></span></p>
+            <p>Bienvenido: <span id="emailDisplay" class="fw-bold">Cargando...</span></p>
 
-            <!-- Formulario para enviar mensaje -->
-            <div id="chatContainer">
+            <!-- Mensaje de carga -->
+            <div id="loadingMessage" class="text-center mb-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Cargando chat...</p>
+            </div>
+
+            <!-- Contenedor del Chat -->
+            <div id="chatContainer" style="display: none;">
+                <!-- Área de mensajes -->
+                <div class="card">
+                    <div class="card-body">
+                        <div id="messages-container">
+                            <div class="text-center text-muted">Cargando mensajes...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario para enviar mensaje -->
                 <form id="chatForm" class="mb-4">
                     <div class="mb-3">
-                        <textarea name="mensaje" class="form-control" rows="3" placeholder="Escribe tu mensaje..." required></textarea>
+                        <textarea 
+                            name="mensaje" 
+                            class="form-control" 
+                            rows="3" 
+                            placeholder="Escribe tu mensaje..." 
+                            required
+                            maxlength="500"
+                            autocomplete="off"
+                        ></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="background-color: #2980b9; margin-left: 40%;">Enviar</button>
+                    <button type="submit" class="btn btn-primary" style="background-color: #2980b9; margin-left: 40%;">
+                        <i class="bi bi-send"></i> Enviar
+                    </button>
                 </form>
-                <div class="card">
-                    <div class="card-body" id="messages-container"></div>
-                </div>
             </div>           
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    
+    <script>
+        // Actualizar indicador de conexión
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.className = 'connection-status connected';
+                statusElement.innerHTML = '<i class="bi bi-wifi"></i> Conectado';
+            } else {
+                statusElement.className = 'connection-status disconnected';
+                statusElement.innerHTML = '<i class="bi bi-wifi-off"></i> Desconectado';
+            }
+        }
+
+        // Mostrar/ocultar elementos de carga
+        function toggleLoadingState(loading) {
+            const chatContainer = document.getElementById('chatContainer');
+            const loadingMessage = document.getElementById('loadingMessage');
+            
+            if (loading) {
+                chatContainer.style.display = 'none';
+                loadingMessage.style.display = 'block';
+            } else {
+                chatContainer.style.display = 'block';
+                loadingMessage.style.display = 'none';
+            }
+        }
+
+        // Inicializar estado de carga
+        toggleLoadingState(true);
+        updateConnectionStatus(false);
+    </script>
+    
+    <!-- Tu script personalizado del chat -->
     <script src="/static/js/chat.js" defer></script>
 </body>
 </html>

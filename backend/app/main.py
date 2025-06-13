@@ -13,6 +13,10 @@ from sqlalchemy import text
 from pytz import timezone, utc
 from datetime import datetime
 
+from flask_socketio import SocketIO, emit, join_room, leave_room
+
+from flask_cors import CORS
+
 
 # MAILpip
 import string
@@ -44,6 +48,7 @@ def create_app(enviroment):
         "supports_credentials": True
     }})
 
+
     app.config.from_object(enviroment)
     
     # CONFIGURAR SMTPLIB
@@ -62,6 +67,17 @@ def create_app(enviroment):
 
 enviroment = config['development']
 app = create_app(enviroment)
+
+
+socketio = SocketIO(
+    app, 
+    cors_allowed_origins="*",
+    logger=True, 
+    engineio_logger=True,
+    async_mode='threading',  # Agregar esto
+    ping_timeout=60,         # Agregar esto
+    ping_interval=25         # Agregar esto
+)
 
 # MAIL RECOVERY 
 
@@ -2908,55 +2924,86 @@ def get_establishments():
 # CHAT 
 
 
-# Función auxiliar para verificar si el usuario ya reaccionó
 def usuario_reacciono_previamente(usuario, mensaje_id):
     return UsuarioReaccion.query.filter_by(usuario=usuario, mensaje_id=mensaje_id).first()
 
 # Ruta para manejar reacciones de usuario
 @app.route('/api/chat/reaction', methods=['POST'])
-def update_reaction():      
-    data = request.json
-    print(data)
-    message_id = request.json.get('id')
-    print(message_id)
-    mensajes = Mensaje.query.all()
-    for mensaje in mensajes:
-        print(f"ID: {mensaje.id}, Contenido: {mensaje.contenido}")
+@jwt_required()
+def update_reaction():
+    try:
+        data = request.json
+        print(data)
+        message_id = request.json.get('id')
+        print(message_id)
+        
+        # Debug: mostrar todos los mensajes (opcional, puedes remover esto)
+        mensajes = Mensaje.query.all()
+        for mensaje in mensajes:
+            print(f"ID: {mensaje.id}, Contenido: {mensaje.contenido}")
+        
         reaction_type = data.get('reaction')
         usuario = data.get('usuario')
-
-    mensaje = Mensaje.query.get(message_id)
-    
-    if not mensaje:
-        return jsonify({"success": False, "message": "Mensaje no encontrado"}), 404
-
-    reaccion_existente = usuario_reacciono_previamente(usuario, message_id)
-
-    if reaccion_existente:
-        if reaccion_existente.tipo_reaccion == reaction_type:
-            db.session.delete(reaccion_existente)
-            if reaction_type == "like":
-                mensaje.thumpsUp -= 1
+        
+        if not all([message_id, reaction_type, usuario]):
+            return jsonify({'success': False, 'message': 'Datos incompletos'}), 400
+        
+        mensaje = Mensaje.query.get(message_id)
+        
+        if not mensaje:
+            return jsonify({"success": False, "message": "Mensaje no encontrado"}), 404
+        
+        reaccion_existente = usuario_reacciono_previamente(usuario, message_id)
+        
+        if reaccion_existente:
+            if reaccion_existente.tipo_reaccion == reaction_type:
+                # Si ya tenía esta reacción, la eliminamos
+                db.session.delete(reaccion_existente)
+                if reaction_type == "like":
+                    mensaje.thumpsUp = max(0, (mensaje.thumpsUp or 0) - 1)
+                else:
+                    mensaje.thumpsDown = max(0, (mensaje.thumpsDown or 0) - 1)
             else:
-                mensaje.thumpsDown -= 1
+                # Si tenía otra reacción, la cambiamos
+                reaccion_existente.tipo_reaccion = reaction_type
+                if reaction_type == "like":
+                    mensaje.thumpsUp = (mensaje.thumpsUp or 0) + 1
+                    mensaje.thumpsDown = max(0, (mensaje.thumpsDown or 0) - 1)
+                else:
+                    mensaje.thumpsDown = (mensaje.thumpsDown or 0) + 1
+                    mensaje.thumpsUp = max(0, (mensaje.thumpsUp or 0) - 1)
         else:
-            reaccion_existente.tipo_reaccion = reaction_type
+            # Nueva reacción
+            nueva_reaccion = UsuarioReaccion(usuario=usuario, mensaje_id=message_id, tipo_reaccion=reaction_type)
+            db.session.add(nueva_reaccion)
             if reaction_type == "like":
-                mensaje.thumpsUp += 1
-                mensaje.thumpsDown -= 1
+                mensaje.thumpsUp = (mensaje.thumpsUp or 0) + 1
             else:
-                mensaje.thumpsDown += 1
-                mensaje.thumpsUp -= 1
-    else:
-        nueva_reaccion = UsuarioReaccion(usuario=usuario, mensaje_id=message_id, tipo_reaccion=reaction_type)
-        db.session.add(nueva_reaccion)
-        if reaction_type == "like":
-            mensaje.thumpsUp += 1
-        else:
-            mensaje.thumpsDown += 1
-
-    db.session.commit()
-    return jsonify({"success": True, "thumpsUp": mensaje.thumpsUp, "thumpsDown": mensaje.thumpsDown}), 200
+                mensaje.thumpsDown = (mensaje.thumpsDown or 0) + 1
+        
+        db.session.commit()
+        
+        # Emitir la actualización de reacciones a todos los clientes via Socket.IO
+        reaction_data = {
+            'id': mensaje.id,
+            'thumpsUp': mensaje.thumpsUp or 0,
+            'thumpsDown': mensaje.thumpsDown or 0,
+            'usuario': usuario,
+            'tipo_reaccion': reaction_type if not (reaccion_existente and reaccion_existente.tipo_reaccion == reaction_type) else None
+        }
+        
+        socketio.emit('actualizar_reacciones', reaction_data)
+        
+        return jsonify({
+            "success": True, 
+            "thumpsUp": mensaje.thumpsUp or 0, 
+            "thumpsDown": mensaje.thumpsDown or 0
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al procesar reacción: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error al procesar reacción: {str(e)}'}), 500
 
 @app.route('/api/report', methods=['GET', 'POST'])
 def manejar_reportes():
@@ -2999,8 +3046,8 @@ def manejar_reportes():
         except Exception as e:
             print("🔥 Error en GET /api/report:", e)
             return jsonify({"success": False, "message": "Error al obtener reportes"}), 500
-@app.route('/api/report/<int:idReport>/solucionar', methods=['POST'])
 
+@app.route('/api/report/<int:idReport>/solucionar', methods=['POST'])
 def marcar_como_solucionado(idReport):
     try:
         # Buscar el reporte por su ID
@@ -3460,6 +3507,10 @@ def chat():
             # Obtener todos los mensajes que NO sean del usuario actual
             mensajes = Mensaje.query.filter(Mensaje.usuario != usuario_email).order_by(Mensaje.fecha_creacion.asc()).all()
             
+            # Si no hay mensajes de otros usuarios, obtener todos los mensajes
+            if not mensajes:
+                mensajes = Mensaje.query.order_by(Mensaje.fecha_creacion.asc()).all()
+            
             argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
             
             mensajes_json = []
@@ -3478,9 +3529,9 @@ def chat():
                     'usuario': m.usuario,
                     'contenido': m.contenido,
                     'fecha_creacion': fecha_formateada,
-                    'thumpsUp': m.thumpsUp,
-                    'thumpsDown': m.thumpsDown,
-                    'is_read': is_read  # Nuevo campo
+                    'thumpsUp': m.thumpsUp or 0,  # Asegurar que no sea None
+                    'thumpsDown': m.thumpsDown or 0,  # Asegurar que no sea None
+                    'is_read': is_read
                 })
             
             return jsonify({'success': True, 'mensajes': mensajes_json}), 200
@@ -3490,7 +3541,6 @@ def chat():
             return jsonify({'success': False, 'message': f'Error al obtener mensajes: {str(e)}'}), 500
     
     elif request.method == 'POST':
-        # El POST se mantiene igual
         try:
             data = request.get_json()
             contenido = data.get('mensaje')
@@ -3501,43 +3551,69 @@ def chat():
             
             nuevo_mensaje = Mensaje(
                 usuario=email_usuario,
-                contenido=contenido
+                contenido=contenido,
+                thumpsUp=0,  # Inicializar valores
+                thumpsDown=0
             )
             
             db.session.add(nuevo_mensaje)
             db.session.commit()
             
-            # Retornar mensajes actualizados con información de lectura
-            mensajes = Mensaje.query.filter(Mensaje.usuario != email_usuario).order_by(Mensaje.fecha_creacion.asc()).all()
-            
+            # Formatear el mensaje para Socket.IO
             argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+            fecha_formateada = nuevo_mensaje.fecha_creacion.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S')
             
-            mensajes_json = []
-            for m in mensajes:
-                fecha = m.fecha_creacion
-                fecha_formateada = fecha.replace(tzinfo=pytz.utc).astimezone(argentina_tz).strftime('%Y-%m-%d %H:%M:%S') if fecha else None
-                
-                is_read = ReadMessage.query.filter_by(
-                    message_id=m.id,
-                    user_id=usuario_actual_id
-                ).first() is not None
-                
-                mensajes_json.append({
-                    'id': m.id,
-                    'usuario': m.usuario,
-                    'contenido': m.contenido,
-                    'fecha_creacion': fecha_formateada,
-                    'thumpsUp': m.thumpsUp,
-                    'thumpsDown': m.thumpsDown,
-                    'is_read': is_read
-                })
+            mensaje_data = {
+                'id': nuevo_mensaje.id,
+                'usuario': nuevo_mensaje.usuario,
+                'contenido': nuevo_mensaje.contenido,
+                'fecha_creacion': fecha_formateada,
+                'thumpsUp': 0,
+                'thumpsDown': 0,
+                'is_read': False
+            }
             
-            return jsonify({'success': True, 'mensajes': mensajes_json}), 200
+            # Emitir el nuevo mensaje a todos los clientes conectados
+            socketio.emit('nuevo_mensaje', mensaje_data, namespace='/')
+            
+            return jsonify({'success': True, 'mensaje': mensaje_data}), 200
         
         except Exception as e:
             db.session.rollback()
             print(f"Error al enviar mensaje: {str(e)}")
             return jsonify({'success': False, 'message': f'Error al enviar mensaje: {str(e)}'}), 500
+
+
+# Eventos de Socket.IO
+@socketio.on('connect')
+def handle_connect():
+    print(f'Cliente conectado: {request.sid}')
+    emit('conectado', {'mensaje': 'Conectado al chat en tiempo real'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print(f'Cliente desconectado: {request.sid}')
+
+@socketio.on('unirse_chat')
+def handle_join_chat(data):
+    """Manejar cuando un usuario se une al chat"""
+    usuario_email = data.get('usuario_email')
+    join_room('chat_general')  # Todos los usuarios en una sala general
+    print(f'Usuario {usuario_email} se unió al chat')
+    emit('estado', {'mensaje': f'Te has unido al chat'})
+
+@socketio.on('salir_chat')
+def handle_leave_chat(data):
+    """Manejar cuando un usuario sale del chat"""
+    usuario_email = data.get('usuario_email')
+    leave_room('chat_general')
+    print(f'Usuario {usuario_email} salió del chat')
+
+# 5. Añadir manejo de errores para Socket.IO
+@socketio.on_error_default
+def default_error_handler(e):
+    print(f'Error en Socket.IO: {e}')
+    emit('error', {'message': 'Ha ocurrido un error en el servidor'})
 
 
 if __name__ == '__main__':
