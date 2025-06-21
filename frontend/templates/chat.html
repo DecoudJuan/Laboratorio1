@@ -13,29 +13,6 @@
     <!-- Custom CSS -->
     <link href="../static/css/styles.css" rel="stylesheet">
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        .background-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom right, #f1dede, #f1dede);
-            z-index: -1;
-        }
-
-        .general-container {
-            position: relative;
-            z-index: 1;
-            padding: 20px;
-            height: 100%;
-            overflow-y: auto;
-        }
 
         #messages-container {
             max-height: 400px;
@@ -44,21 +21,6 @@
             border-radius: 0.375rem;
             padding: 1rem;
             background-color: #f8f9fa;
-        }
-
-        .back-button {
-            position: absolute;
-            top: 20%;
-            left: 10%;
-            z-index: 10;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
-
-        .back-button i {
-            font-size: 1.5rem;
-            color: #fff;
         }
 
         .reaction-buttons {
@@ -105,23 +67,20 @@
 <body>
     <div class="background-layer"></div>
 
-    <!-- Indicador de estado de conexión -->
-    <div id="connectionStatus" class="connection-status disconnected">
-        <i class="bi bi-wifi-off"></i> Desconectado
+    <div class="top-bar">
+        <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Chat en Tiempo Real</h1>
+        <div class="dark-section"></div>
+        <div class="green-section"></div>
+        <button id="logoutBtn" class="logout-button">
+            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+        </button>
     </div>
 
     <div class="general-container">
-        <div class="top-bar">
-            <h1 style="background-color: #1f0322; color: #f1dede; margin-bottom: -2%;">Chat en Tiempo Real</h1>
-            <div class="dark-section"></div>
-            <div class="green-section"></div>
-            <button id="logoutBtn" class="logout-button">
-                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-            </button>
             <button type="button" class="back-button" id="backToPrincipalBtn">
                 <i class="bi bi-arrow-left-circle-fill"></i>
             </button>        
-        </div>
+
 
         <div class="container mt-5">
             <h2 class="mb-4">¡Dejá tu advertencia!</h2>
@@ -173,17 +132,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     
     <script>
-        // Actualizar indicador de conexión
-        function updateConnectionStatus(connected) {
-            const statusElement = document.getElementById('connectionStatus');
-            if (connected) {
-                statusElement.className = 'connection-status connected';
-                statusElement.innerHTML = '<i class="bi bi-wifi"></i> Conectado';
-            } else {
-                statusElement.className = 'connection-status disconnected';
-                statusElement.innerHTML = '<i class="bi bi-wifi-off"></i> Desconectado';
-            }
-        }
+
 
         // Mostrar/ocultar elementos de carga
         function toggleLoadingState(loading) {

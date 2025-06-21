@@ -5,6 +5,8 @@ import pytz
 
 db = SQLAlchemy()
 from datetime import datetime
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     __tablename__ = 'user'
@@ -16,7 +18,24 @@ class User(db.Model):
     password = db.Column(db.Text, nullable=False)
     userRole = db.Column(db.Text, nullable=False)
     
+    # Campos para recuperación de contraseña
+    recovery_token = db.Column(db.Text, nullable=True)
+    recovery_token_expires = db.Column(db.DateTime, nullable=True)
+    
     messages = db.relationship('Message', backref='user', cascade='all, delete-orphan')
+    
+    def set_password(self, password):
+        """Hashea y guarda la contraseña"""
+        self.password = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """Verifica la contraseña"""
+        return check_password_hash(self.password, password)
+    
+    def clear_recovery_token(self):
+        """Limpia el token de recuperación"""
+        self.recovery_token = None
+        self.recovery_token_expires = None
 
 class car_brands(db.Model):
     __tablename__ = 'car_brands'

@@ -1,17 +1,21 @@
-import random
 from flask import Flask, jsonify, redirect, request, send_from_directory, render_template, url_for, session
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from models import User, Vehicle, Owns, Establishment, Sectors, EstablishmentAdmin, SectorEstablishment, Reports
 # MODULOS PARA LOGIN
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
-from werkzeug.security import check_password_hash   
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request, decode_token
+from werkzeug.security import check_password_hash, generate_password_hash  
+from jwt.exceptions import DecodeError, ExpiredSignatureError
+
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # MODULOS PARA BASE DE DATOS
 from sqlalchemy import text
 from pytz import timezone, utc
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
@@ -74,9 +78,9 @@ socketio = SocketIO(
     cors_allowed_origins="*",
     logger=True, 
     engineio_logger=True,
-    async_mode='threading',  # Agregar esto
-    ping_timeout=60,         # Agregar esto
-    ping_interval=25         # Agregar esto
+    async_mode='threading',  
+    ping_timeout=60,         
+    ping_interval=25         
 )
 
 # MAIL RECOVERY 
@@ -89,63 +93,170 @@ print(f"MAIL_USERNAME: {os.getenv('MAIL_USERNAME')}")
 print(f"MAIL_PASSWORD: {os.getenv('MAIL_PASSWORD')}")
 """
 
-# POR AHORA MOCKEADO PARA NO IMPLEMENTAR TODO EL SISTEMA
-def generate_recovery_code(length=6):
-    letters_and_digits = string.ascii_letters + string.digits
-    return ''.join(random.choice(letters_and_digits) for i in range(length))
-
 @app.route('/api/send-recovery-email', methods=['POST'])
 def send_recovery_email():
     try:
-
         data = request.get_json()
         email = data.get('email')
         
         if not email:
             return jsonify({'success': False, 'message': 'Email no proporcionado'}), 400
             
-        # VERIFICACION DE EXISTENCIA DEL MAIL
+        # Verificar si el usuario existe
         existing_user = User.query.filter_by(email=email).first()
         if not existing_user:
-            # MENSAJE GENERAL AL USUARIO
-            return jsonify({'success': True, 'message': 'Si el email existe, recibirás un código de recuperación.'}), 200
+            # Por seguridad, siempre devolvemos el mismo mensaje
+            return jsonify({'success': True, 'message': 'Si el email existe, recibirás un enlace de recuperación.'}), 200
         
-        recovery_code = generate_recovery_code()
+        # Generar token JWT con expiración de 30 minutos
+        token_expiry = datetime.utcnow() + timedelta(minutes=30)
+        recovery_token = create_access_token(
+            identity=existing_user.idUser,
+            expires_delta=timedelta(minutes=30),
+            additional_claims={'type': 'password_recovery', 'email': email}
+        )
         
-        # Aquí podrías almacenar el código en la base de datos asociado al usuario
-        # existing_user.recovery_code = recovery_code
-        # existing_user.recovery_expiry = datetime.now() + timedelta(minutes=15)
-        # db.session.commit()
+        # Guardar el token en la base de datos
+        existing_user.recovery_token = recovery_token
+        existing_user.recovery_token_expires = token_expiry
+        db.session.commit()
         
-        # CONFIGURACION DEL SERVER SMTP
+        # Crear el enlace de recuperación
+        recovery_link = f"http://localhost:3000/reset-password.html?token={recovery_token}"
+        
+        # Configuración del servidor SMTP
         smtp_server = os.getenv('MAIL_SERVER')
         smtp_port = int(os.getenv('MAIL_PORT', 587))
         smtp_username = os.getenv('MAIL_USERNAME')
         smtp_password = os.getenv('MAIL_PASSWORD')
         
-        # CREA EL MENSAJE
+        # Crear el mensaje de email
         msg = MIMEMultipart()
         msg['From'] = smtp_username
         msg['To'] = email
         msg['Subject'] = 'Recuperación de Contraseña'
         
-        # CUERPO DEL MENSAJE
-        body = f'Hola,\n\nHas solicitado recuperar tu contraseña.\n\nTu código de recuperación es: {recovery_code}\n\nEste código expirará en 15 minutos.\n\nSi no solicitaste este cambio, ignora este mensaje.\n\nSaludos,\nEquipo de Soporte'
-        msg.attach(MIMEText(body, 'plain'))
+        # HTML del email
+        html_body = f"""
+        <html>
+        <body>
+            <h2>Recuperación de Contraseña</h2>
+            <p>Hola {existing_user.username},</p>
+            <p>Has solicitado recuperar tu contraseña. Haz clic en el enlace de abajo para crear una nueva contraseña:</p>
+            <p><a href="{recovery_link}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Cambiar Contraseña</a></p>
+            <p>Este enlace expirará en 30 minutos.</p>
+            <p>Si no solicitaste este cambio, ignora este mensaje.</p>
+            <p>Saludos,<br>Equipo de Soporte</p>
+        </body>
+        </html>
+        """
         
-        # ENVIAR CORREO
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        # Enviar correo
         with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls() # INICIA TLS
+            server.starttls()
             server.login(smtp_username, smtp_password)
             server.send_message(msg)
             
-        print(f"Correo enviado a {email} con código {recovery_code}")  # DEPURACIÓN
+        print(f"Correo de recuperación enviado a {email}")
         
-        return jsonify({'success': True, 'message': 'Si el email existe, recibirás un código de recuperación.'}), 200
+        return jsonify({'success': True, 'message': 'Si el email existe, recibirás un enlace de recuperación.'}), 200
+        
     except Exception as e:
-        print(f'Error detallado: {str(e)}')  # LOG DE ERROR 
+        print(f'Error enviando email de recuperación: {str(e)}')
         return jsonify({'success': False, 'message': 'Ocurrió un error al enviar el email. Por favor intenta más tarde.'}), 500
-    
+
+
+@app.route('/api/validate-recovery-token', methods=['POST'])
+def validate_recovery_token():
+    try:
+        data = request.get_json()
+        token = data.get('token')
+        
+        if not token:
+            return jsonify({'success': False, 'message': 'Token no proporcionado'}), 400
+        
+        # Decodificar y validar el token
+        try:
+            decoded_token = decode_token(token)
+            user_id = decoded_token['sub']
+            token_type = decoded_token.get('type')
+            
+            if token_type != 'password_recovery':
+                return jsonify({'success': False, 'message': 'Token inválido'}), 400
+                
+        except (DecodeError, ExpiredSignatureError, KeyError):
+            return jsonify({'success': False, 'message': 'Token inválido o expirado'}), 400
+        
+        # Verificar que el token existe en la base de datos
+        user = User.query.filter_by(idUser=user_id, recovery_token=token).first()
+        if not user:
+            return jsonify({'success': False, 'message': 'Token inválido'}), 400
+        
+        # Verificar que no haya expirado
+        if user.recovery_token_expires and user.recovery_token_expires < datetime.utcnow():
+            return jsonify({'success': False, 'message': 'Token expirado'}), 400
+        
+        return jsonify({'success': True, 'message': 'Token válido', 'email': user.email}), 200
+        
+    except Exception as e:
+        print(f'Error validando token: {str(e)}')
+        return jsonify({'success': False, 'message': 'Error interno del servidor'}), 500
+
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    try:
+        data = request.get_json()
+        token = data.get('token')
+        new_password = data.get('password')
+        confirm_password = data.get('confirmPassword')
+        
+        if not all([token, new_password, confirm_password]):
+            return jsonify({'success': False, 'message': 'Todos los campos son requeridos'}), 400
+        
+        if new_password != confirm_password:
+            return jsonify({'success': False, 'message': 'Las contraseñas no coinciden'}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({'success': False, 'message': 'La contraseña debe tener al menos 6 caracteres'}), 400
+        
+        # Validar token
+        try:
+            decoded_token = decode_token(token)
+            user_id = decoded_token['sub']
+            token_type = decoded_token.get('type')
+            
+            if token_type != 'password_recovery':
+                return jsonify({'success': False, 'message': 'Token inválido'}), 400
+                
+        except (DecodeError, ExpiredSignatureError, KeyError):
+            return jsonify({'success': False, 'message': 'Token inválido o expirado'}), 400
+        
+        # Buscar usuario y validar token
+        user = User.query.filter_by(idUser=user_id, recovery_token=token).first()
+        if not user:
+            return jsonify({'success': False, 'message': 'Token inválido'}), 400
+        
+        if user.recovery_token_expires and user.recovery_token_expires < datetime.utcnow():
+            return jsonify({'success': False, 'message': 'Token expirado'}), 400
+        
+        # Actualizar contraseña
+        user.set_password(new_password)
+        user.clear_recovery_token()
+        db.session.commit()
+        
+        print(f"Contraseña actualizada para usuario: {user.email}")
+        
+        return jsonify({'success': True, 'message': 'Contraseña actualizada exitosamente'}), 200
+        
+    except Exception as e:
+        print(f'Error reseteando contraseña: {str(e)}')
+        return jsonify({'success': False, 'message': 'Error interno del servidor'}), 500
+
+
+
 # NUEVA RUTA PARA LOGIN
 
 @app.route('/api/login', methods=['POST'])

@@ -1,5 +1,5 @@
 body {
-    background-color: #F1DEDE;
+    background: linear-gradient(135deg, #F1DEDE 0%, #E6D0D6 25%, #DBC2CE 50%, #D0B4C6 75%, #C5A6BE 100%);    background: linear-gradient(135deg, #57174b 0%, #863678 25%, #ae6aa1 75%, #d89dcd 100%);
     font-family: Arial, sans-serif;
     display: flex;
     min-height: 100vh;
@@ -8,6 +8,7 @@ body {
     margin: 0;
     padding: 20PX;
 }
+
 
 #addVehicleForm, #editVehicleForm {
     display: none;
