@@ -3159,19 +3159,34 @@ def manejar_reportes():
             return jsonify({"success": False, "message": "Error al obtener reportes"}), 500
 
 @app.route('/api/report/<int:idReport>/solucionar', methods=['POST'])
+@jwt_required()
 def marcar_como_solucionado(idReport):
     try:
+        # Obtener la información del usuario actual del token JWT
+        current_user = get_jwt_identity()
+        user_id = current_user['id']
+        user_role = current_user['userRole']
+        
+        # Verificar que el usuario tiene permisos de administrador
+        if user_role not in ['administrador', 'superuser']:
+            return jsonify({"success": False, "message": "Sin permisos de administrador"}), 403
+        
         # Buscar el reporte por su ID
         reporte = Reports.query.get(idReport)
         
         if not reporte:
             return jsonify({"success": False, "message": "Reporte no encontrado"}), 404
 
-        # Marcar el reporte como solucionado
+        # Marcar el reporte como solucionado y asignar el admin
         reporte.solucionado = True
+        reporte.idAdmin = user_id
         db.session.commit()
 
-        return jsonify({"success": True, "message": "Reporte marcado como solucionado"})
+        return jsonify({
+            "success": True, 
+            "message": "Reporte marcado como solucionado",
+            "admin_id": user_id
+        })
     
     except Exception as e:
         print("Error al marcar como solucionado:", e)
@@ -3303,19 +3318,34 @@ def manejar_denuncias():
 
 
 @app.route('/api/complaint/<int:idComplaint>/solucionar', methods=['POST'])
+@jwt_required()  # Agregar el decorador JWT
 def marcar_denuncia_solucionada(idComplaint):
     try:
+        # Obtener la información del usuario actual del token JWT
+        current_user = get_jwt_identity()
+        user_id = current_user['id']
+        user_role = current_user['userRole']
+        
+        # Verificar que el usuario tiene permisos de administrador
+        if user_role not in ['administrador', 'superuser']:
+            return jsonify({"success": False, "message": "Sin permisos de administrador"}), 403
+        
         # Buscar la denuncia por su ID
         denuncia = Complaints.query.get(idComplaint)
 
         if not denuncia:
             return jsonify({"success": False, "message": "Denuncia no encontrada"}), 404
 
-        # Marcar la denuncia como solucionada
+        # Marcar la denuncia como solucionada Y guardar el ID del admin
         denuncia.solucionado = True
+        denuncia.idAdmin = user_id  # Guardar el ID del admin que solucionó la denuncia
         db.session.commit()
 
-        return jsonify({"success": True, "message": "Denuncia marcada como solucionada"})
+        return jsonify({
+            "success": True, 
+            "message": "Denuncia marcada como solucionada",
+            "admin_id": user_id
+        })
 
     except Exception as e:
         print("Error al marcar como solucionado:", e)
