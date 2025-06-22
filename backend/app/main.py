@@ -85,13 +85,7 @@ socketio = SocketIO(
 
 # MAIL RECOVERY 
 
-"""
-print(f"MAIL_SERVER: {os.getenv('MAIL_SERVER')}")
-print(f"MAIL_PORT: {os.getenv('MAIL_PORT')}")
-print(f"MAIL_USE_TLS: {os.getenv('MAIL_USE_TLS')}")
-print(f"MAIL_USERNAME: {os.getenv('MAIL_USERNAME')}")
-print(f"MAIL_PASSWORD: {os.getenv('MAIL_PASSWORD')}")
-"""
+
 
 @app.route('/api/send-recovery-email', methods=['POST'])
 def send_recovery_email():

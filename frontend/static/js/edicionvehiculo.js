@@ -6,8 +6,6 @@ function checkToken() {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
 
-    console.log('Token de autenticación:', authToken); // Verifica el token
-    console.log('Usuario actual:', currentUser); // Verifica el usuario
 
     if (!authToken || !currentUser) {
         console.error('No se encontró el token o el usuario actual');
@@ -166,12 +164,10 @@ async function loadUserVehicles() {
         return;
     }
     
-    console.log('URL de la API:', `${API_BASE_URL}/api/user-vehicles/${currentUser.id}`);
-    console.log('currentUser:', currentUser);
+ 
     
     try {
         const data = await fetchWithAuth(`${API_BASE_URL}/api/user-vehicles/${currentUser.id}`);
-        console.log('Datos recibidos de la API:', data);
         
         if (data.success) {
             displayVehicles(data.vehicles);
@@ -190,7 +186,6 @@ function displayVehicles(vehicles) {
     const vehiclesTableBody = document.getElementById('vehiclesTableBody');
     const noVehiclesMessage = document.getElementById('noVehiclesMessage');
     
-    console.log('Vehículos recibidos para mostrar:', vehicles); // Verificar los datos recibidos
 
     if (!vehiclesTableBody) {
         console.error('No se encontró el elemento con id "vehiclesTableBody"');
@@ -201,7 +196,6 @@ function displayVehicles(vehicles) {
     vehiclesTableBody.innerHTML = '';
     
     if (!vehicles || vehicles.length === 0) {
-        console.log('No hay vehículos para mostrar.');
         if (noVehiclesMessage) noVehiclesMessage.style.display = 'block';
         return;
     }
@@ -209,7 +203,6 @@ function displayVehicles(vehicles) {
     if (noVehiclesMessage) noVehiclesMessage.style.display = 'none';
 
     vehicles.forEach(vehicle => {
-        console.log('Procesando vehículo:', vehicle); // Verificar cada vehículo
 
         const row = document.createElement('tr');
         
@@ -229,7 +222,6 @@ function displayVehicles(vehicles) {
         vehiclesTableBody.appendChild(row);
     });
 
-    console.log('Vehículos mostrados en la tabla.'); // Confirmar que se completó el proceso
     attachVehicleButtonListeners();
 }
 

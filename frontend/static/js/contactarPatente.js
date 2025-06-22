@@ -1,12 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM completamente cargado');
     
     // Cargar vehículos en el selector de denuncia al inicio
     cargarVehiculos();
 
     // Esta función será llamada desde el HTML cuando se presione "Contactar al Usuario por la Patente"
     window.contactarUsuario = async function() {
-        console.log('Función contactarUsuario llamada');
         
         const selectorVehiculo = document.getElementById('selector-vehiculo-denuncia');
         if (!selectorVehiculo) {
@@ -22,18 +20,15 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        console.log("Buscando propietario para:", idVehicle);
 
         try {
             const response = await fetch(`http://localhost:5000/api/propietario/${idVehicle}`);
-            console.log("Respuesta del servidor:", response.status);
 
             if (!response.ok) {
                 throw new Error(`Error en la respuesta: ${response.status}`);
             }
 
             const data = await response.json();
-            console.log("Datos recibidos:", data);
 
             if (data.success) {
                 // Mostrar el teléfono en un modal o alert
@@ -69,7 +64,6 @@ function cargarVehiculos() {
         return;
     }
     
-    console.log('Iniciando carga de vehículos...');
 
     fetch('http://localhost:5000/api/vehiculos')
         .then(response => {
@@ -79,24 +73,20 @@ function cargarVehiculos() {
             return response.json();
         })
         .then(data => {
-            console.log('Datos de vehículos recibidos:', data);
 
             if (data.success) {
                 vehiculoSelect.innerHTML = '<option value="" disabled selected>Seleccioná una patente</option>';
 
                 if (data.vehicles && data.vehicles.length > 0) {
                     data.vehicles.forEach(vehicle => {
-                        console.log("🛠️ Agregando vehículo al selector:", vehicle.idVehicle);
 
                         const option = document.createElement('option');
                         option.value = vehicle.idVehicle;
                         option.textContent = vehicle.idVehicle;
                         vehiculoSelect.appendChild(option);
                     });
-                    console.log(`Se cargaron ${data.vehicles.length} vehículos`);
                 } else {
                     vehiculoSelect.innerHTML += '<option value="" disabled>No hay vehículos disponibles</option>';
-                    console.log('No hay vehículos disponibles');
                 }
             } else {
                 vehiculoSelect.innerHTML += '<option value="" disabled>Error al cargar vehículos</option>';

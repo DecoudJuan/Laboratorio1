@@ -74,6 +74,5 @@ function loadSectors() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Página cargada, ejecutando loadSectors()");
     loadSectors();
 });

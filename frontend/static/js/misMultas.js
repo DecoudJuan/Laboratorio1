@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("JS cargado");
 
     const denunciasContainer = document.getElementById('denuncias');
     const API_BASE_URL = 'http://localhost:5000'; // Cambia según tu configuración

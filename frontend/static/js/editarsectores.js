@@ -23,7 +23,6 @@ function checkToken() {
 window.addEventListener('pageshow', (event) => {
     // Si la página se restaura desde el caché (botón atrás)
     if (event.persisted) {
-        console.log('Página restaurada desde caché - verificando autenticación');
         checkToken();
     }
 });
@@ -31,7 +30,6 @@ window.addEventListener('pageshow', (event) => {
 // También verificar cuando la página vuelve a estar visible
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        console.log('Página visible - verificando autenticación');
         checkToken();
     }
 });

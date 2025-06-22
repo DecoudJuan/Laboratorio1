@@ -82,7 +82,6 @@ function createEstablishment(event) {
 
 // Configuración de la UI y event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Página de creación de establecimiento cargada");
     
     // Event listener para el formulario de creación
     const createForm = document.getElementById('createEstablishmentForm');

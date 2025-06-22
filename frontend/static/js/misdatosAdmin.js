@@ -12,9 +12,7 @@ preventCaching();
 function checkToken() {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
-    
-    console.log('Auth Token:', authToken);
-    console.log('Current User:', currentUser);
+
 
     // Si no hay token o usuario, redirigir al login
     if (!authToken || !currentUser) {
@@ -73,8 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const userData = parseJwt(token);
     
-    // Verificar la estructura del token y mostrar en consola para depuración
-    console.log('Datos del token decodificado:', userData);
+
     
     // Verificar si el token tiene la estructura esperada
     if (!userData) {
@@ -123,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then(response => {
         if (!response.ok) {
-            console.log('No se pudieron obtener datos adicionales del servidor');
             return null;
         }
         return response.json();

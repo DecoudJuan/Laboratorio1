@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("JS cargado");
     
     // Verificar que el elemento existe antes de usarlo
     const denunciasContainer = document.getElementById('denuncias');
@@ -26,17 +25,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Validar que el contenedor existe
     if (!denunciasContainer) {
-        console.error('ERROR: No se encontró el elemento con ID "denuncias"');
-        console.error('Elementos disponibles en la página:');
-        console.log(document.body.innerHTML);
         return;
     }
     
-    console.log("Contenedor encontrado:", denunciasContainer);
 
     async function cargarDenuncias() {
         try {
-            console.log("Iniciando carga de denuncias...");
             const response = await fetch(`${API_BASE_URL}/api/complaint`, {
                 headers: getAuthHeaders() // Agregar headers de autorización
             });
@@ -46,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             
             const data = await response.json();
-            console.log("Datos recibidos:", data);
 
             if (data.success) {
                 mostrarDenuncias(data.denuncias);
@@ -70,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         
-        console.log("Mostrando denuncias:", denuncias);
         denunciasContainer.innerHTML = '';
     
         const denunciasNoSolucionados = denuncias.filter(r => !r.solucionado);
@@ -113,7 +105,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 const idComplaint = card.getAttribute('data-id');
     
                 try {
-                    console.log("Marcando denuncia como solucionada:", idComplaint);
                     const response = await fetch(`${API_BASE_URL}/api/complaint/${idComplaint}/solucionar`, {
                         method: 'POST',
                         headers: getAuthHeaders() // Usar headers con autorización
