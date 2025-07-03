@@ -3750,6 +3750,112 @@ def default_error_handler(e):
     print(f'Error en Socket.IO: {e}')
     emit('error', {'message': 'Ha ocurrido un error en el servidor'})
 
+@app.route('/api/send-complaint-email', methods=['POST'])
+def send_complaint_email():
+    try:
+        # Verificar autenticación (opcional)
+        token = request.headers.get('Authorization')
+        if not token or not token.startswith('Bearer '):
+            return jsonify({'success': False, 'message': 'Token de autenticación requerido'}), 401
+        
+        token = token.split(' ')[1]
+        
+        data = request.get_json()
+        patente = data.get('patente')
+        mensaje = data.get('mensaje')
+        sector = data.get('sector')
+        
+        if not patente or not mensaje or not sector:
+            return jsonify({'success': False, 'message': 'Faltan datos requeridos'}), 400
+        
+        # Buscar el usuario por patente del vehículo usando SQLAlchemy
+        user_data = db.session.query(User.email, User.username).join(
+            Owns, User.idUser == Owns.idUser
+        ).join(
+            Vehicle, Owns.idVehicle == Vehicle.idVehicle
+        ).filter(
+            Vehicle.idVehicle == patente
+        ).first()
+        
+        if not user_data:
+            return jsonify({'success': False, 'message': 'Usuario no encontrado para la patente especificada'}), 404
+        
+        user_email = user_data[0]
+        user_name = user_data[1]
+        
+        # Configuración del servidor SMTP (igual que en tu función de recuperación)
+        smtp_server = os.getenv('MAIL_SERVER')
+        smtp_port = int(os.getenv('MAIL_PORT', 587))
+        smtp_username = os.getenv('MAIL_USERNAME')
+        smtp_password = os.getenv('MAIL_PASSWORD')
+        
+        # Crear el mensaje de email
+        msg = MIMEMultipart()
+        msg['From'] = smtp_username
+        msg['To'] = user_email
+        msg['Subject'] = 'Notificación de Denuncia - Ubica2'
+        
+        # Plantilla del email
+        html_body = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px;">
+                    <h2 style="color: #2c3e50; text-align: center;">Notificación de Denuncia</h2>
+                    
+                    <div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                        <p>Estimado/a <strong>{user_name}</strong>,</p>
+                        
+                        <p>Te informamos que se ha registrado una denuncia relacionada con tu vehículo:</p>
+                        
+                        <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 15px 0;">
+                            <p><strong>Patente:</strong> {patente}</p>
+                            <p><strong>Sector:</strong> {sector}</p>
+                            <p><strong>Mensaje:</strong></p>
+                            <p style="font-style: italic;">{mensaje}</p>
+                        </div>
+                        
+                        <p>Te recomendamos que revises la situación y tomes las medidas necesarias.</p>
+                        
+                        <p>Si tienes alguna consulta o necesitas más información, puedes contactarnos a través de nuestro sistema de chat.</p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="http://localhost:5000" style="background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                                Acceder al Sistema
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; color: #6c757d; font-size: 12px;">
+                        <p>Este es un email automático del sistema Ubica2</p>
+                        <p>Por favor no responder a este email</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+        
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        # Enviar correo usando el mismo método que funciona
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+            
+        print(f"Correo de denuncia enviado a {user_email}")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Email de denuncia enviado exitosamente'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error enviando email de denuncia: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': f'Error interno del servidor: {str(e)}'
+        }), 500
+    
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

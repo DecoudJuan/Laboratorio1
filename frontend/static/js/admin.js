@@ -760,14 +760,45 @@ document.getElementById('modalDenunciar').addEventListener('shown.bs.modal', fun
 });
 
 // Manejar envío de denuncia
+async function enviarEmailDenuncia(patente, mensaje, sector) {
+    try {
+        const response = await fetch('http://localhost:5000/api/send-complaint-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+            },
+            body: JSON.stringify({
+                patente: patente,
+                mensaje: mensaje,
+                sector: sector
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('Email de denuncia enviado exitosamente');
+            return true;
+        } else {
+            console.error('Error al enviar email:', data.message);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error en el envío del email:', error);
+        return false;
+    }
+}
+
+// Manejar envío de denuncia
 document.getElementById('complaintForm').addEventListener('submit', async function(event) {
     event.preventDefault();
-
-    const API_BASE_URL = 'http://localhost:5000/api';
+    
+    const mensaje = event.target.querySelector('textarea[name="mensaje"]').value;
+    const patente = document.getElementById('selector-vehiculo-denuncia').value;
     const sector = document.getElementById('selector-sector-denuncia').value;
-    const idVehicle = document.getElementById('selector-vehiculo-denuncia').value;
-    const content = document.querySelector('textarea[name="mensaje"]').value;
-
+    
+    // Obtener ID del usuario actual
     const currentUserData = localStorage.getItem('currentUser');
     let idUser = null;
 
@@ -779,35 +810,66 @@ document.getElementById('complaintForm').addEventListener('submit', async functi
             console.error('Error al parsear currentUser:', error);
         }
     }
-
-    if (!idUser || !sector || !idVehicle || !content) {
-        alert("Todos los campos son obligatorios.");
+    
+    if (!mensaje || !patente || !sector || !idUser) {
+        alert('Por favor completa todos los campos');
         return;
     }
-
+    
+    // Mostrar indicador de carga
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Enviando...';
+    submitBtn.disabled = true;
+    
     try {
-        const response = await fetch(`${API_BASE_URL}/complaint`, {
+        // Enviar denuncia al foro (usando los campos correctos)
+        const complaintResponse = await fetch('http://localhost:5000/api/complaint', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idSuperUser: idUser, idVehiculo: idVehicle, sector, content })
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+            },
+            body: JSON.stringify({
+                idSuperUser: idUser,    // Campo correcto
+                idVehiculo: patente,    // Campo correcto (patente es el ID del vehículo)
+                sector: sector,         // Campo correcto
+                content: mensaje        // Campo correcto
+            })
         });
-
-        if (response.ok) {
-            alert('Reporte enviado con éxito');
-            document.getElementById('complaintForm').reset();
-            document.getElementById('selector-sector-denuncia').value = '';
+        
+        const complaintData = await complaintResponse.json();
+        
+        if (complaintData.success) {
+            // Enviar email de notificación
+            const emailEnviado = await enviarEmailDenuncia(patente, mensaje, sector);
+            
+            if (emailEnviado) {
+                alert('Denuncia enviada exitosamente. Se ha notificado al usuario por email.');
+            } else {
+                alert('Denuncia enviada exitosamente, pero no se pudo enviar el email de notificación.');
+            }
+            
+            // Limpiar formulario
+            event.target.reset();
             document.getElementById('selector-vehiculo-denuncia').value = '';
+            document.getElementById('selector-sector-denuncia').value = '';
             
             // Cerrar modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalDenunciar'));
-            modal.hide();
+            if (modal) {
+                modal.hide();
+            }
         } else {
-            const errorData = await response.json();
-            alert('Error al enviar reporte: ' + (errorData.message || ''));
+            alert('Error al enviar la denuncia: ' + complaintData.message);
         }
     } catch (error) {
-        console.error('Error en la solicitud:', error);
-        alert('Ocurrió un error al enviar el reporte');
+        console.error('Error:', error);
+        alert('Error de conexión. Por favor intenta nuevamente.');
+    } finally {
+        // Restaurar botón
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 });
 
