@@ -804,13 +804,23 @@ def guardar_datos():
             return jsonify({'message': 'El teléfono debe contener solo números', 'success': False}), 400
             
         # Buscar si existe un usuario con el nombre anterior
-        user = User.query.filter_by(username=nombre_anterior).first()
+        user = User.query.filter_by(email=nombre_anterior).first()
 
         if user:
             # Actualizamos los datos del usuario
             user.username = username
-            user.email = email
+
+            # Validar y actualizar el email solo si es diferente al actual
             
+            print(email)
+            print(user.email)
+
+            if email and email != user.email:
+                email_existente = User.query.filter(User.email == email, User.idUser != user.idUser).first()
+                if email_existente:
+                    return jsonify({'message': 'El email ya está en uso por otro usuario', 'success': False}), 400
+                user.email = email
+
             # Actualizamos el teléfono sólo si se proporcionó uno nuevo
             if phone:
                 user.phone = phone

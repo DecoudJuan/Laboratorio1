@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (editarBtn) {
         editarBtn.addEventListener('click', function() {
-            const nombreAnterior = prompt("Ingrese su nombre actual para confirmar el cambio:");
+            const nombreAnterior = prompt("Ingrese su mail actual para confirmar el cambio:");
             
             if (!nombreAnterior) {
                 alert("Debes ingresar tu nombre actual para continuar.");
