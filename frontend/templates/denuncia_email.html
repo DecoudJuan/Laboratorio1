@@ -1,0 +1,32 @@
+<!-- denuncia_email.html -->
+<html>
+  <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px;">
+      <h2 style="color: #2c3e50; text-align: center;">Notificación de Denuncia</h2>
+
+      <div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+        <p>Estimado/a <strong>{{ user_name }}</strong>,</p>
+
+        <p>Te informamos que se ha registrado una denuncia relacionada con tu vehículo:</p>
+
+        <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 15px 0;">
+          <p><strong>Patente:</strong> {{ patente }}</p>
+          <p><strong>Sector:</strong> {{ sector }}</p>
+          <p><strong>Mensaje:</strong></p>
+          <p style="font-style: italic;">{{ mensaje }}</p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="http://localhost:3000/index.html" style="background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            Ir a la Página
+          </a>
+        </div>
+      </div>
+
+      <div style="text-align: center; color: #6c757d; font-size: 12px;">
+        <p>Este es un email automático del sistema Ubica2</p>
+        <p>Por favor no responder a este email</p>
+      </div>
+    </div>
+  </body>
+</html>
