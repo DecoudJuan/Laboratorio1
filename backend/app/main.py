@@ -3813,14 +3813,10 @@ def send_complaint_email():
                             <p><strong>Mensaje:</strong></p>
                             <p style="font-style: italic;">{mensaje}</p>
                         </div>
-                        
-                        <p>Te recomendamos que revises la situación y tomes las medidas necesarias.</p>
-                        
-                        <p>Si tienes alguna consulta o necesitas más información, puedes contactarnos a través de nuestro sistema de chat.</p>
-                        
+                                                                        
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:5000" style="background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                                Acceder al Sistema
+                            <a href="http://localhost:3000/index.html" style="background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                                Ir a la Página
                             </a>
                         </div>
                     </div>
