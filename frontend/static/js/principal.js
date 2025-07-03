@@ -18,14 +18,12 @@ function checkToken() {
 
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
-        console.log('Página restaurada desde caché - verificando autenticación');
         checkToken();
     }
 });
 
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        console.log('Página visible - verificando autenticación');
         checkToken();
     }
 });
@@ -206,7 +204,6 @@ function mostrarMensajesEnContainer(mensajesNuevos, container, tildeBtn) {
 
 // Función principal de notificaciones
 document.getElementById('notificaciones').addEventListener('click', function () {
-    console.log('Botón de notificaciones clickeado');
 
     let existingContainer = document.getElementById('notificaciones-dinámico');
     if (existingContainer) {

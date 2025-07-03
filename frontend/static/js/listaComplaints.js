@@ -1,31 +1,45 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("JS cargado");
     
     // Verificar que el elemento existe antes de usarlo
     const denunciasContainer = document.getElementById('denuncias');
     const API_BASE_URL = 'http://localhost:5000'; // Ruta base de la API
 
+    // Función para obtener el token de autorización
+    function getAuthToken() {
+        return localStorage.getItem('authToken');
+    }
+
+    // Función para crear headers con autorización (formato JWT)
+    function getAuthHeaders() {
+        const token = getAuthToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        return headers;
+    }
+
     // Validar que el contenedor existe
     if (!denunciasContainer) {
-        console.error('ERROR: No se encontró el elemento con ID "denuncias"');
-        console.error('Elementos disponibles en la página:');
-        console.log(document.body.innerHTML);
         return;
     }
     
-    console.log("Contenedor encontrado:", denunciasContainer);
 
     async function cargarDenuncias() {
         try {
-            console.log("Iniciando carga de denuncias...");
-            const response = await fetch(`${API_BASE_URL}/api/complaint`);
+            const response = await fetch(`${API_BASE_URL}/api/complaint`, {
+                headers: getAuthHeaders() // Agregar headers de autorización
+            });
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
-            console.log("Datos recibidos:", data);
 
             if (data.success) {
                 mostrarDenuncias(data.denuncias);
@@ -49,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         
-        console.log("Mostrando denuncias:", denuncias);
         denunciasContainer.innerHTML = '';
     
         const denunciasNoSolucionados = denuncias.filter(r => !r.solucionado);
@@ -70,7 +83,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     <p class="card-text">${denuncia.content}</p>
                     <button class="btn btn-success btn-sm marcar-solucionado-btn">✅ Marcar como solucionado</button>
                     <div class="text-muted" style="font-size: 0.8rem;">${denuncia.fecha_creacion}</div>
-
                 </div>
             `;
     
@@ -93,12 +105,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const idComplaint = card.getAttribute('data-id');
     
                 try {
-                    console.log("Marcando denuncia como solucionada:", idComplaint);
                     const response = await fetch(`${API_BASE_URL}/api/complaint/${idComplaint}/solucionar`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
+                        headers: getAuthHeaders() // Usar headers con autorización
                     });
     
                     const result = await response.json();

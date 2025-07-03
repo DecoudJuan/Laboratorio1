@@ -52,7 +52,6 @@ function loadSectors() {
     
     fetchWithAuth(`${API_BASE_URL}/api/sectores`)
         .then(data => {
-            console.log('Sectores recibidos:', data);
             if (data.success) {
                 displaySectors(data.sectors || []);
             } else {
@@ -81,7 +80,6 @@ function displaySectors(sectors) {
     tableBody.innerHTML = '';
     
     if (!sectors || sectors.length === 0) {
-        console.log('No hay sectores para mostrar.');
         if (noSectorsMessage) noSectorsMessage.style.display = 'block';
         
         const row = document.createElement('tr');
@@ -281,7 +279,6 @@ function updateSector(event) {
 
 // Función mejorada para eliminar un sector con confirmación
 function deleteSector(sectorName) {
-    console.log(`Intentando eliminar el sector: ${sectorName}`);
     
     // Verificar si tenemos un modal de confirmación
     const deleteModal = document.getElementById('deleteSectorModal');
@@ -354,7 +351,6 @@ function proceedWithSectorDeletion(sectorName) {
 
 // Configuración de la UI y event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Página cargada, ejecutando loadSectors()");
     
     // Cargar la lista de sectores
     loadSectors();

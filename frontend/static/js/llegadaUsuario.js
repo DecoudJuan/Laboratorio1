@@ -568,7 +568,6 @@ function procesarLlegadaSalida() {
             .then(async dataCochera => {
                 // Si la cochera no existe, registrarla primero
                 if (!dataCochera.success) {
-                    console.log("Cochera no encontrada, registrando nueva cochera...");
                     
                     const formDataRegistro = new FormData();
                     formDataRegistro.append('sector', sectorNormalizado);

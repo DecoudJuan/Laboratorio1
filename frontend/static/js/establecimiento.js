@@ -52,7 +52,6 @@ function loadEstablishments() {
     
     fetchWithAuth(`${API_BASE_URL}/api/establecimientos`)
         .then(data => {
-            console.log('Establecimientos recibidos:', data);
             if (data.success) {
                 displayEstablishments(data.establishments || []);
             } else {
@@ -81,7 +80,6 @@ function displayEstablishments(establishments) {
     tableBody.innerHTML = '';
     
     if (!establishments || establishments.length === 0) {
-        console.log('No hay establecimientos para mostrar.');
         if (noEstablishmentsMessage) noEstablishmentsMessage.style.display = 'block';
         
         const row = document.createElement('tr');
@@ -265,7 +263,6 @@ function updateEstablishment(event) {
 
 // Función para eliminar un establecimiento con confirmación
 function deleteEstablishment(establishmentName) {
-    console.log(`Intentando eliminar el establecimiento: ${establishmentName}`);
     
     // Verificar si tenemos un modal de confirmación
     const deleteModal = document.getElementById('deleteEstablishmentModal');
@@ -333,7 +330,6 @@ function proceedWithEstablishmentDeletion(establishmentName) {
 
 // Configuración de la UI y event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Página de establecimientos cargada, ejecutando loadEstablishments()");
     
     // Cargar la lista de establecimientos
     loadEstablishments();

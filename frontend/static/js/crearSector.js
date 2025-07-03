@@ -167,7 +167,6 @@ function createSector() {
         cocherasDisponibles: parseInt(availableSpots) || 0
     };
     
-    console.log('Enviando datos de sector:', sectorData);
     
     // Deshabilitar el botón de submit para evitar múltiples envíos
     const submitBtn = document.querySelector('button[type="submit"]');

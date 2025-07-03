@@ -31,16 +31,12 @@ setupBackButton();
 
 // Verificación simplificada de autenticación
 function checkToken() {
-    console.log('=== EJECUTANDO checkToken ===');
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
-    
-    console.log('authToken:', authToken);
-    console.log('currentUser:', currentUser);
+
     
     // Si no hay token o usuario, redirigir al login
     if (!authToken || !currentUser) {
-        console.log('No hay token o usuario - redirigiendo a index.html');
         window.location.replace('index.html');
         return false;
     }
@@ -439,7 +435,6 @@ function procesarLlegadaSalida(modalId) {
             .then(async dataCochera => {
                 // Si la cochera no existe, registrarla primero
                 if (!dataCochera.success) {
-                    console.log("Cochera no encontrada, registrando nueva cochera...");
                     
                     const formDataRegistro = new FormData();
                     formDataRegistro.append('sector', sectorNormalizado);
@@ -527,7 +522,6 @@ function verificarCocheraParaSalida(sector, cochera) {
 window.addEventListener('pageshow', (event) => {
     // Si la página se restaura desde el caché (botón atrás)
     if (event.persisted) {
-        console.log('Página restaurada desde caché - verificando autenticación');
         checkToken();
     }
 });
@@ -585,7 +579,6 @@ function loadUsers() {
         return response.json();
     })
     .then(data => {
-        console.log('Datos recibidos:', data); // Depuración
         if (data.success) {
             displayUsers(data.users);
         } else {
@@ -690,7 +683,6 @@ function cargarSectoresDenuncia() {
             return response.json();
         })
         .then(data => {
-            console.log('Datos recibidos de sectores:', data); // Para depuración
             
             if (data.success) {
                 sectorSelect.innerHTML = '<option value="" disabled selected>Seleccioná un sector</option>';
@@ -735,7 +727,6 @@ function cargarVehiculosDenuncia() {
             return response.json();
         })
         .then(data => {
-            console.log('Datos recibidos de vehiculos:', data); // Para depuración
             
             if (data.success) {
                 vehiculoSelect.innerHTML = '<option value="" disabled selected>Seleccioná una patente</option>';

@@ -19,14 +19,12 @@ function checkToken() {
 // Verificar autenticación al volver a la página
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
-        console.log('Página restaurada desde caché - verificando autenticación');
         checkToken();
     }
 });
 
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        console.log('Página visible - verificando autenticación');
         checkToken();
     }
 });

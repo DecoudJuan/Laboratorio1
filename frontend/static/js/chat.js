@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("El script `chat.js` se ha cargado correctamente.");
 
     const chatForm = document.getElementById('chatForm');
     const messagesContainer = document.getElementById('messages-container');
@@ -40,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Eventos de conexión
         socket.on('connect', function() {
-            console.log('Conectado al servidor Socket.IO');
             
             // Unirse al chat solo si tenemos el email del usuario
             if (currentUserEmail) {
@@ -49,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         socket.on('disconnect', function() {
-            console.log('Desconectado del servidor Socket.IO');
         });
 
         socket.on('connect_error', function(error) {
@@ -58,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Escuchar nuevos mensajes
         socket.on('nuevo_mensaje', function(mensaje) {
-            console.log('Nuevo mensaje recibido:', mensaje);
             // Solo agregar si no es nuestro propio mensaje
             if (mensaje.usuario !== currentUserEmail) {
                 addMessageToContainer(mensaje);
@@ -68,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Escuchar actualizaciones de reacciones en tiempo real
         socket.on('actualizar_reacciones', function(data) {
-            console.log('Actualización de reacciones:', data);
             updateMessageReactions(data.id, data.thumpsUp, data.thumpsDown);
             
             // Mostrar notificación si la reacción no es del usuario actual
@@ -79,11 +74,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         socket.on('conectado', function(data) {
-            console.log('Mensaje del servidor:', data.mensaje);
         });
 
         socket.on('estado', function(data) {
-            console.log('Estado del chat:', data.mensaje);
         });
     }
 
@@ -104,7 +97,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (userData.email) {
                     currentUserEmail = userData.email;
                     document.getElementById('emailDisplay').textContent = userData.email;
-                    console.log('Usuario cargado:', currentUserEmail);
                     return true;
                 }
             } catch (e) {
@@ -158,7 +150,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        console.log("Reaccionando al mensaje con ID:", id, "Reacción:", reaction);
 
         // Deshabilitar botón temporalmente para evitar clics múltiples
         const button = document.querySelector(`[data-id="${id}"][data-action="${reaction}"]`);
@@ -178,7 +169,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             if (data.success) {
-                console.log('Reacción procesada correctamente');
                 const emoji = reaction === 'like' ? '👍' : '👎';
                 showNotification(`Reacción ${emoji} enviada`, 'info');
             } else {
@@ -222,7 +212,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Cargar mensajes iniciales
     async function loadMessages() {
         try {
-            console.log('Cargando mensajes...');
             const data = await fetchWithErrorHandling(`${API_BASE_URL}/chat`, {
                 method: 'GET',
                 headers: {
@@ -230,7 +219,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
             
-            console.log('Mensajes cargados:', data);
             updateMessages(data.mensajes);
             return true;
         } catch (error) {
@@ -310,7 +298,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Función principal de inicialización
     async function initializeChat() {
-        console.log('Inicializando chat...');
         
         try {
             // 1. Cargar datos del usuario
@@ -331,10 +318,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // 4. Ocultar loading y mostrar chat
             toggleLoadingState(false);
-            console.log('Chat inicializado correctamente');
 
         } catch (error) {
-            console.error('Error al inicializar el chat:', error);
             showNotification('Error al inicializar el chat', 'error');
             toggleLoadingState(false);
         }
@@ -354,7 +339,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             
-            console.log(`Click en botón de reacción: ${action} para mensaje ${messageId}`);
             reactToMessage(messageId, action);
         });
     }

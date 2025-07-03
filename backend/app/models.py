@@ -173,6 +173,7 @@ class Reports(db.Model): #cuidado que no quede dentro de la clase UsuarioReaccio
     content = db.Column(db.Text)
     solucionado = db.Column(db.Boolean, default=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    idAdmin = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete = 'CASCADE'))
 
 class Complaints(db.Model): 
     __tablename__ = 'complaints'
@@ -184,4 +185,6 @@ class Complaints(db.Model):
     content = db.Column(db.Text)
     solucionado = db.Column(db.Boolean, default=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    idAdmin = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete = 'CASCADE'))
+
        

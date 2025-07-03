@@ -26,7 +26,6 @@ checkToken();
 window.addEventListener('pageshow', (event) => {
     // Si la página se restaura desde el caché (botón atrás)
     if (event.persisted) {
-        console.log('Página restaurada desde caché - verificando autenticación');
         checkToken();
     }
 });
@@ -35,28 +34,23 @@ window.addEventListener('pageshow', (event) => {
 // También verificar cuando la página vuelve a estar visible
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        console.log('Página visible - verificando autenticación');
         checkToken();
     }
 });
 
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("Documento cargado. Inicializando funciones de cocheras.");
 
     // Función para manejar la obtención de datos y mostrar el modal
     async function obtenerCocheras(sector) {
         sector = sector.charAt(0).toUpperCase() + sector.slice(1).toLowerCase();
-        console.log(`Obteniendo datos para el sector: ${sector}`);
         try {
             const response = await fetch(`http://localhost:5000/api/cocheras/${encodeURIComponent(sector)}`);
-            console.log("Respuesta recibida:", response);
             
             if (!response.ok) {
                 throw new Error(`Error HTTP: ${response.status}`);
             }
             
             const data = await response.json();
-            console.log("Datos recibidos:", data);
 
             const modalBody = document.getElementById("modal-body-content");
             if (data.cocheras !== undefined) {
@@ -86,11 +80,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Agregar evento de clic a los botones laterales
     const buttons = document.querySelectorAll(".btn.btn-success");
-    console.log(`Encontrados ${buttons.length} botones`);
     
     buttons.forEach(button => {
         button.addEventListener("click", function() {
-            console.log("Botón presionado:", this.textContent.trim());
             const sector = this.getAttribute("data-name") || this.textContent.trim();
             obtenerCocheras(sector);
         });
@@ -98,11 +90,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Agregar evento de clic a los puntos del mapa
     const mapPoints = document.querySelectorAll(".map-point");
-    console.log(`Encontrados ${mapPoints.length} puntos en el mapa`);
     
     mapPoints.forEach(point => {
         point.addEventListener("click", function() {
-            console.log("Punto del mapa presionado");
             const sector = this.getAttribute("data-name");
             obtenerCocheras(sector);
         });
