@@ -168,23 +168,23 @@ class Reports(db.Model): #cuidado que no quede dentro de la clase UsuarioReaccio
     __tablename__ = 'Reports'
 
     idReport = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
+    idUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE')) #quien la genera
     sector = db.Column(db.String)
     content = db.Column(db.Text)
     solucionado = db.Column(db.Boolean, default=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    idAdmin = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete = 'CASCADE'))
+    idAdmin = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete = 'CASCADE')) #quien la resuelve
 
 class Complaints(db.Model): 
     __tablename__ = 'complaints'
 
     idComplaint = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    idSuperUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE'))
+    idSuperUser = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete='CASCADE')) #quien la genera
     idVehiculo = db.Column(db.Text, db.ForeignKey('vehicle.idVehicle', ondelete='CASCADE'))
     sector = db.Column(db.String)
     content = db.Column(db.Text)
     solucionado = db.Column(db.Boolean, default=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    idAdmin = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete = 'CASCADE'))
+    idAdmin = db.Column(db.Integer, db.ForeignKey('user.idUser', ondelete = 'CASCADE')) #quien la resuelve
 
        

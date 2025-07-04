@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mostrar los datos básicos del token
     document.getElementById('nombre-completo').textContent = username || 'No disponible';
     document.getElementById('email').textContent = email || 'No disponible';
-    document.getElementById('telefono').textContent = 'No disponible'; // Cambié data.phone por string fijo
+    document.getElementById('telefono').textContent = 'No disponible'; // Valor inicial
     
     // Configurar lista de vehículos secundarios inicialmente vacía
     const vehiculosSecundariosElement = document.getElementById('vehiculos-secundarios');
@@ -110,8 +110,22 @@ document.addEventListener('DOMContentLoaded', () => {
         vehiculosSecundariosElement.appendChild(li);
     }
     
-    // Intentar obtener datos adicionales del servidor
-    fetch(`http://localhost:5000/api/usuario/${username}`, {
+    // Intentar obtener datos adicionales del servidor usando el ID del usuario
+    let userId;
+    if (userData.userId) {
+        userId = userData.userId;
+    } else if (userData.sub && userData.sub.id) {
+        userId = userData.sub.id;
+    } else if (userData.id) {
+        userId = userData.id;
+    }
+    
+    // Si tenemos userId, usar el endpoint por ID, si no usar el endpoint por username
+    const apiUrl = userId ? 
+        `http://localhost:5000/api/usuario/id/${userId}` : 
+        `http://localhost:5000/api/usuario/${username}`;
+    
+    fetch(apiUrl, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -125,29 +139,38 @@ document.addEventListener('DOMContentLoaded', () => {
         return response.json();
     })
     .then(data => {
-        if (data && data.success) {
-            // Actualizar con datos más completos del servidor
-            const vehiculoPrincipalElement = document.getElementById('vehiculo-principal');
-            if (vehiculoPrincipalElement) {
-                vehiculoPrincipalElement.textContent = data.vehiculo_principal || 'No asignado';
+        if (data) {
+            // Actualizar teléfono - ahora probando ambas estructuras posibles
+            if (data.phone) {
+                document.getElementById('telefono').textContent = data.phone;
+            } else if (data.success && data.phone) {
+                document.getElementById('telefono').textContent = data.phone;
             }
             
-            // Actualizar vehículos secundarios
-            if (vehiculosSecundariosElement) {
-                vehiculosSecundariosElement.innerHTML = '';
+            // Actualizar con datos más completos del servidor (estructura original)
+            if (data.success) {
+                const vehiculoPrincipalElement = document.getElementById('vehiculo-principal');
+                if (vehiculoPrincipalElement) {
+                    vehiculoPrincipalElement.textContent = data.vehiculo_principal || 'No asignado';
+                }
                 
-                if (data.vehiculos_secundarios && data.vehiculos_secundarios.length > 0) {
-                    data.vehiculos_secundarios.forEach(vehiculo => {
+                // Actualizar vehículos secundarios
+                if (vehiculosSecundariosElement) {
+                    vehiculosSecundariosElement.innerHTML = '';
+                    
+                    if (data.vehiculos_secundarios && data.vehiculos_secundarios.length > 0) {
+                        data.vehiculos_secundarios.forEach(vehiculo => {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item';
+                            li.textContent = vehiculo;
+                            vehiculosSecundariosElement.appendChild(li);
+                        });
+                    } else {
                         const li = document.createElement('li');
                         li.className = 'list-group-item';
-                        li.textContent = vehiculo;
+                        li.textContent = 'No asignado';
                         vehiculosSecundariosElement.appendChild(li);
-                    });
-                } else {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item';
-                    li.textContent = 'No asignado';
-                    vehiculosSecundariosElement.appendChild(li);
+                    }
                 }
             }
         }
