@@ -550,8 +550,7 @@ def mis_datos():
             }
 
             return jsonify(data), 200
-        else:
-            return jsonify({'message': 'Usuario no encontrado', 'success': False}), 404
+    
 
     except Exception as e:
         return jsonify({'message': str(e), 'success': False}), 500
